@@ -1,5 +1,6 @@
 import { getAllPosts } from "@/lib/posts";
 import Link from "next/link";
+import PostActions from "@/components/admin/PostActions";
 
 export const metadata = {
   title: "Quản lý bài viết",
@@ -62,13 +63,8 @@ export default async function AdminPostsPage() {
                     )}
                   </div>
                 </td>
-                <td className="p-4 text-right">
-                  <Link
-                    href={`/admin/posts/${post.slug}/edit`}
-                    className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
-                  >
-                    Sửa
-                  </Link>
+                <td className="p-4">
+                  <PostActions slug={post.slug} />
                 </td>
               </tr>
             ))}

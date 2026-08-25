@@ -15,7 +15,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { slug, title, description, date, category, tags, author, image, featured, content, readingTime } = body;
+    const { slug, title, description, date, category, tags, author, image, featured, content, rawContent, readingTime } = body;
 
     if (!slug || !title || !description || !date || !category || !content) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -38,6 +38,7 @@ export async function POST(request: NextRequest) {
       image: image || "",
       featured: featured || false,
       content,
+      rawContent: rawContent || "",
       readingTime: readingTime || "5 phút đọc",
       createdAt: now,
       updatedAt: now,

@@ -4,6 +4,7 @@ import { eq, sql } from "drizzle-orm";
 import { db } from "./db";
 import { posts, type PostRow } from "./db/schema";
 import { Post } from "./types";
+import { embedUrlsToIframes } from "./embeds";
 
 function rowToPost(row: PostRow, contentHtml: string): Post {
   return {
@@ -21,26 +22,33 @@ function rowToPost(row: PostRow, contentHtml: string): Post {
   };
 }
 
-async function renderMarkdown(content: string): Promise<string> {
-  const result = await remark().use(html).process(content);
-  return String(result);
+function renderContent(rawContent: string, contentHtml: string): string {
+  const source = rawContent || contentHtml;
+  if (!source) return "";
+  const hasHtmlTags = /<[^>]+>/.test(source);
+  const hasMarkdownSyntax = /^#{1,6}\s|^\*\*|^\- |^\d+\. |```|^\|/m.test(source);
+  let rendered: string;
+  if (hasHtmlTags && !hasMarkdownSyntax) {
+    rendered = source;
+  } else {
+    rendered = remark().use(html).processSync(source).toString();
+  }
+  return embedUrlsToIframes(rendered);
 }
 
 export async function getPostBySlug(slug: string): Promise<Post> {
   const row = db.select().from(posts).where(eq(posts.slug, slug)).get();
   if (!row) throw new Error(`Post not found: ${slug}`);
-  const contentHtml = await renderMarkdown(row.content);
+  const contentHtml = renderContent(row.rawContent || "", row.content);
   return rowToPost(row, contentHtml);
 }
 
 export async function getAllPosts(): Promise<Post[]> {
   const rows = db.select().from(posts).all();
-  const rendered = await Promise.all(
-    rows.map(async (row) => {
-      const contentHtml = await renderMarkdown(row.content);
-      return rowToPost(row, contentHtml);
-    })
-  );
+  const rendered = rows.map((row) => {
+    const contentHtml = renderContent(row.rawContent || "", row.content);
+    return rowToPost(row, contentHtml);
+  });
   return rendered.sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );

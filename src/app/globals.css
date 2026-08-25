@@ -144,12 +144,6 @@ body {
   letter-spacing: -0.02em;
   margin-top: 1.8em;
   margin-bottom: 0.6em;
-  padding-bottom: 0.4em;
-  border-bottom: 1px solid rgb(229 231 235);
-}
-
-.dark .prose h2 {
-  border-bottom-color: rgb(31 41 55);
 }
 
 .prose h3 {
@@ -158,6 +152,47 @@ body {
   letter-spacing: -0.015em;
   margin-top: 1.6em;
   margin-bottom: 0.5em;
+}
+
+.prose h4 {
+  font-size: 1.1em;
+  font-weight: 600;
+  margin-top: 1.4em;
+  margin-bottom: 0.4em;
+}
+
+.prose h5 {
+  font-size: 1em;
+  font-weight: 600;
+  margin-top: 1.2em;
+  margin-bottom: 0.4em;
+}
+
+.prose h6 {
+  font-size: 0.9em;
+  font-weight: 600;
+  margin-top: 1.2em;
+  margin-bottom: 0.4em;
+  color: rgb(107 114 128);
+}
+
+.dark .prose h6 {
+  color: rgb(156 163 175);
+}
+
+.prose sub {
+  font-size: 0.75em;
+  vertical-align: sub;
+}
+
+.prose sup {
+  font-size: 0.75em;
+  vertical-align: super;
+}
+
+.prose del {
+  text-decoration-color: rgb(239 68 68);
+  text-decoration-thickness: 2px;
 }
 
 .prose p {

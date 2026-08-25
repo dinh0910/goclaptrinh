@@ -2,6 +2,8 @@ import fs from "fs";
 import path from "path";
 import readingTime from "reading-time";
 import bcrypt from "bcrypt";
+import { remark } from "remark";
+import remarkHtml from "remark-html";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import Database from "better-sqlite3";
 import { posts, users } from "../src/lib/db/schema";
@@ -58,6 +60,7 @@ sqlite.exec(`
     image TEXT DEFAULT '',
     featured INTEGER NOT NULL DEFAULT 0,
     content TEXT NOT NULL,
+    raw_content TEXT NOT NULL DEFAULT '',
     reading_time TEXT NOT NULL DEFAULT '5 phút đọc',
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
@@ -123,7 +126,8 @@ function seedPosts() {
       author: (data.author as string) || "Góc Lập Trình",
       image: (data.image as string) || "",
       featured: (data.featured as boolean) || false,
-      content,
+      content: remark().use(remarkHtml).processSync(content).toString(),
+      rawContent: content,
       readingTime: stats.text.replace("min read", "phút đọc"),
       createdAt: now,
       updatedAt: now,

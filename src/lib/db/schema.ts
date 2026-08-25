@@ -21,6 +21,7 @@ export const posts = sqliteTable("posts", {
   image: text("image").default(""),
   featured: integer("featured", { mode: "boolean" }).notNull().default(false),
   content: text("content").notNull(),
+  rawContent: text("raw_content").notNull().default(""),
   readingTime: text("reading_time").notNull().default("5 phút đọc"),
   createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
   updatedAt: text("updated_at").notNull().$defaultFn(() => new Date().toISOString()),
