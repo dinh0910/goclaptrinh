@@ -147,6 +147,13 @@ const Icon = {
   ),
   indent: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="11 8 15 12 11 16"/><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="16" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>,
   outdent: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="13 8 9 12 13 16"/><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>,
+  addRowAbove: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="6" width="18" height="12" rx="2"/><line x1="12" y1="3" x2="12" y2="6"/><polyline points="10 4.5 12 2 14 4.5"/></svg>,
+  addRowBelow: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="6" width="18" height="12" rx="2"/><line x1="12" y1="18" x2="12" y2="21"/><polyline points="10 19.5 12 22 14 19.5"/></svg>,
+  addColLeft: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="6" y="3" width="12" height="18" rx="2"/><line x1="3" y1="12" x2="6" y2="12"/><polyline points="4.5 10 2 12 4.5 14"/></svg>,
+  addColRight: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="6" y="3" width="12" height="18" rx="2"/><line x1="18" y1="12" x2="21" y2="12"/><polyline points="19.5 10 22 12 19.5 14"/></svg>,
+  deleteRow: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="9" y1="8" x2="15" y2="16" strokeWidth="2.5"/><line x1="15" y1="8" x2="9" y2="16" strokeWidth="2.5"/></svg>,
+  deleteCol: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="3" x2="12" y2="21"/><line x1="8" y1="8" x2="16" y2="16" strokeWidth="2.5"/><line x1="16" y1="8" x2="8" y2="16" strokeWidth="2.5"/></svg>,
+  deleteTable: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="15" strokeWidth="2.5"/><line x1="15" y1="9" x2="9" y2="15" strokeWidth="2.5"/></svg>,
 };
 
 // --- Config data ---
@@ -225,18 +232,24 @@ export default function RichEditor({ content, onChange }: RichEditorProps) {
   const [showVideoInput, setShowVideoInput] = useState(false);
   const [videoUrl, setVideoUrl] = useState("");
   const [openDrop, setOpenDrop] = useState<string | null>(null);
+  const [showTableGrid, setShowTableGrid] = useState(false);
+  const [tableGridHover, setTableGridHover] = useState({ rows: 0, cols: 0 });
+  const [isInTable, setIsInTable] = useState(false);
+  const [, setForceRender] = useState(0);
   const toolbarRef = useRef<HTMLDivElement>(null);
+  const tableGridRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!openDrop) return;
+    if (!openDrop && !showTableGrid) return;
     const handleClick = (e: MouseEvent) => {
       if (toolbarRef.current && !toolbarRef.current.contains(e.target as Node)) {
         setOpenDrop(null);
+        setShowTableGrid(false);
       }
     };
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
-  }, [openDrop]);
+  }, [openDrop, showTableGrid]);
 
   const editor = useEditor({
     extensions: [
@@ -256,7 +269,13 @@ export default function RichEditor({ content, onChange }: RichEditorProps) {
       Indent,
     ],
     content,
-    onUpdate: ({ editor: e }) => onChange(e.getHTML()),
+    onSelectionUpdate: ({ editor: e }) => {
+      setForceRender((n) => n + 1);
+      setIsInTable(e.isActive("table"));
+    },
+    onUpdate: ({ editor: e }) => {
+      onChange(e.getHTML());
+    },
     editorProps: {
       attributes: {
         class: "prose prose-lg max-w-none focus:outline-none min-h-[400px] px-4 py-3 dark:prose-invert prose-headings:text-gray-900 prose-p:text-gray-700 prose-a:text-blue-600 dark:prose-headings:text-white dark:prose-p:text-gray-300 dark:prose-a:text-blue-400",
@@ -271,16 +290,16 @@ export default function RichEditor({ content, onChange }: RichEditorProps) {
     try {
       const res = await fetch("/api/upload", { method: "POST", body: fd });
       const data = await res.json();
-      if (res.ok && data.url) editor.chain().focus().setImage({ src: data.url }).run();
+      if (res.ok && data.url) editor.chain().focus().setImage({ src: data.url }).blur().run();
     } catch { /* silent */ }
   }, [editor]);
 
   const addLink = () => {
     if (!editor || !linkUrl.trim()) return;
     if (linkText.trim()) {
-      editor.chain().focus().insertContent(`<a href="${linkUrl}">${linkText}</a>`).run();
+      editor.chain().focus().insertContent(`<a href="${linkUrl}">${linkText}</a>`).blur().run();
     } else {
-      editor.chain().focus().setLink({ href: linkUrl }).run();
+      editor.chain().focus().setLink({ href: linkUrl }).blur().run();
     }
     setLinkUrl(""); setLinkText(""); setShowLinkInput(false);
   };
@@ -288,8 +307,11 @@ export default function RichEditor({ content, onChange }: RichEditorProps) {
   const addVideo = () => {
     if (!editor || !videoUrl.trim()) return;
     const url = videoUrl.trim();
-    if (url.includes("tiktok.com")) editor.chain().focus().setTiktok({ src: url }).run();
-    else if (url.includes("youtube.com") || url.includes("youtu.be")) editor.commands.setYoutubeVideo({ src: url });
+    if (url.includes("tiktok.com")) {
+      editor.chain().focus().setTiktok({ src: url }).blur().run();
+    } else if (url.includes("youtube.com") || url.includes("youtu.be")) {
+      editor.chain().focus().setYoutubeVideo({ src: url }).blur().run();
+    }
     setVideoUrl(""); setShowVideoInput(false);
   };
 
@@ -412,7 +434,54 @@ export default function RichEditor({ content, onChange }: RichEditorProps) {
         <Divider />
 
         {/* --- Table --- */}
-        <Btn onClick={() => c.insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()} title="Chèn bảng">{Icon.table}</Btn>
+        <div className="relative">
+          <Btn onClick={() => { setShowTableGrid(!showTableGrid); setOpenDrop(null); }} active={showTableGrid} title="Chèn bảng">{Icon.table}</Btn>
+          {showTableGrid && (
+            <div ref={tableGridRef} className="absolute top-full left-0 mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50 p-3">
+              <div className="text-xs text-gray-500 dark:text-gray-400 mb-2 text-center">
+                {tableGridHover.rows > 0 && tableGridHover.cols > 0
+                  ? `${tableGridHover.rows} × ${tableGridHover.cols}`
+                  : "Chọn kích thước bảng"}
+              </div>
+              <div className="grid gap-0.5" style={{ gridTemplateColumns: `repeat(8, 1fr)` }}>
+                {Array.from({ length: 8 }, (_, row) =>
+                  Array.from({ length: 8 }, (_, col) => {
+                    const isActive = row < tableGridHover.rows && col < tableGridHover.cols;
+                    return (
+                      <div
+                        key={`${row}-${col}`}
+                        className={`w-5 h-5 rounded-sm border transition-colors cursor-pointer ${
+                          isActive
+                            ? "bg-blue-500 border-blue-600"
+                            : "bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 hover:border-blue-400"
+                        }`}
+                        onMouseEnter={() => setTableGridHover({ rows: row + 1, cols: col + 1 })}
+                        onClick={() => {
+                          c.insertTable({ rows: row + 1, cols: col + 1, withHeaderRow: true }).run();
+                          setShowTableGrid(false);
+                          setTableGridHover({ rows: 0, cols: 0 });
+                        }}
+                      />
+                    );
+                  })
+                )}
+              </div>
+              <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+                <button
+                  type="button"
+                  onClick={() => {
+                    c.insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
+                    setShowTableGrid(false);
+                    setTableGridHover({ rows: 0, cols: 0 });
+                  }}
+                  className="w-full text-xs text-center py-1.5 text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-500/10 rounded-md transition-colors"
+                >
+                  Bảng mặc định (3×3)
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
 
         <Divider />
 
@@ -443,6 +512,28 @@ export default function RichEditor({ content, onChange }: RichEditorProps) {
         </div>
       </div>
 
+      {/* --- Table Context Toolbar --- */}
+      {isInTable && (
+        <div className="flex items-center gap-0.5 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-500/10 border-b border-emerald-200 dark:border-emerald-500/20">
+          <span className="text-xs font-medium text-emerald-700 dark:text-emerald-400 mr-2">Bảng</span>
+          <Divider />
+          <Btn onClick={() => c.addColumnAfter().run()} title="Thêm cột phải">{Icon.addColRight}</Btn>
+          <Btn onClick={() => c.addColumnBefore().run()} title="Thêm cột trái">{Icon.addColLeft}</Btn>
+          <Btn onClick={() => c.addRowAfter().run()} title="Thêm hàng dưới">{Icon.addRowBelow}</Btn>
+          <Btn onClick={() => c.addRowBefore().run()} title="Thêm hàng trên">{Icon.addRowAbove}</Btn>
+          <Divider />
+          <Btn onClick={() => c.deleteColumn().run()} title="Xóa cột">{Icon.deleteCol}</Btn>
+          <Btn onClick={() => c.deleteRow().run()} title="Xóa hàng">{Icon.deleteRow}</Btn>
+          <Divider />
+          <Btn onClick={() => c.deleteTable().run()} title="Xóa bảng">
+            <span className="flex items-center gap-1 text-red-500 dark:text-red-400">
+              {Icon.deleteTable}
+              <span className="text-xs">Xóa bảng</span>
+            </span>
+          </Btn>
+        </div>
+      )}
+
       {/* --- Link input --- */}
       {showLinkInput && (
         <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-500/10 border-b border-blue-200 dark:border-blue-500/20">
@@ -472,7 +563,9 @@ export default function RichEditor({ content, onChange }: RichEditorProps) {
         </div>
       )}
 
-      <EditorContent editor={editor} />
+      <div className="max-h-[70vh] overflow-y-auto">
+        <EditorContent editor={editor} />
+      </div>
     </div>
   );
 }

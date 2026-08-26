@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { CATEGORIES } from "@/lib/constants";
 import RichEditor from "./RichEditor";
 
@@ -63,7 +64,6 @@ export default function PostEditor({ mode, initialData, slug }: PostEditorProps)
   const [tagInput, setTagInput] = useState("");
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState("");
   const [uploadDragOver, setUploadDragOver] = useState(false);
 
   const updateField = <K extends keyof PostFormData>(key: K, value: PostFormData[K]) => {
@@ -94,7 +94,6 @@ export default function PostEditor({ mode, initialData, slug }: PostEditorProps)
   const handleImageUpload = useCallback(
     async (file: File) => {
       setUploading(true);
-      setError("");
       try {
         const formData = new FormData();
         formData.append("file", file);
@@ -103,7 +102,7 @@ export default function PostEditor({ mode, initialData, slug }: PostEditorProps)
         if (!res.ok) throw new Error(data.error);
         updateField("image", data.url);
       } catch (e) {
-        setError(e instanceof Error ? e.message : "Upload failed");
+        toast.error(e instanceof Error ? e.message : "Upload failed");
       } finally {
         setUploading(false);
       }
@@ -125,9 +124,8 @@ export default function PostEditor({ mode, initialData, slug }: PostEditorProps)
   );
 
   const handleSave = async () => {
-    setError("");
     if (!form.slug || !form.title || !form.description || !form.category || !form.content) {
-      setError("Vui lòng điền đầy đủ các trường bắt buộc");
+      toast.error("Vui lòng điền đầy đủ các trường bắt buộc");
       return;
     }
 
@@ -147,23 +145,21 @@ export default function PostEditor({ mode, initialData, slug }: PostEditorProps)
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
 
-      router.push("/admin/posts");
-      router.refresh();
+      if (mode === "edit") {
+        toast.success("Cập nhật bài viết thành công!");
+      } else {
+        router.push("/admin/posts");
+        router.refresh();
+      }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Save failed");
+      toast.error(e instanceof Error ? e.message : "Save failed");
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <div className="max-w-5xl">
-      {error && (
-        <div className="mb-6 p-4 text-sm text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-500/10 rounded-xl border border-red-200 dark:border-red-500/20">
-          {error}
-        </div>
-      )}
-
+    <div>
       {/* Top bar */}
       <div className="flex items-center gap-3 mb-6">
         <div className="flex-1" />
@@ -176,9 +172,9 @@ export default function PostEditor({ mode, initialData, slug }: PostEditorProps)
         </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6">
         {/* Main content */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="space-y-6">
           {/* Title */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">

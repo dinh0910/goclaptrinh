@@ -19,7 +19,7 @@ export default function AdminSidebar({ user }: AdminSidebarProps) {
   const pathname = usePathname();
 
   return (
-    <aside className="w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex flex-col shrink-0">
+    <aside className="w-64 h-full bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex flex-col shrink-0 overflow-y-auto">
       <div className="p-6 border-b border-gray-200 dark:border-gray-800">
         <Link href="/admin" className="flex items-center gap-2">
           <span className="text-lg font-bold text-blue-600 dark:text-blue-400">{"</>"}</span>
@@ -29,7 +29,14 @@ export default function AdminSidebar({ user }: AdminSidebarProps) {
 
       <nav className="flex-1 p-4 space-y-1">
         {adminLinks.map((link) => {
-          const isActive = pathname === link.href || (link.href !== "/admin" && pathname.startsWith(link.href));
+          const isActive =
+            link.href === "/"
+              ? false
+              : link.href === "/admin/posts/new"
+                ? pathname === "/admin/posts/new"
+                : link.href === "/admin/posts"
+                  ? pathname === "/admin/posts" || (pathname.startsWith("/admin/posts/") && !pathname.startsWith("/admin/posts/new"))
+                  : pathname === link.href;
           return (
             <Link
               key={link.href}

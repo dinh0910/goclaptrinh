@@ -9,10 +9,10 @@ export default async function AdminLayout({
   const session = await auth();
 
   return (
-    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-950">
+    <div className="fixed inset-0 z-50 flex bg-gray-50 dark:bg-gray-950">
       <AdminSidebar user={session?.user} />
-      <main className="flex-1 overflow-auto">
-        <div className="p-8">{children}</div>
+      <main className="flex-1 overflow-y-auto">
+        <div className="p-6 lg:p-8">{children}</div>
       </main>
     </div>
   );

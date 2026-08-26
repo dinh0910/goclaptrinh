@@ -46,7 +46,7 @@ export default function CategoriesPage() {
           <div className="absolute top-[-10%] left-[-5%] w-[400px] h-[400px] rounded-full bg-violet-400/10 dark:bg-violet-600/10 blur-[100px]" />
           <div className="absolute bottom-[-10%] right-[-5%] w-[300px] h-[300px] rounded-full bg-blue-400/10 dark:bg-blue-600/10 blur-[80px]" />
         </div>
-        <div className="relative max-w-6xl mx-auto px-4 sm:px-6 py-16 sm:py-20">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-20">
           <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 dark:text-white leading-tight">
             Danh mục
           </h1>
@@ -57,7 +57,7 @@ export default function CategoriesPage() {
       </section>
 
       {/* Categories Grid */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {categories.map((cat) => (
             <Link

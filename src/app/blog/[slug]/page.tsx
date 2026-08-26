@@ -94,7 +94,7 @@ export default async function BlogPostPage({ params }: PageProps) {
         <div className="absolute inset-0">
           <div className={`absolute top-[-20%] left-[10%] w-[500px] h-[500px] rounded-full bg-gradient-to-br ${catMeta.gradient} opacity-10 blur-[120px]`} />
         </div>
-        <div className="relative max-w-4xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
+        <div className="relative max-w-5xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
           {/* Breadcrumb */}
           <nav className="mb-6">
             <ol className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 flex-wrap">
@@ -131,12 +131,12 @@ export default async function BlogPostPage({ params }: PageProps) {
       </section>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
         <PostContent post={post} />
       </div>
 
       {/* Prev/Next + Related */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 pb-16">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 pb-16">
         {/* Prev / Next */}
         {(prevPost || nextPost) && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-12">

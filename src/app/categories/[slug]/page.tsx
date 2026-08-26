@@ -58,7 +58,7 @@ export default async function CategoryPage({ params }: PageProps) {
         <div className="absolute inset-0">
           <div className={`absolute top-[-10%] left-[-5%] w-[400px] h-[400px] rounded-full bg-gradient-to-br ${meta.gradient} opacity-10 blur-[100px]`} />
         </div>
-        <div className="relative max-w-6xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
           <nav className="mb-6">
             <ol className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400">
               <li>
@@ -94,7 +94,7 @@ export default async function CategoryPage({ params }: PageProps) {
       </section>
 
       {/* Posts */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
         {posts.length === 0 ? (
           <div className="text-center py-20">
             <div className="w-20 h-20 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mx-auto mb-6">

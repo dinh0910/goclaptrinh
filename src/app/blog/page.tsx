@@ -41,7 +41,7 @@ export default async function BlogPage() {
           <div className="absolute top-[-10%] right-[-5%] w-[400px] h-[400px] rounded-full bg-blue-400/10 dark:bg-blue-600/10 blur-[100px]" />
           <div className="absolute bottom-[-10%] left-[-5%] w-[300px] h-[300px] rounded-full bg-violet-400/10 dark:bg-violet-600/10 blur-[80px]" />
         </div>
-        <div className="relative max-w-6xl mx-auto px-4 sm:px-6 py-16 sm:py-20">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-20">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
             <div>
               <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 dark:text-white leading-tight">
@@ -66,7 +66,7 @@ export default async function BlogPage() {
         </div>
       </section>
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
         {/* Category Filter Bar */}
         <div className="py-6 -mt-1">
           <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">

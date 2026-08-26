@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { siteConfig } from "@/lib/constants";
 import { ThemeProvider } from "@/components/shared/ThemeProvider";
+import ToasterProvider from "@/components/shared/ToasterProvider";
 import Header from "@/components/shared/Header";
 import Footer from "@/components/shared/Footer";
 import "./globals.css";
@@ -88,6 +89,7 @@ export default function RootLayout({
     <html lang="vi" className={`${geistSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
       <body className="min-h-screen flex flex-col bg-gray-50 text-gray-900 antialiased dark:bg-gray-950 dark:text-gray-100">
         <ThemeProvider>
+          <ToasterProvider />
           <Header />
           <main className="flex-1">{children}</main>
           <Footer />

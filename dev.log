@@ -1,0 +1,291 @@
+
+> goclaptrinh.io.vn@0.1.0 dev
+> next dev
+
+▲ Next.js 16.3.1 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.1.3:3000
+- Environments: .env
+✓ Ready in 721ms
+✓ Running next.config.ts took 49ms
+- Experiments (use with caution):
+  · optimizePackageImports
+
+ GET /categories 200 in 645ms (next.js: 288ms, application-code: 357ms)
+ GET /icon?7dd47167419105be 200 in 398ms (next.js: 83ms, application-code: 315ms)
+ GET /api/auth/providers 200 in 1111ms (next.js: 1032ms, application-code: 79ms)
+ GET /login?callbackUrl=%2Fadmin 200 in 131ms (next.js: 36ms, application-code: 94ms)
+ GET /api/auth/providers 200 in 25ms (next.js: 10ms, application-code: 14ms)
+ GET /api/auth/csrf 200 in 13ms (next.js: 4ms, application-code: 10ms)
+ POST /api/auth/callback/credentials? 200 in 324ms (next.js: 5ms, application-code: 320ms)
+ GET /admin 200 in 1473ms (next.js: 1207ms, proxy.ts: 28ms, application-code: 238ms)
+ GET /admin 200 in 134ms (next.js: 9ms, proxy.ts: 33ms, application-code: 92ms)
+ GET /admin/posts 200 in 740ms (next.js: 600ms, proxy.ts: 25ms, application-code: 115ms)
+ GET /admin/posts/git-workflow/edit 200 in 1983ms (next.js: 1919ms, proxy.ts: 17ms, application-code: 46ms)
+[browser] Next.js detected. `immediatelyRender` defaults to false to avoid hydration mismatches. Pass `immediatelyRender: true` explicitly if you are rendering the editor only on the client. (src/components/admin/RichEditor.tsx:241:27)
+[browser] Next.js detected. `immediatelyRender` defaults to false to avoid hydration mismatches. Pass `immediatelyRender: true` explicitly if you are rendering the editor only on the client. (src/components/admin/RichEditor.tsx:241:27)
+[browser] [tiptap warn]: Duplicate extension names found: ['link', 'underline']. This can lead to issues.
+ PUT /api/posts/git-workflow 200 in 1359ms (next.js: 1327ms, proxy.ts: 15ms, application-code: 17ms)
+ GET /admin/posts 200 in 172ms (next.js: 14ms, proxy.ts: 17ms, application-code: 141ms)
+ GET /admin/posts 200 in 171ms (next.js: 65ms, proxy.ts: 15ms, application-code: 91ms)
+ GET / 200 in 131ms (next.js: 32ms, application-code: 99ms)
+ GET /blog/git-workflow 200 in 1806ms (next.js: 683ms, generate-params: 1029ms, application-code: 94ms)
+ GET /admin 200 in 164ms (next.js: 20ms, proxy.ts: 26ms, application-code: 118ms)
+SSR detected. `immediatelyRender` has been set to false to avoid hydration mismatches
+ GET /admin/posts/git-workflow/edit 200 in 333ms (next.js: 27ms, proxy.ts: 23ms, application-code: 283ms)
+[browser] Next.js detected. `immediatelyRender` defaults to false to avoid hydration mismatches. Pass `immediatelyRender: true` explicitly if you are rendering the editor only on the client. (src/components/admin/RichEditor.tsx:241:27)
+[browser] Next.js detected. `immediatelyRender` defaults to false to avoid hydration mismatches. Pass `immediatelyRender: true` explicitly if you are rendering the editor only on the client. (src/components/admin/RichEditor.tsx:241:27)
+[browser] [tiptap warn]: Duplicate extension names found: ['link', 'underline']. This can lead to issues.
+ PUT /api/posts/git-workflow 200 in 51ms (next.js: 15ms, proxy.ts: 20ms, application-code: 15ms)
+ GET /admin/posts 200 in 147ms (next.js: 10ms, proxy.ts: 20ms, application-code: 117ms)
+ GET /admin/posts 200 in 196ms (next.js: 15ms, proxy.ts: 26ms, application-code: 156ms)
+ GET / 200 in 226ms (next.js: 9ms, application-code: 217ms)
+ GET /blog/git-workflow 200 in 93ms (next.js: 8ms, generate-params: 6ms, application-code: 80ms)
+ GET /admin/posts/git-workflow/edit 200 in 61ms (next.js: 12ms, proxy.ts: 8ms, application-code: 41ms)
+[browser] Next.js detected. `immediatelyRender` defaults to false to avoid hydration mismatches. Pass `immediatelyRender: true` explicitly if you are rendering the editor only on the client. (src/components/admin/RichEditor.tsx:241:27)
+[browser] Next.js detected. `immediatelyRender` defaults to false to avoid hydration mismatches. Pass `immediatelyRender: true` explicitly if you are rendering the editor only on the client. (src/components/admin/RichEditor.tsx:241:27)
+[browser] [tiptap warn]: Duplicate extension names found: ['link', 'underline']. This can lead to issues.
+ GET /blog/docker-co-ban 200 in 122ms (next.js: 7ms, generate-params: 9ms, application-code: 107ms)
+ GET /categories/devops 200 in 1600ms (next.js: 616ms, generate-params: 838ms, application-code: 145ms)
+ GET /categories/devops 200 in 82ms (next.js: 7ms, generate-params: 8ms, application-code: 67ms)
+✓ Compiled in 617ms
+ GET /blog/docker-co-ban 200 in 296ms (next.js: 9ms, generate-params: 10ms, application-code: 277ms)
+ GET /admin/posts/git-workflow/edit 200 in 317ms (next.js: 29ms, proxy.ts: 181ms, application-code: 107ms)
+✓ Compiled in 303ms
+ GET /blog/docker-co-ban 200 in 214ms (next.js: 11ms, generate-params: 10ms, application-code: 194ms)
+[browser] Next.js detected. `immediatelyRender` defaults to false to avoid hydration mismatches. Pass `immediatelyRender: true` explicitly if you are rendering the editor only on the client. (src/components/admin/RichEditor.tsx:251:27)
+[browser] Next.js detected. `immediatelyRender` defaults to false to avoid hydration mismatches. Pass `immediatelyRender: true` explicitly if you are rendering the editor only on the client. (src/components/admin/RichEditor.tsx:251:27)
+[browser] [tiptap warn]: Duplicate extension names found: ['link', 'underline']. This can lead to issues.
+ GET /admin/posts/git-workflow/edit 200 in 217ms (next.js: 53ms, proxy.ts: 33ms, application-code: 130ms)
+✓ Compiled in 110ms
+[browser] The final argument passed to useEffect changed size between renders. The order and size of this array must remain constant.
+
+Previous: []
+Incoming: [, false] 
+    at RichEditor (src/components/admin/RichEditor.tsx:240:12)
+    at Set.forEach (<anonymous>)
+  238 |   const tableGridRef = useRef<HTMLDivElement>(null);
+  239 |
+> 240 |   useEffect(() => {
+      |            ^
+  241 |     if (!openDrop && !showTableGrid) return;
+  242 |     const handleClick = (e: MouseEvent) => {
+  243 |       if (toolbarRef.current && !toolbarRef.current.contains(e.target as Node)) { (src/components/admin/RichEditor.tsx:240:12)
+ GET /blog/docker-co-ban 200 in 512ms (next.js: 14ms, generate-params: 14ms, application-code: 484ms)
+ GET /admin/posts/git-workflow/edit 200 in 556ms (next.js: 51ms, proxy.ts: 294ms, application-code: 212ms)
+✓ Compiled in 188ms
+ GET /blog/docker-co-ban 200 in 334ms (next.js: 18ms, generate-params: 13ms, application-code: 302ms)
+ GET /admin/posts/git-workflow/edit 200 in 375ms (next.js: 36ms, proxy.ts: 197ms, application-code: 142ms)
+✓ Compiled in 146ms
+[browser] Next.js detected. `immediatelyRender` defaults to false to avoid hydration mismatches. Pass `immediatelyRender: true` explicitly if you are rendering the editor only on the client. (src/components/admin/RichEditor.tsx:253:27)
+[browser] Next.js detected. `immediatelyRender` defaults to false to avoid hydration mismatches. Pass `immediatelyRender: true` explicitly if you are rendering the editor only on the client. (src/components/admin/RichEditor.tsx:253:27)
+[browser] [tiptap warn]: Duplicate extension names found: ['link', 'underline']. This can lead to issues.
+ GET /blog/docker-co-ban 200 in 372ms (next.js: 12ms, generate-params: 11ms, application-code: 349ms)
+ GET /admin/posts/git-workflow/edit 200 in 402ms (next.js: 29ms, proxy.ts: 243ms, application-code: 130ms)
+✓ Compiled in 199ms
+ GET /blog/docker-co-ban 200 in 393ms (next.js: 14ms, generate-params: 11ms, application-code: 368ms)
+ GET /admin/posts/git-workflow/edit 200 in 411ms (next.js: 73ms, proxy.ts: 176ms, application-code: 162ms)
+✓ Compiled in 251ms
+ GET /blog/docker-co-ban 200 in 396ms (next.js: 12ms, generate-params: 12ms, application-code: 371ms)
+ GET /admin/posts/git-workflow/edit 200 in 415ms (next.js: 38ms, proxy.ts: 237ms, application-code: 140ms)
+✓ Compiled in 254ms
+ PUT /api/posts/git-workflow 200 in 132ms (next.js: 30ms, proxy.ts: 37ms, application-code: 65ms)
+ GET /admin/posts 200 in 192ms (next.js: 21ms, proxy.ts: 51ms, application-code: 119ms)
+ GET /admin/posts 200 in 245ms (next.js: 11ms, proxy.ts: 32ms, application-code: 202ms)
+ GET /categories/devops 200 in 82ms (next.js: 6ms, generate-params: 5ms, application-code: 72ms)
+ GET /blog/git-workflow 200 in 75ms (next.js: 5ms, generate-params: 5ms, application-code: 65ms)
+ GET /blog/git-workflow 200 in 180ms (next.js: 7ms, generate-params: 7ms, application-code: 166ms)
+ GET /icon?7dd47167419105be 200 in 58ms (next.js: 9ms, application-code: 48ms)
+ GET /admin/posts/git-workflow/edit 200 in 77ms (next.js: 17ms, proxy.ts: 15ms, application-code: 45ms)
+[browser] Next.js detected. `immediatelyRender` defaults to false to avoid hydration mismatches. Pass `immediatelyRender: true` explicitly if you are rendering the editor only on the client. (src/components/admin/RichEditor.tsx:253:27)
+[browser] Next.js detected. `immediatelyRender` defaults to false to avoid hydration mismatches. Pass `immediatelyRender: true` explicitly if you are rendering the editor only on the client. (src/components/admin/RichEditor.tsx:253:27)
+[browser] [tiptap warn]: Duplicate extension names found: ['link', 'underline']. This can lead to issues.
+ PUT /api/posts/git-workflow 200 in 42ms (next.js: 14ms, proxy.ts: 15ms, application-code: 14ms)
+ GET /admin/posts 200 in 223ms (next.js: 12ms, proxy.ts: 19ms, application-code: 193ms)
+ GET /admin/posts 200 in 225ms (next.js: 94ms, proxy.ts: 18ms, application-code: 113ms)
+ GET /blog/git-workflow 200 in 138ms (next.js: 6ms, generate-params: 4ms, application-code: 127ms)
+ GET /icon?7dd47167419105be 200 in 23ms (next.js: 4ms, application-code: 18ms)
+ GET /blog/git-workflow 200 in 144ms (next.js: 5ms, generate-params: 6ms, application-code: 133ms)
+ GET /blog/git-workflow 200 in 203ms (next.js: 40ms, generate-params: 0.1ms, application-code: 162ms)
+ GET /icon?7dd47167419105be 200 in 27ms (next.js: 6ms, application-code: 22ms)
+ GET /admin/posts/git-workflow/edit 200 in 76ms (next.js: 12ms, proxy.ts: 13ms, application-code: 50ms)
+[browser] Next.js detected. `immediatelyRender` defaults to false to avoid hydration mismatches. Pass `immediatelyRender: true` explicitly if you are rendering the editor only on the client. (src/components/admin/RichEditor.tsx:253:27)
+[browser] Next.js detected. `immediatelyRender` defaults to false to avoid hydration mismatches. Pass `immediatelyRender: true` explicitly if you are rendering the editor only on the client. (src/components/admin/RichEditor.tsx:253:27)
+[browser] [tiptap warn]: Duplicate extension names found: ['link', 'underline']. This can lead to issues.
+ PUT /api/posts/git-workflow 200 in 47ms (next.js: 14ms, proxy.ts: 14ms, application-code: 19ms)
+ GET /admin/posts 200 in 217ms (next.js: 15ms, proxy.ts: 18ms, application-code: 183ms)
+ GET /admin/posts 200 in 219ms (next.js: 95ms, proxy.ts: 18ms, application-code: 106ms)
+ GET /admin/posts/git-workflow/edit 200 in 74ms (next.js: 11ms, proxy.ts: 23ms, application-code: 40ms)
+[browser] Next.js detected. `immediatelyRender` defaults to false to avoid hydration mismatches. Pass `immediatelyRender: true` explicitly if you are rendering the editor only on the client. (src/components/admin/RichEditor.tsx:253:27)
+[browser] Next.js detected. `immediatelyRender` defaults to false to avoid hydration mismatches. Pass `immediatelyRender: true` explicitly if you are rendering the editor only on the client. (src/components/admin/RichEditor.tsx:253:27)
+[browser] [tiptap warn]: Duplicate extension names found: ['link', 'underline']. This can lead to issues.
+ GET /blog/git-workflow 200 in 154ms (next.js: 5ms, generate-params: 6ms, application-code: 143ms)
+ GET /icon?7dd47167419105be 200 in 23ms (next.js: 5ms, application-code: 18ms)
+ GET /blog/git-workflow 200 in 138ms (next.js: 7ms, generate-params: 6ms, application-code: 125ms)
+ GET /icon?7dd47167419105be 200 in 18ms (next.js: 5ms, application-code: 14ms)
+ PUT /api/posts/git-workflow 200 in 42ms (next.js: 12ms, proxy.ts: 16ms, application-code: 15ms)
+ GET /admin/posts 200 in 173ms (next.js: 10ms, proxy.ts: 16ms, application-code: 148ms)
+ GET /admin/posts 200 in 204ms (next.js: 74ms, proxy.ts: 15ms, application-code: 115ms)
+ GET /blog/git-workflow 200 in 126ms (next.js: 6ms, generate-params: 4ms, application-code: 116ms)
+ GET /icon?7dd47167419105be 200 in 23ms (next.js: 5ms, application-code: 17ms)
+ GET /blog/git-workflow 200 in 130ms (next.js: 6ms, generate-params: 6ms, application-code: 119ms)
+ GET /icon?7dd47167419105be 200 in 27ms (next.js: 5ms, application-code: 22ms)
+ GET /admin/posts/git-workflow/edit 200 in 61ms (next.js: 12ms, proxy.ts: 6ms, application-code: 43ms)
+[browser] Next.js detected. `immediatelyRender` defaults to false to avoid hydration mismatches. Pass `immediatelyRender: true` explicitly if you are rendering the editor only on the client. (src/components/admin/RichEditor.tsx:253:27)
+[browser] Next.js detected. `immediatelyRender` defaults to false to avoid hydration mismatches. Pass `immediatelyRender: true` explicitly if you are rendering the editor only on the client. (src/components/admin/RichEditor.tsx:253:27)
+[browser] [tiptap warn]: Duplicate extension names found: ['link', 'underline']. This can lead to issues.
+ GET /blog/git-workflow 200 in 123ms (next.js: 7ms, generate-params: 6ms, application-code: 111ms)
+ GET /blog/git-workflow 200 in 223ms (next.js: 15ms, generate-params: 7ms, application-code: 201ms)
+ GET /admin/posts/git-workflow/edit 200 in 241ms (next.js: 25ms, proxy.ts: 110ms, application-code: 107ms)
+ GET /icon?7dd47167419105be 200 in 28ms (next.js: 8ms, application-code: 20ms)
+✓ Compiled in 303ms
+ GET /blog/git-workflow 200 in 230ms (next.js: 15ms, generate-params: 8ms, application-code: 207ms)
+ GET /admin/posts/git-workflow/edit 200 in 244ms (next.js: 25ms, proxy.ts: 119ms, application-code: 100ms)
+ GET /icon?7dd47167419105be 200 in 32ms (next.js: 6ms, application-code: 26ms)
+✓ Compiled in 151ms
+ GET /blog/git-workflow 200 in 343ms (next.js: 25ms, generate-params: 15ms, application-code: 304ms)
+ GET /admin/posts/git-workflow/edit 200 in 358ms (next.js: 33ms, proxy.ts: 204ms, application-code: 121ms)
+ GET /icon?7dd47167419105be 200 in 52ms (next.js: 11ms, application-code: 42ms)
+✓ Compiled in 138ms
+ GET /blog/git-workflow 200 in 256ms (next.js: 21ms, generate-params: 9ms, application-code: 226ms)
+ GET /admin/posts/git-workflow/edit 200 in 286ms (next.js: 22ms, proxy.ts: 155ms, application-code: 109ms)
+ GET /icon?7dd47167419105be 200 in 29ms (next.js: 7ms, application-code: 23ms)
+ GET /blog/git-workflow 200 in 160ms (next.js: 15ms, generate-params: 5ms, application-code: 140ms)
+ GET /icon?7dd47167419105be 200 in 59ms (next.js: 7ms, application-code: 52ms)
+[browser] A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <RedirectBoundary>
+      <RedirectErrorBoundary router={{...}}>
+        <Head>
+        <__next_root_layout_boundary__>
+          <SegmentViewNode type="layout" pagePath="layout.tsx">
+            <SegmentTrieNode>
+            <link>
+            <script>
+            <RootLayout>
+              <html lang="vi" className="geist_a715..." suppressHydrationWarning={true}>
+                <body className="min-h-scre...">
+                  <ThemeProvider>
+                    <Header>
+                      <header className="sticky top...">
+                        <div className="max-w-6xl ...">
+                          <div className="flex items...">
+                            <LinkComponent>
+                            <nav>
+                            <div className="flex items...">
+                              <ThemeToggle>
+                                <button
+                                  onClick={function ThemeProvider.useCallback[toggleTheme]}
+                                  className="relative p-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 ..."
++                                 aria-label="Chuyển sang chế độ sáng"
+-                                 aria-label="Chuyển sang chế độ tối"
+                                >
+                                  <svg
++                                   className="w-5 h-5 text-amber-500 transition-all duration-300 rotate-90 scale-0 op..."
+-                                   className="w-5 h-5 text-amber-500 transition-all duration-300 rotate-0 scale-100 o..."
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                    strokeWidth={2}
+                                  >
+                                  <svg
++                                   className="w-5 h-5 text-blue-400 absolute inset-0 m-auto transition-all duration-3..."
+-                                   className="w-5 h-5 text-blue-400 absolute inset-0 m-auto transition-all duration-3..."
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                    strokeWidth={2}
+                                  >
+                              ...
+                    ...
+        ...
+ 
+ GET /blog/git-workflow 200 in 132ms (next.js: 11ms, generate-params: 6ms, application-code: 115ms)
+ GET /icon?7dd47167419105be 200 in 29ms (next.js: 6ms, application-code: 22ms)
+✓ Compiled in 154ms
+ GET /blog/git-workflow 200 in 310ms (next.js: 22ms, generate-params: 11ms, application-code: 277ms)
+ GET /admin/posts/git-workflow/edit 200 in 345ms (next.js: 25ms, proxy.ts: 202ms, application-code: 119ms)
+ GET /icon?7dd47167419105be 200 in 34ms (next.js: 10ms, application-code: 24ms)
+✓ Compiled in 61ms
+ GET /blog/git-workflow 200 in 271ms (next.js: 11ms, generate-params: 6ms, application-code: 255ms)
+ GET /admin/posts/git-workflow/edit 200 in 286ms (next.js: 23ms, proxy.ts: 141ms, application-code: 122ms)
+ GET /icon?7dd47167419105be 200 in 32ms (next.js: 9ms, application-code: 23ms)
+ GET /blog/git-workflow 200 in 152ms (next.js: 6ms, generate-params: 6ms, application-code: 140ms)
+[browser] A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <RedirectBoundary>
+      <RedirectErrorBoundary router={{...}}>
+        <Head>
+        <__next_root_layout_boundary__>
+          <SegmentViewNode type="layout" pagePath="layout.tsx">
+            <SegmentTrieNode>
+            <link>
+            <script>
+            <RootLayout>
+              <html lang="vi" className="geist_a715..." suppressHydrationWarning={true}>
+                <body className="min-h-scre...">
+                  <ThemeProvider>
+                    <Header>
+                      <header className="sticky top...">
+                        <div className="max-w-6xl ...">
+                          <div className="flex items...">
+                            <LinkComponent>
+                            <nav>
+                            <div className="flex items...">
+                              <ThemeToggle>
+                                <button
+                                  onClick={function ThemeProvider.useCallback[toggleTheme]}
+                                  className="relative p-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 ..."
++                                 aria-label="Chuyển sang chế độ sáng"
+-                                 aria-label="Chuyển sang chế độ tối"
+                                >
+                                  <svg
++                                   className="w-5 h-5 text-amber-500 transition-all duration-300 rotate-90 scale-0 op..."
+-                                   className="w-5 h-5 text-amber-500 transition-all duration-300 rotate-0 scale-100 o..."
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                    strokeWidth={2}
+                                  >
+                                  <svg
++                                   className="w-5 h-5 text-blue-400 absolute inset-0 m-auto transition-all duration-3..."
+-                                   className="w-5 h-5 text-blue-400 absolute inset-0 m-auto transition-all duration-3..."
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                    strokeWidth={2}
+                                  >
+                              ...
+                    ...
+        ...
+ 
+ GET /icon?7dd47167419105be 200 in 32ms (next.js: 5ms, application-code: 27ms)
+SSR detected. `immediatelyRender` has been set to false to avoid hydration mismatches
+ GET /admin/posts/git-workflow/edit 200 in 163ms (next.js: 15ms, proxy.ts: 10ms, application-code: 138ms)
+ GET /icon?7dd47167419105be 200 in 24ms (next.js: 4ms, application-code: 20ms)
+[browser] Next.js detected. `immediatelyRender` defaults to false to avoid hydration mismatches. Pass `immediatelyRender: true` explicitly if you are rendering the editor only on the client. (src/components/admin/RichEditor.tsx:253:27)
+[browser] Next.js detected. `immediatelyRender` defaults to false to avoid hydration mismatches. Pass `immediatelyRender: true` explicitly if you are rendering the editor only on the client. (src/components/admin/RichEditor.tsx:253:27)
+[browser] [tiptap warn]: Duplicate extension names found: ['link', 'underline']. This can lead to issues.
+[?25h

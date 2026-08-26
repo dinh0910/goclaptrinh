@@ -34,7 +34,7 @@ export default async function TagPage({ params }: PageProps) {
   const posts = await getPostsByTag(slug);
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
       <nav className="mb-8">
         <ol className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400">
           <li>

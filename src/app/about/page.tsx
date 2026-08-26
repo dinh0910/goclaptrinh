@@ -88,7 +88,7 @@ export default function AboutPage() {
           />
         </div>
 
-        <div className="relative max-w-6xl mx-auto px-4 sm:px-6 py-20 sm:py-28">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-20 sm:py-28">
           <div className="text-center max-w-3xl mx-auto">
             {/* Badge */}
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 backdrop-blur-sm mb-8">
@@ -130,7 +130,7 @@ export default function AboutPage() {
       </section>
 
       {/* Values Section */}
-      <section className="max-w-6xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
         <div className="text-center mb-16">
           <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">
             Tại sao chọn {siteConfig.name}?
@@ -165,7 +165,7 @@ export default function AboutPage() {
 
       {/* Topics Section */}
       <section className="bg-gray-100 dark:bg-gray-900/50">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
           <div className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">
               Chủ đề chúng tôi viết
@@ -200,7 +200,7 @@ export default function AboutPage() {
       </section>
 
       {/* Team Section */}
-      <section className="max-w-6xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
         <div className="text-center mb-16">
           <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">
             Đội ngũ
@@ -232,7 +232,7 @@ export default function AboutPage() {
 
       {/* Timeline Section */}
       <section className="bg-gray-100 dark:bg-gray-900/50">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
           <div className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">
               Hành trình
@@ -284,7 +284,7 @@ export default function AboutPage() {
           <div className="absolute top-10 left-10 w-72 h-72 bg-white rounded-full blur-3xl" />
           <div className="absolute bottom-10 right-10 w-96 h-96 bg-blue-300 rounded-full blur-3xl" />
         </div>
-        <div className="relative max-w-4xl mx-auto px-4 sm:px-6 py-16 sm:py-20 text-center">
+        <div className="relative max-w-5xl mx-auto px-4 sm:px-6 py-16 sm:py-20 text-center">
           <h2 className="text-3xl sm:text-4xl font-bold text-white">
             Sẵn sàng bắt đầu?
           </h2>

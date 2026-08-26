@@ -38,7 +38,7 @@ export default async function Home() {
       <HeroBanner />
 
       {/* Ad Banner Top - Responsive Banner 728x90 */}
-      <section className="max-w-6xl mx-auto px-4 sm:px-6 mt-8">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 mt-8">
         <div className="flex justify-center">
           <div className="w-full max-w-[728px] h-[90px] bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center dark:bg-gray-900 dark:border-gray-700">
             <div className="text-center text-gray-400 dark:text-gray-500">
@@ -51,7 +51,7 @@ export default async function Home() {
 
       {/* Featured Posts */}
       {featuredPosts.length > 0 && (
-        <section className="max-w-6xl mx-auto px-4 sm:px-6 py-12">
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
               Bài viết nổi bật
@@ -72,7 +72,7 @@ export default async function Home() {
       )}
 
       {/* Ad Inline - Rectangle 300x250 */}
-      <section className="max-w-6xl mx-auto px-4 sm:px-6">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="flex justify-center">
           <div className="w-full max-w-[300px] h-[250px] bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center dark:bg-gray-900 dark:border-gray-700">
             <div className="text-center text-gray-400 dark:text-gray-500">
@@ -85,7 +85,7 @@ export default async function Home() {
 
       {/* Categories */}
       {categories.length > 0 && (
-        <section className="max-w-6xl mx-auto px-4 sm:px-6 py-12">
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-8">
             Danh mục
           </h2>
@@ -94,7 +94,7 @@ export default async function Home() {
       )}
 
       {/* Main Content + Sidebar Layout */}
-      <section className="max-w-6xl mx-auto px-4 sm:px-6 py-12">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-8">
           {/* Main Content */}
           <div>
@@ -141,7 +141,7 @@ export default async function Home() {
 
       {/* Newsletter CTA */}
       <section className="bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-900 dark:to-gray-800">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-16">
           <div className="max-w-2xl mx-auto text-center">
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
               Đăng ký nhận bài viết mới
@@ -169,7 +169,7 @@ export default async function Home() {
       </section>
 
       {/* Ad Banner Bottom - Responsive 728x90 */}
-      <section className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
         <div className="flex justify-center">
           <div className="w-full max-w-[728px] h-[90px] bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center dark:bg-gray-900 dark:border-gray-700">
             <div className="text-center text-gray-400 dark:text-gray-500">
@@ -181,7 +181,7 @@ export default async function Home() {
       </section>
 
       {/* Partner Banner Grid */}
-      <section className="max-w-6xl mx-auto px-4 sm:px-6 pb-12">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 pb-12">
         <h2 className="text-center text-sm font-semibold text-gray-400 uppercase tracking-wider mb-6 dark:text-gray-500">
           Đối tác &amp; Tài trợ
         </h2>

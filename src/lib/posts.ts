@@ -25,14 +25,10 @@ function rowToPost(row: PostRow, contentHtml: string): Post {
 function renderContent(rawContent: string, contentHtml: string): string {
   const source = rawContent || contentHtml;
   if (!source) return "";
-  const hasHtmlTags = /<[^>]+>/.test(source);
-  const hasMarkdownSyntax = /^#{1,6}\s|^\*\*|^\- |^\d+\. |```|^\|/m.test(source);
-  let rendered: string;
-  if (hasHtmlTags && !hasMarkdownSyntax) {
-    rendered = source;
-  } else {
-    rendered = remark().use(html).processSync(source).toString();
+  if (/<[^>]+>/.test(source)) {
+    return embedUrlsToIframes(source);
   }
+  const rendered = remark().use(html).processSync(source).toString();
   return embedUrlsToIframes(rendered);
 }
 

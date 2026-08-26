@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Post } from "@/lib/types";
 import { formatDate } from "@/lib/utils";
 import { siteConfig } from "@/lib/constants";
+import CodeBlockCopy from "./CodeBlockCopy";
 
 interface PostContentProps {
   post: Post;
@@ -134,10 +135,12 @@ export default function PostContent({ post }: PostContentProps) {
         </header>
 
         {/* Content */}
-        <div
-          className="prose prose-lg max-w-none prose-headings:text-gray-900 prose-p:text-gray-700 prose-a:text-blue-600 prose-strong:text-gray-900 prose-code:text-blue-600 prose-pre:bg-gray-900 prose-pre:text-gray-100 dark:prose-invert dark:prose-headings:text-white dark:prose-p:text-gray-300 dark:prose-a:text-blue-400 dark:prose-strong:text-white dark:prose-code:text-blue-400 dark:prose-pre:bg-gray-800"
-          dangerouslySetInnerHTML={{ __html: post.content }}
-        />
+        <CodeBlockCopy>
+          <div
+            className="prose prose-lg max-w-none prose-headings:text-gray-900 prose-p:text-gray-700 prose-a:text-blue-600 prose-strong:text-gray-900 prose-code:text-blue-600 prose-pre:bg-gray-900 prose-pre:text-gray-100 dark:prose-invert dark:prose-headings:text-white dark:prose-p:text-gray-300 dark:prose-a:text-blue-400 dark:prose-strong:text-white dark:prose-code:text-blue-400 dark:prose-pre:bg-gray-800"
+            dangerouslySetInnerHTML={{ __html: post.content }}
+          />
+        </CodeBlockCopy>
 
         {/* Tags */}
         {post.tags.length > 0 && (
