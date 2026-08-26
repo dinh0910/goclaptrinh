@@ -10,7 +10,7 @@ export default async function AdminPostsPage() {
   const posts = await getAllPosts();
 
   return (
-    <div>
+    <div className="max-w-5xl mx-auto">
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Bài viết</h1>
         <Link

@@ -22,7 +22,7 @@ import TaskList from "@tiptap/extension-task-list";
 import TaskItem from "@tiptap/extension-task-item";
 import { Tiktok } from "./tiktok-node";
 import { Indent } from "./indent";
-import { useRef, useState, useCallback, useEffect } from "react";
+import { useRef, useState, useCallback, useEffect, memo } from "react";
 
 interface RichEditorProps {
   content: string;
@@ -39,6 +39,7 @@ const Btn = ({
 }) => (
   <button
     type="button" onClick={onClick} disabled={disabled} title={title}
+    onMouseDown={(e) => e.preventDefault()}
     className={`p-1.5 rounded-md text-sm transition-colors ${
       active
         ? "bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400"
@@ -59,6 +60,7 @@ const Dropdown = ({
 }) => (
   <div className="relative">
     <button type="button" onClick={() => onToggle(name)}
+      onMouseDown={(e) => e.preventDefault()}
       className="flex items-center gap-1 px-1.5 py-1 text-sm rounded-md transition-colors text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700">
       {label}
     </button>
@@ -76,6 +78,7 @@ const DropdownItem = ({
   active?: boolean; onClick: () => void; children: React.ReactNode; style?: React.CSSProperties;
 }) => (
   <button type="button" onClick={onClick} style={style}
+    onMouseDown={(e) => e.preventDefault()}
     className={`w-full flex items-center px-3 py-1.5 text-sm text-left transition-colors ${
       active
         ? "bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400"
@@ -224,7 +227,13 @@ const ALIGN_OPTIONS = [
 
 // --- Component ---
 
-export default function RichEditor({ content, onChange }: RichEditorProps) {
+const EDITOR_PROPS = {
+  attributes: {
+    class: "prose prose-lg max-w-none focus:outline-none min-h-[400px] px-4 py-3 dark:prose-invert prose-headings:text-gray-900 prose-p:text-gray-700 prose-a:text-blue-600 dark:prose-headings:text-white dark:prose-p:text-gray-300 dark:prose-a:text-blue-400",
+  },
+};
+
+function RichEditorInner({ content, onChange }: RichEditorProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showLinkInput, setShowLinkInput] = useState(false);
   const [linkUrl, setLinkUrl] = useState("");
@@ -234,10 +243,11 @@ export default function RichEditor({ content, onChange }: RichEditorProps) {
   const [openDrop, setOpenDrop] = useState<string | null>(null);
   const [showTableGrid, setShowTableGrid] = useState(false);
   const [tableGridHover, setTableGridHover] = useState({ rows: 0, cols: 0 });
-  const [isInTable, setIsInTable] = useState(false);
-  const [, setForceRender] = useState(0);
+  const [toolbarKey, setToolbarKey] = useState(0);
   const toolbarRef = useRef<HTMLDivElement>(null);
   const tableGridRef = useRef<HTMLDivElement>(null);
+  const onChangeRef = useRef(onChange);
+  useEffect(() => { onChangeRef.current = onChange; });
 
   useEffect(() => {
     if (!openDrop && !showTableGrid) return;
@@ -250,6 +260,8 @@ export default function RichEditor({ content, onChange }: RichEditorProps) {
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
   }, [openDrop, showTableGrid]);
+
+  const rafRef = useRef(0);
 
   const editor = useEditor({
     extensions: [
@@ -269,18 +281,21 @@ export default function RichEditor({ content, onChange }: RichEditorProps) {
       Indent,
     ],
     content,
-    onSelectionUpdate: ({ editor: e }) => {
-      setForceRender((n) => n + 1);
-      setIsInTable(e.isActive("table"));
+    onTransaction: () => {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = requestAnimationFrame(() => {
+        setToolbarKey((k) => k + 1);
+      });
     },
     onUpdate: ({ editor: e }) => {
-      onChange(e.getHTML());
+      const html = e.getHTML();
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = requestAnimationFrame(() => {
+        setToolbarKey((k) => k + 1);
+        onChangeRef.current(html);
+      });
     },
-    editorProps: {
-      attributes: {
-        class: "prose prose-lg max-w-none focus:outline-none min-h-[400px] px-4 py-3 dark:prose-invert prose-headings:text-gray-900 prose-p:text-gray-700 prose-a:text-blue-600 dark:prose-headings:text-white dark:prose-p:text-gray-300 dark:prose-a:text-blue-400",
-      },
-    },
+    editorProps: EDITOR_PROPS,
   });
 
   const uploadImage = useCallback(async (file: File) => {
@@ -326,10 +341,9 @@ export default function RichEditor({ content, onChange }: RichEditorProps) {
   const mark = (name: string, attrs?: Record<string, unknown>) => editor!.chain().focus().setMark(name, attrs).run();
   const unsetMark = (name: string) => editor!.chain().focus().unsetMark(name).run();
   const isMark = (name: string) => editor!.isActive(name);
+  const cmd = () => editor!.chain().focus();
 
   if (!editor) return null;
-
-  const c = editor.chain().focus();
 
   return (
     <div className="border border-gray-300 dark:border-gray-700 rounded-xl overflow-hidden bg-white dark:bg-gray-900">
@@ -338,6 +352,7 @@ export default function RichEditor({ content, onChange }: RichEditorProps) {
         {/* --- Heading --- */}
         <div className="relative">
           <button type="button" onClick={() => toggle("heading")}
+            onMouseDown={(e) => e.preventDefault()}
             className="flex items-center gap-1 px-2 py-1.5 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700 transition-colors min-w-[70px]">
             <span className="text-xs font-bold">{headingLevel() > 0 ? `H${headingLevel()}` : "P"}</span>
             <Chevron />
@@ -348,8 +363,8 @@ export default function RichEditor({ content, onChange }: RichEditorProps) {
                 <DropdownItem key={o.level}
                   active={o.level === 0 ? headingLevel() === 0 : editor.isActive("heading", { level: o.level })}
                   onClick={() => {
-                    if (o.level === 0) c.setParagraph().run();
-                    else c.toggleHeading({ level: o.level as 1|2|3|4|5|6 }).run();
+                    if (o.level === 0) cmd().setParagraph().run();
+                    else cmd().toggleHeading({ level: o.level as 1|2|3|4|5|6 }).run();
                     setOpenDrop(null);
                   }}>
                   <span className={`font-bold ${o.level === 0 ? "text-sm" : o.level <= 2 ? o.level === 1 ? "text-xl" : "text-lg" : "text-xs"}`}>{o.tag}</span>
@@ -395,14 +410,14 @@ export default function RichEditor({ content, onChange }: RichEditorProps) {
 
         <Divider />
 
-        <Btn onClick={() => c.toggleBold().run()} active={isMark("bold")} title="Đậm (Ctrl+B)">{Icon.bold}</Btn>
-        <Btn onClick={() => c.toggleItalic().run()} active={isMark("italic")} title="Nghiêng (Ctrl+I)">{Icon.italic}</Btn>
-        <Btn onClick={() => c.toggleUnderline().run()} active={isMark("underline")} title="Gạch chân (Ctrl+U)">{Icon.underline}</Btn>
-        <Btn onClick={() => c.toggleStrike().run()} active={isMark("strike")} title="Gạch ngang">{Icon.strike}</Btn>
-        <Btn onClick={() => c.toggleCode().run()} active={isMark("code")} title="Code inline">{Icon.code}</Btn>
-        <Btn onClick={() => c.toggleHighlight().run()} active={isMark("highlight")} title="Highlight">{Icon.highlight}</Btn>
-        <Btn onClick={() => c.toggleSubscript().run()} active={isMark("subscript")} title="Chữ nhỏ dưới (x₂)"><span className="text-xs font-bold">X<sub>2</sub></span></Btn>
-        <Btn onClick={() => c.toggleSuperscript().run()} active={isMark("superscript")} title="Chữ nhỏ trên (x²)"><span className="text-xs font-bold">X<sup>2</sup></span></Btn>
+        <Btn onClick={() => cmd().toggleBold().run()} active={isMark("bold")} title="Đậm (Ctrl+B)">{Icon.bold}</Btn>
+        <Btn onClick={() => cmd().toggleItalic().run()} active={isMark("italic")} title="Nghiêng (Ctrl+I)">{Icon.italic}</Btn>
+        <Btn onClick={() => cmd().toggleUnderline().run()} active={isMark("underline")} title="Gạch chân (Ctrl+U)">{Icon.underline}</Btn>
+        <Btn onClick={() => cmd().toggleStrike().run()} active={isMark("strike")} title="Gạch ngang">{Icon.strike}</Btn>
+        <Btn onClick={() => cmd().toggleCode().run()} active={isMark("code")} title="Code inline">{Icon.code}</Btn>
+        <Btn onClick={() => cmd().toggleHighlight().run()} active={isMark("highlight")} title="Highlight">{Icon.highlight}</Btn>
+        <Btn onClick={() => cmd().toggleSubscript().run()} active={isMark("subscript")} title="Chữ nhỏ dưới (x₂)"><span className="text-xs font-bold">X<sub>2</sub></span></Btn>
+        <Btn onClick={() => cmd().toggleSuperscript().run()} active={isMark("superscript")} title="Chữ nhỏ trên (x²)"><span className="text-xs font-bold">X<sup>2</sup></span></Btn>
 
         <Divider />
 
@@ -419,17 +434,17 @@ export default function RichEditor({ content, onChange }: RichEditorProps) {
         <Divider />
 
         {/* --- Lists --- */}
-        <Btn onClick={() => c.toggleBulletList().run()} active={isMark("bulletList")} title="Danh sách">{Icon.bulletList}</Btn>
-        <Btn onClick={() => c.toggleOrderedList().run()} active={isMark("orderedList")} title="Danh sách đánh số">{Icon.orderedList}</Btn>
-        <Btn onClick={() => c.toggleTaskList().run()} active={isMark("taskList")} title="Danh sách công việc">{Icon.taskList}</Btn>
-        <Btn onClick={() => c.toggleBlockquote().run()} active={isMark("blockquote")} title="Trích dẫn">{Icon.quote}</Btn>
-        <Btn onClick={() => c.toggleCodeBlock().run()} active={isMark("codeBlock")} title="Code block">{Icon.codeBlock}</Btn>
+        <Btn onClick={() => cmd().toggleBulletList().run()} active={isMark("bulletList")} title="Danh sách">{Icon.bulletList}</Btn>
+        <Btn onClick={() => cmd().toggleOrderedList().run()} active={isMark("orderedList")} title="Danh sách đánh số">{Icon.orderedList}</Btn>
+        <Btn onClick={() => cmd().toggleTaskList().run()} active={isMark("taskList")} title="Danh sách công việc">{Icon.taskList}</Btn>
+        <Btn onClick={() => cmd().toggleBlockquote().run()} active={isMark("blockquote")} title="Trích dẫn">{Icon.quote}</Btn>
+        <Btn onClick={() => cmd().toggleCodeBlock().run()} active={isMark("codeBlock")} title="Code block">{Icon.codeBlock}</Btn>
 
         <Divider />
 
         {/* --- Indent / Outdent --- */}
-        <Btn onClick={() => c.indent().run()} title="Thụt lề (Tab)">{Icon.indent}</Btn>
-        <Btn onClick={() => c.outdent().run()} title="Lùi lề (Shift+Tab)">{Icon.outdent}</Btn>
+        <Btn onClick={() => cmd().indent().run()} title="Thụt lề (Tab)">{Icon.indent}</Btn>
+        <Btn onClick={() => cmd().outdent().run()} title="Lùi lề (Shift+Tab)">{Icon.outdent}</Btn>
 
         <Divider />
 
@@ -457,7 +472,7 @@ export default function RichEditor({ content, onChange }: RichEditorProps) {
                         }`}
                         onMouseEnter={() => setTableGridHover({ rows: row + 1, cols: col + 1 })}
                         onClick={() => {
-                          c.insertTable({ rows: row + 1, cols: col + 1, withHeaderRow: true }).run();
+                           cmd().insertTable({ rows: row + 1, cols: col + 1, withHeaderRow: true }).run();
                           setShowTableGrid(false);
                           setTableGridHover({ rows: 0, cols: 0 });
                         }}
@@ -470,7 +485,7 @@ export default function RichEditor({ content, onChange }: RichEditorProps) {
                 <button
                   type="button"
                   onClick={() => {
-                    c.insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
+                    cmd().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
                     setShowTableGrid(false);
                     setTableGridHover({ rows: 0, cols: 0 });
                   }}
@@ -487,7 +502,7 @@ export default function RichEditor({ content, onChange }: RichEditorProps) {
 
         {/* --- Alignment --- */}
         {ALIGN_OPTIONS.map((a) => (
-          <Btn key={a.align} onClick={() => c.setTextAlign(a.align).run()} active={editor.isActive({ textAlign: a.align })} title={a.title}>
+          <Btn key={a.align} onClick={() => cmd().setTextAlign(a.align).run()} active={editor.isActive({ textAlign: a.align })} title={a.title}>
             {a.icon}
           </Btn>
         ))}
@@ -496,36 +511,36 @@ export default function RichEditor({ content, onChange }: RichEditorProps) {
 
         {/* --- Link / Image / Video / HR / Clear --- */}
         <Btn onClick={() => {
-          if (editor.isActive("link")) { c.unsetLink().run(); }
+          if (editor.isActive("link")) { cmd().unsetLink().run(); }
           else { setLinkText(editor.state.doc.textBetween(editor.state.selection.from, editor.state.selection.to, "")); setShowLinkInput(!showLinkInput); setShowVideoInput(false); }
         }} active={isMark("link")} title="Chèn link">{Icon.link}</Btn>
         <Btn onClick={() => fileInputRef.current?.click()} title="Chèn ảnh">{Icon.image}</Btn>
         <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={async (e) => { const f = e.target.files?.[0]; if (f) await uploadImage(f); e.target.value = ""; }} />
         <Btn onClick={() => { setShowVideoInput(!showVideoInput); setShowLinkInput(false); }} title="Chèn video">{Icon.video}</Btn>
-        <Btn onClick={() => c.setHorizontalRule().run()} title="Đường kẻ ngang">{Icon.hr}</Btn>
-        <Btn onClick={() => c.clearNodes().unsetAllMarks().run()} title="Xóa format">{Icon.clear}</Btn>
+        <Btn onClick={() => cmd().setHorizontalRule().run()} title="Đường kẻ ngang">{Icon.hr}</Btn>
+        <Btn onClick={() => cmd().clearNodes().unsetAllMarks().run()} title="Xóa format">{Icon.clear}</Btn>
 
         {/* --- Undo/Redo --- */}
         <div className="ml-auto flex items-center gap-0.5">
-          <Btn onClick={() => c.undo().run()} disabled={!editor.can().undo()} title="Hoàn tác (Ctrl+Z)">{Icon.undo}</Btn>
-          <Btn onClick={() => c.redo().run()} disabled={!editor.can().redo()} title="Làm lại (Ctrl+Y)">{Icon.redo}</Btn>
+          <Btn onClick={() => cmd().undo().run()} disabled={!editor.can().undo()} title="Hoàn tác (Ctrl+Z)">{Icon.undo}</Btn>
+          <Btn onClick={() => cmd().redo().run()} disabled={!editor.can().redo()} title="Làm lại (Ctrl+Y)">{Icon.redo}</Btn>
         </div>
       </div>
 
       {/* --- Table Context Toolbar --- */}
-      {isInTable && (
+      {toolbarKey >= 0 && editor?.isActive("table") && (
         <div className="flex items-center gap-0.5 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-500/10 border-b border-emerald-200 dark:border-emerald-500/20">
           <span className="text-xs font-medium text-emerald-700 dark:text-emerald-400 mr-2">Bảng</span>
           <Divider />
-          <Btn onClick={() => c.addColumnAfter().run()} title="Thêm cột phải">{Icon.addColRight}</Btn>
-          <Btn onClick={() => c.addColumnBefore().run()} title="Thêm cột trái">{Icon.addColLeft}</Btn>
-          <Btn onClick={() => c.addRowAfter().run()} title="Thêm hàng dưới">{Icon.addRowBelow}</Btn>
-          <Btn onClick={() => c.addRowBefore().run()} title="Thêm hàng trên">{Icon.addRowAbove}</Btn>
+          <Btn onClick={() => cmd().addColumnAfter().run()} title="Thêm cột phải">{Icon.addColRight}</Btn>
+          <Btn onClick={() => cmd().addColumnBefore().run()} title="Thêm cột trái">{Icon.addColLeft}</Btn>
+          <Btn onClick={() => cmd().addRowAfter().run()} title="Thêm hàng dưới">{Icon.addRowBelow}</Btn>
+          <Btn onClick={() => cmd().addRowBefore().run()} title="Thêm hàng trên">{Icon.addRowAbove}</Btn>
           <Divider />
-          <Btn onClick={() => c.deleteColumn().run()} title="Xóa cột">{Icon.deleteCol}</Btn>
-          <Btn onClick={() => c.deleteRow().run()} title="Xóa hàng">{Icon.deleteRow}</Btn>
+          <Btn onClick={() => cmd().deleteColumn().run()} title="Xóa cột">{Icon.deleteCol}</Btn>
+          <Btn onClick={() => cmd().deleteRow().run()} title="Xóa hàng">{Icon.deleteRow}</Btn>
           <Divider />
-          <Btn onClick={() => c.deleteTable().run()} title="Xóa bảng">
+          <Btn onClick={() => cmd().deleteTable().run()} title="Xóa bảng">
             <span className="flex items-center gap-1 text-red-500 dark:text-red-400">
               {Icon.deleteTable}
               <span className="text-xs">Xóa bảng</span>
@@ -569,3 +584,6 @@ export default function RichEditor({ content, onChange }: RichEditorProps) {
     </div>
   );
 }
+
+const RichEditor = memo(RichEditorInner);
+export default RichEditor;

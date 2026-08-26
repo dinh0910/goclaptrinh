@@ -61,6 +61,8 @@ export default function PostEditor({ mode, initialData, slug }: PostEditorProps)
     readingTime: initialData?.readingTime || "5 phút đọc",
   });
 
+  const contentRef = useRef(form.content);
+
   const [tagInput, setTagInput] = useState("");
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -72,12 +74,14 @@ export default function PostEditor({ mode, initialData, slug }: PostEditorProps)
       if (key === "title" && mode === "create") {
         next.slug = slugify(value as string);
       }
-      if (key === "content") {
-        next.readingTime = estimateReadingTime(value as string);
-      }
       return next;
     });
   };
+
+  const onContentChange = useCallback((html: string) => {
+    contentRef.current = html;
+    setForm((prev) => ({ ...prev, readingTime: estimateReadingTime(html) }));
+  }, []);
 
   const addTag = () => {
     const tag = tagInput.trim().toLowerCase();
@@ -124,14 +128,14 @@ export default function PostEditor({ mode, initialData, slug }: PostEditorProps)
   );
 
   const handleSave = async () => {
-    if (!form.slug || !form.title || !form.description || !form.category || !form.content) {
+    if (!form.slug || !form.title || !form.description || !form.category || !contentRef.current) {
       toast.error("Vui lòng điền đầy đủ các trường bắt buộc");
       return;
     }
 
     setSaving(true);
     try {
-      const body = { ...form, rawContent: form.content };
+      const body = { ...form, content: contentRef.current, rawContent: contentRef.current };
 
       const url = mode === "edit" ? `/api/posts/${slug}` : "/api/posts";
       const method = mode === "edit" ? "PUT" : "POST";
@@ -224,7 +228,7 @@ export default function PostEditor({ mode, initialData, slug }: PostEditorProps)
             </label>
             <RichEditor
               content={form.content}
-              onChange={(html) => updateField("content", html)}
+              onChange={onContentChange}
             />
           </div>
         </div>
