@@ -3,8 +3,13 @@
 import { useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { CATEGORIES } from "@/lib/constants";
 import RichEditor from "./RichEditor";
+
+const SEO_LIMITS = {
+  title: 60,
+  slug: 60,
+  description: 160,
+} as const;
 
 interface PostFormData {
   slug: string;
@@ -24,6 +29,7 @@ interface PostEditorProps {
   mode: "create" | "edit";
   initialData?: Partial<PostFormData>;
   slug?: string;
+  categories?: { slug: string; name: string }[];
 }
 
 function estimateReadingTime(html: string): string {
@@ -43,7 +49,54 @@ function slugify(text: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
-export default function PostEditor({ mode, initialData, slug }: PostEditorProps) {
+function countChars(text: string): number {
+  return text.length;
+}
+
+function normalizeUtc(value: string): string {
+  const isIsoLocal = value.includes("T") && !/[zZ]|[+-]\d{2}:\d{2}$/.test(value);
+  return isIsoLocal ? `${value}:00Z` : value;
+}
+
+function toUtcInput(value: string): string {
+  try {
+    const date = new Date(normalizeUtc(value));
+    if (isNaN(date.getTime())) return value;
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())}T${pad(
+      date.getUTCHours()
+    )}:${pad(date.getUTCMinutes())}`;
+  } catch {
+    return value;
+  }
+}
+
+function toUtcIso(value: string): string {
+  const date = new Date(normalizeUtc(value));
+  return isNaN(date.getTime()) ? value : date.toISOString();
+}
+
+function fieldClass(over: boolean): string {
+  return over
+    ? "w-full px-4 py-3 bg-red-50 dark:bg-red-500/10 border border-red-500 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-colors"
+    : "w-full px-4 py-3 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors";
+}
+
+function WordCount({ count, limit }: { count: number; limit: number }) {
+  const over = count > limit;
+  return (
+    <span
+      className={`text-xs font-medium ${
+        over ? "text-red-500" : "text-gray-400 dark:text-gray-500"
+      }`}
+    >
+      {count}/{limit} ký tự
+      {over && " · vượt giới hạn SEO"}
+    </span>
+  );
+}
+
+export default function PostEditor({ mode, initialData, slug, categories }: PostEditorProps) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -51,8 +104,8 @@ export default function PostEditor({ mode, initialData, slug }: PostEditorProps)
     slug: initialData?.slug || "",
     title: initialData?.title || "",
     description: initialData?.description || "",
-    date: initialData?.date || new Date().toISOString().split("T")[0],
-    category: initialData?.category || CATEGORIES[0].slug,
+    date: toUtcInput(initialData?.date || new Date().toISOString()),
+    category: initialData?.category || categories?.[0]?.slug || "",
     tags: initialData?.tags || [],
     author: initialData?.author || "Góc Lập Trình",
     image: initialData?.image || "",
@@ -135,7 +188,12 @@ export default function PostEditor({ mode, initialData, slug }: PostEditorProps)
 
     setSaving(true);
     try {
-      const body = { ...form, content: contentRef.current, rawContent: contentRef.current };
+      const body = {
+        ...form,
+        date: toUtcIso(form.date),
+        content: contentRef.current,
+        rawContent: contentRef.current,
+      };
 
       const url = mode === "edit" ? `/api/posts/${slug}` : "/api/posts";
       const method = mode === "edit" ? "PUT" : "POST";
@@ -151,6 +209,10 @@ export default function PostEditor({ mode, initialData, slug }: PostEditorProps)
 
       if (mode === "edit") {
         toast.success("Cập nhật bài viết thành công!");
+        if (slug && form.slug !== slug) {
+          router.replace(`/admin/posts/${encodeURIComponent(form.slug)}/edit`);
+        }
+        router.refresh();
       } else {
         router.push("/admin/posts");
         router.refresh();
@@ -181,42 +243,51 @@ export default function PostEditor({ mode, initialData, slug }: PostEditorProps)
         <div className="space-y-6">
           {/* Title */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-              Tiêu đề *
-            </label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Tiêu đề *
+              </label>
+              <WordCount count={countChars(form.title)} limit={SEO_LIMITS.title} />
+            </div>
             <input
               type="text"
               value={form.title}
               onChange={(e) => updateField("title", e.target.value)}
-              className="w-full px-4 py-3 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-lg"
+              className={`${fieldClass(countChars(form.title) > SEO_LIMITS.title)} text-lg`}
               placeholder="Nhập tiêu đề bài viết..."
             />
           </div>
 
           {/* Slug */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-              Slug *
-            </label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Slug *
+              </label>
+              <WordCount count={countChars(form.slug)} limit={SEO_LIMITS.slug} />
+            </div>
             <input
               type="text"
               value={form.slug}
               onChange={(e) => updateField("slug", e.target.value)}
-              className="w-full px-4 py-3 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white font-mono text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+              className={`${fieldClass(countChars(form.slug) > SEO_LIMITS.slug)} font-mono text-sm`}
               placeholder="bai-viet-seo-friendly"
             />
           </div>
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-              Mô tả *
-            </label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Mô tả *
+              </label>
+              <WordCount count={countChars(form.description)} limit={SEO_LIMITS.description} />
+            </div>
             <textarea
               value={form.description}
               onChange={(e) => updateField("description", e.target.value)}
               rows={2}
-              className="w-full px-4 py-3 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors resize-none"
+              className={`${fieldClass(countChars(form.description) > SEO_LIMITS.description)} resize-none`}
               placeholder="Mô tả ngắn gọn nội dung bài viết..."
             />
           </div>
@@ -306,7 +377,7 @@ export default function PostEditor({ mode, initialData, slug }: PostEditorProps)
               onChange={(e) => updateField("category", e.target.value)}
               className="w-full px-4 py-3 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
             >
-              {CATEGORIES.map((cat) => (
+              {categories?.map((cat) => (
                 <option key={cat.slug} value={cat.slug}>
                   {cat.name}
                 </option>
@@ -361,11 +432,12 @@ export default function PostEditor({ mode, initialData, slug }: PostEditorProps)
               Ngày đăng
             </label>
             <input
-              type="date"
+              type="datetime-local"
               value={form.date}
               onChange={(e) => updateField("date", e.target.value)}
               className="w-full px-4 py-3 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
             />
+            <p className="mt-1.5 text-xs text-gray-400 dark:text-gray-500">Giờ hiển thị theo UTC, lưu DB dạng ISO UTC</p>
           </div>
 
           {/* Author */}

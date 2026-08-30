@@ -1,6 +1,7 @@
 import { getAllPosts } from "@/lib/posts";
 import Link from "next/link";
 import PostActions from "@/components/admin/PostActions";
+import { formatDateTime } from "@/lib/utils";
 
 export const metadata = {
   title: "Quản lý bài viết",
@@ -47,7 +48,9 @@ export default async function AdminPostsPage() {
                   <span className="text-sm text-gray-600 dark:text-gray-400">{post.category}</span>
                 </td>
                 <td className="p-4">
-                  <span className="text-sm text-gray-500 dark:text-gray-400">{post.date}</span>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                    {formatDateTime(post.date)}
+                  </span>
                 </td>
                 <td className="p-4">
                   <div className="flex flex-wrap gap-1">

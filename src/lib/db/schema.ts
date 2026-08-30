@@ -27,7 +27,16 @@ export const posts = sqliteTable("posts", {
   updatedAt: text("updated_at").notNull().$defaultFn(() => new Date().toISOString()),
 });
 
+export const categories = sqliteTable("categories", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  slug: text("slug").notNull().unique(),
+  name: text("name").notNull(),
+  description: text("description").notNull().default(""),
+});
+
 export type UserRow = typeof users.$inferSelect;
 export type UserInsert = typeof users.$inferInsert;
 export type PostRow = typeof posts.$inferSelect;
 export type PostInsert = typeof posts.$inferInsert;
+export type CategoryRow = typeof categories.$inferSelect;
+export type CategoryInsert = typeof categories.$inferInsert;

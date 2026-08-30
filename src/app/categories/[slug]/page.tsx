@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { CATEGORIES, siteConfig } from "@/lib/constants";
+import { siteConfig } from "@/lib/constants";
+import { getCategoryBySlug, getCategoriesWithCounts } from "@/lib/categories";
 import { getPostsByCategory } from "@/lib/posts";
 import PostCard from "@/components/client/PostCard";
 
@@ -10,12 +11,12 @@ interface PageProps {
 }
 
 export async function generateStaticParams() {
-  return CATEGORIES.map((cat) => ({ slug: cat.slug }));
+  return getCategoriesWithCounts().map((cat) => ({ slug: cat.slug }));
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const category = CATEGORIES.find((c) => c.slug === slug);
+  const category = getCategoryBySlug(slug);
   if (!category) return { title: "Not Found" };
 
   return {
@@ -45,10 +46,10 @@ const CATEGORY_META: Record<string, { icon: string; gradient: string; bg: string
 
 export default async function CategoryPage({ params }: PageProps) {
   const { slug } = await params;
-  const category = CATEGORIES.find((c) => c.slug === slug);
+  const category = getCategoryBySlug(slug);
   if (!category) notFound();
 
-  const posts = await getPostsByCategory(category.name);
+  const posts = await getPostsByCategory(category.slug);
   const meta = CATEGORY_META[slug] || { icon: "📄", gradient: "from-gray-400 to-gray-600", bg: "bg-gray-50", darkBg: "dark:bg-gray-500/5" };
 
   return (

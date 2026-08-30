@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { getAllPosts, getAllCategories } from "@/lib/posts";
-import { CATEGORIES, siteConfig } from "@/lib/constants";
+import { getAllPosts } from "@/lib/posts";
+import { siteConfig } from "@/lib/constants";
+import { getCategoriesWithCounts } from "@/lib/categories";
 import PostCard from "@/components/client/PostCard";
 import CategoryList from "@/components/client/CategoryList";
 import HeroBanner from "@/components/client/HeroBanner";
@@ -9,12 +10,8 @@ export default async function Home() {
   const posts = await getAllPosts();
   const featuredPosts = posts.filter((post) => post.featured);
   const latestPosts = posts.slice(0, 6);
-  const categoryCounts = getAllCategories();
 
-  const categories = CATEGORIES.map((cat) => ({
-    ...cat,
-    count: categoryCounts[cat.slug] || 0,
-  })).filter((cat) => cat.count > 0);
+  const categories = getCategoriesWithCounts().filter((cat) => cat.count > 0);
 
   const jsonLd = {
     "@context": "https://schema.org",

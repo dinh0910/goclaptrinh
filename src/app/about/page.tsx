@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { siteConfig, CATEGORIES } from "@/lib/constants";
+import { siteConfig } from "@/lib/constants";
+import { getCategoriesWithCounts } from "@/lib/categories";
 
 export const metadata: Metadata = {
   title: "Giới thiệu",
@@ -71,6 +72,7 @@ const TIMELINE = [
 ];
 
 export default function AboutPage() {
+  const categories = getCategoriesWithCounts();
   return (
     <div>
       {/* Hero Section */}
@@ -176,7 +178,7 @@ export default function AboutPage() {
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            {CATEGORIES.map((cat) => (
+            {categories.map((cat) => (
               <Link
                 key={cat.slug}
                 href={`/categories/${cat.slug}`}

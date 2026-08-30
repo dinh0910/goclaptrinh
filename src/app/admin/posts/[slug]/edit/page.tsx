@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { posts } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { getCategoriesWithCounts } from "@/lib/categories";
 import PostEditor from "@/components/admin/PostEditor";
 
 export const metadata = {
@@ -21,6 +22,8 @@ export default async function EditPostPage({
     notFound();
   }
 
+  const categories = getCategoriesWithCounts();
+
   return (
     <div>
       <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-8">
@@ -29,6 +32,7 @@ export default async function EditPostPage({
       <PostEditor
         mode="edit"
         slug={post.slug}
+        categories={categories}
         initialData={{
           slug: post.slug,
           title: post.title,

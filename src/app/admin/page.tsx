@@ -1,4 +1,5 @@
 import { getAllPosts } from "@/lib/posts";
+import { formatDateTime } from "@/lib/utils";
 
 export const metadata = {
   title: "Admin Dashboard",
@@ -47,7 +48,7 @@ export default async function AdminDashboard() {
               <div>
                 <p className="text-sm font-semibold text-gray-900 dark:text-white">{post.title}</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  {post.category} · {post.date} · {post.readingTime}
+                  {post.category} · {formatDateTime(post.date)} · {post.readingTime}
                 </p>
               </div>
               <a

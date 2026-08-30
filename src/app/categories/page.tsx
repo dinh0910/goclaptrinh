@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CATEGORIES, siteConfig } from "@/lib/constants";
-import { getAllCategories } from "@/lib/posts";
+import { siteConfig } from "@/lib/constants";
+import { getCategoriesWithCounts } from "@/lib/categories";
 
 export const metadata: Metadata = {
   title: "Danh mục",
@@ -28,11 +28,8 @@ const CATEGORY_META: Record<string, { icon: string; gradient: string; bg: string
 };
 
 export default function CategoriesPage() {
-  const categoryCounts = getAllCategories();
-
-  const categories = CATEGORIES.map((cat) => ({
+  const categories = getCategoriesWithCounts().map((cat) => ({
     ...cat,
-    count: categoryCounts[cat.slug] || 0,
     meta: CATEGORY_META[cat.slug] || { icon: "📄", gradient: "from-gray-400 to-gray-600", bg: "bg-gray-50", darkBg: "dark:bg-gray-500/5" },
   }));
 

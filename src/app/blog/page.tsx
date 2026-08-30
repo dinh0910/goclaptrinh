@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getAllPosts } from "@/lib/posts";
-import { CATEGORIES, siteConfig } from "@/lib/constants";
+import { siteConfig } from "@/lib/constants";
+import { getCategoriesWithCounts } from "@/lib/categories";
 import PostCard from "@/components/client/PostCard";
 
 export const metadata: Metadata = {
@@ -30,6 +31,7 @@ const CATEGORY_ICONS: Record<string, string> = {
 
 export default async function BlogPage() {
   const posts = await getAllPosts();
+  const categories = getCategoriesWithCounts();
   const featuredPost = posts[0];
   const remainingPosts = posts.slice(1);
 
@@ -58,7 +60,7 @@ export default async function BlogPage() {
               </div>
               <div className="w-px h-10 bg-gray-200 dark:bg-gray-800" />
               <div className="text-center">
-                <p className="text-3xl font-bold text-violet-600 dark:text-violet-400">{CATEGORIES.length}</p>
+                <p className="text-3xl font-bold text-violet-600 dark:text-violet-400">{categories.length}</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Chủ đề</p>
               </div>
             </div>
@@ -77,7 +79,7 @@ export default async function BlogPage() {
               Tất cả
               <span className="text-xs opacity-80">({posts.length})</span>
             </Link>
-            {CATEGORIES.map((cat) => {
+            {categories.map((cat) => {
               const count = posts.filter((p) => p.category.toLowerCase() === cat.slug).length;
               if (count === 0) return null;
               return (

@@ -14,6 +14,7 @@ const adminLinks = [
   { href: "/admin", label: "Dashboard", icon: "📊" },
   { href: "/admin/posts", label: "Bài viết", icon: "📝" },
   { href: "/admin/posts/new", label: "Viết mới", icon: "✏️" },
+  { href: "/admin/categories", label: "Danh mục", icon: "🗂️" },
   { href: "/", label: "Xem site", icon: "🌐" },
 ];
 

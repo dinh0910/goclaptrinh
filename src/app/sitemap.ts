@@ -1,6 +1,7 @@
 import { MetadataRoute } from "next";
 import { getAllPostSlugs, getPostBySlug, getAllTags } from "@/lib/posts";
-import { CATEGORIES, siteConfig } from "@/lib/constants";
+import { getCategoriesWithCounts } from "@/lib/categories";
+import { siteConfig } from "@/lib/constants";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const posts = getAllPostSlugs();
@@ -17,7 +18,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })
   );
 
-  const categoryEntries: MetadataRoute.Sitemap = CATEGORIES.map((cat) => ({
+  const categoryEntries: MetadataRoute.Sitemap = getCategoriesWithCounts().map((cat) => ({
     url: `${siteConfig.url}/categories/${cat.slug}`,
     lastModified: new Date(),
     changeFrequency: "weekly" as const,

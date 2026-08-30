@@ -17,7 +17,9 @@ export async function proxy(request: NextRequest) {
 
   // Protect API write routes
   if (
-    pathname.startsWith("/api/posts") &&
+    ["/api/posts", "/api/categories"].some((prefix) =>
+      pathname.startsWith(prefix)
+    ) &&
     ["POST", "PUT", "PATCH", "DELETE"].includes(request.method)
   ) {
     if (!session) {
@@ -29,5 +31,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/api/posts/:path*"],
+  matcher: ["/admin/:path*", "/api/posts/:path*", "/api/categories/:path*"],
 };

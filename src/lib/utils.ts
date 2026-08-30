@@ -10,6 +10,22 @@ export function formatDate(dateString: string): string {
   }
 }
 
+export function formatDateTime(dateString: string): string {
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return dateString;
+    const day = String(date.getUTCDate()).padStart(2, "0");
+    const month = new Intl.DateTimeFormat("vi", { month: "long", timeZone: "UTC" }).format(date);
+    const hour = date.getUTCHours();
+    const meridiem = hour >= 12 ? "PM" : "AM";
+    const hour12 = hour % 12 === 0 ? 12 : hour % 12;
+    const minute = String(date.getUTCMinutes()).padStart(2, "0");
+    return `${day} ${month}, ${date.getUTCFullYear()} lúc ${hour12}:${minute} ${meridiem}`;
+  } catch {
+    return dateString;
+  }
+}
+
 export function slugify(text: string): string {
   return text
     .toLowerCase()
