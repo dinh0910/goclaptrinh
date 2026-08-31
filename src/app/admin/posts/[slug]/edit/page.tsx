@@ -25,28 +25,23 @@ export default async function EditPostPage({
   const categories = getCategoriesWithCounts();
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-8">
-        Chỉnh sửa: {post.title}
-      </h1>
-      <PostEditor
-        mode="edit"
-        slug={post.slug}
-        categories={categories}
-        initialData={{
-          slug: post.slug,
-          title: post.title,
-          description: post.description,
-          date: post.date,
-          category: post.category,
-          tags: post.tags || [],
-          author: post.author,
-          image: post.image || "",
-          featured: post.featured,
-          content: post.content,
-          readingTime: post.readingTime,
-        }}
-      />
-    </div>
+    <PostEditor
+      mode="edit"
+      slug={post.slug}
+      categories={categories}
+      initialData={{
+        slug: post.slug,
+        title: post.title,
+        description: post.description,
+        date: post.date,
+        category: post.category,
+        tags: post.tags || [],
+        author: post.author,
+        image: post.image || "",
+        featured: post.featured,
+        content: post.content,
+        readingTime: post.readingTime,
+      }}
+    />
   );
 }

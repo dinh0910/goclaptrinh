@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { media } from "@/lib/db/schema";
+import { getImageDimensions, resolveUploadPath, UPLOAD_DIR } from "@/lib/media";
 import fs from "fs";
-import path from "path";
 
-const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads");
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 
@@ -33,14 +34,49 @@ export async function POST(request: NextRequest) {
       fs.mkdirSync(UPLOAD_DIR, { recursive: true });
     }
 
-    const ext = file.name.split(".").pop() || "jpg";
+    const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
     const filename = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-    const filepath = path.join(UPLOAD_DIR, filename);
+    const filepath = resolveUploadPath(filename);
 
-    const bytes = await file.arrayBuffer();
-    fs.writeFileSync(filepath, Buffer.from(bytes));
+    const bytes = Buffer.from(await file.arrayBuffer());
+    fs.writeFileSync(filepath, bytes);
 
-    return NextResponse.json({ url: `/uploads/${filename}` }, { status: 201 });
+    const { width, height } = await getImageDimensions(bytes);
+    const now = new Date().toISOString();
+
+    const title = (formData.get("title") as string | null)?.trim() || "";
+    const altText = (formData.get("alt") as string | null)?.trim() || "";
+    const description = (formData.get("description") as string | null)?.trim() || "";
+    const rawTags = (formData.get("tags") as string | null)?.trim() || "";
+    const tags = rawTags
+      .split(",")
+      .map((t) => t.trim().toLowerCase())
+      .filter(Boolean);
+
+    const row = db
+      .insert(media)
+      .values({
+        filename,
+        url: `/uploads/${filename}`,
+        originalName: file.name,
+        mimeType: file.type,
+        size: file.size,
+        width,
+        height,
+        title,
+        altText,
+        description,
+        tags,
+        createdAt: now,
+        updatedAt: now,
+      })
+      .returning({ id: media.id })
+      .get();
+
+    return NextResponse.json(
+      { url: `/uploads/${filename}`, id: row.id },
+      { status: 201 }
+    );
   } catch {
     return NextResponse.json({ error: "Upload failed" }, { status: 500 });
   }

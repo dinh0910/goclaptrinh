@@ -31,4 +31,31 @@ if (!categoriesTable) {
   }
 }
 
+const mediaTable = sqlite
+  .prepare(
+    "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'media'"
+  )
+  .get();
+
+if (!mediaTable) {
+  sqlite.exec(`
+    CREATE TABLE media (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      filename TEXT NOT NULL UNIQUE,
+      url TEXT NOT NULL,
+      original_name TEXT NOT NULL DEFAULT '',
+      mime_type TEXT NOT NULL DEFAULT 'image/jpeg',
+      size INTEGER NOT NULL DEFAULT 0,
+      width INTEGER NOT NULL DEFAULT 0,
+      height INTEGER NOT NULL DEFAULT 0,
+      title TEXT NOT NULL DEFAULT '',
+      alt_text TEXT NOT NULL DEFAULT '',
+      description TEXT NOT NULL DEFAULT '',
+      tags TEXT NOT NULL DEFAULT '[]',
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+  `);
+}
+
 export const db = drizzle(sqlite, { schema });

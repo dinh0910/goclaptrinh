@@ -34,9 +34,28 @@ export const categories = sqliteTable("categories", {
   description: text("description").notNull().default(""),
 });
 
+export const media = sqliteTable("media", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  filename: text("filename").notNull().unique(),
+  url: text("url").notNull(),
+  originalName: text("original_name").notNull().default(""),
+  mimeType: text("mime_type").notNull().default("image/jpeg"),
+  size: integer("size").notNull().default(0),
+  width: integer("width").notNull().default(0),
+  height: integer("height").notNull().default(0),
+  title: text("title").notNull().default(""),
+  altText: text("alt_text").notNull().default(""),
+  description: text("description").notNull().default(""),
+  tags: text("tags", { mode: "json" }).notNull().$type<string[]>().default([]),
+  createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
+  updatedAt: text("updated_at").notNull().$defaultFn(() => new Date().toISOString()),
+});
+
 export type UserRow = typeof users.$inferSelect;
 export type UserInsert = typeof users.$inferInsert;
 export type PostRow = typeof posts.$inferSelect;
 export type PostInsert = typeof posts.$inferInsert;
 export type CategoryRow = typeof categories.$inferSelect;
 export type CategoryInsert = typeof categories.$inferInsert;
+export type MediaRow = typeof media.$inferSelect;
+export type MediaInsert = typeof media.$inferInsert;

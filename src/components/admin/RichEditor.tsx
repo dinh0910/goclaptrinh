@@ -2,7 +2,7 @@
 
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import Image from "@tiptap/extension-image";
+import { ImageStyled } from "./image-extension";
 import Link from "@tiptap/extension-link";
 import Placeholder from "@tiptap/extension-placeholder";
 import Youtube from "@tiptap/extension-youtube";
@@ -23,6 +23,8 @@ import TaskItem from "@tiptap/extension-task-item";
 import { Tiktok } from "./tiktok-node";
 import { Indent } from "./indent";
 import { useRef, useState, useCallback, useEffect, memo } from "react";
+import MediaPicker from "./MediaPicker";
+import ImageToolbar from "./ImageToolbar";
 
 interface RichEditorProps {
   content: string;
@@ -233,6 +235,27 @@ const EDITOR_PROPS = {
   },
 };
 
+// Hoisted to module scope so `useEditor`'s option comparison treats it as
+// stable across renders. If rebuilt inline, the new reference triggers
+// `editor.setOptions(...)`, which re-initializes the document and drops any
+// freshly inserted nodes (e.g. images from the media library).
+const EXTENSIONS = [
+  StarterKit.configure({ heading: { levels: [1, 2, 3, 4, 5, 6] } }),
+  ImageStyled.configure({ inline: false, allowBase64: true }),
+  Link.configure({ openOnClick: false, HTMLAttributes: { class: "text-blue-600 underline dark:text-blue-400" } }),
+  Placeholder.configure({ placeholder: "Bắt đầu viết nội dung..." }),
+  Youtube.configure({ width: 640, height: 360, nocookie: true }),
+  Tiktok, Underline,
+  TextAlign.configure({ types: ["heading", "paragraph"] }),
+  Highlight.configure({ multicolor: true }),
+  Table.configure({ resizable: true }),
+  TableRow, TableCell, TableHeader,
+  Subscript, Superscript,
+  TextStyle, FontSize, FontFamily, LineHeight, Color, Typography,
+  TaskList, TaskItem.configure({ nested: true }),
+  Indent,
+];
+
 function RichEditorInner({ content, onChange }: RichEditorProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showLinkInput, setShowLinkInput] = useState(false);
@@ -240,6 +263,7 @@ function RichEditorInner({ content, onChange }: RichEditorProps) {
   const [linkText, setLinkText] = useState("");
   const [showVideoInput, setShowVideoInput] = useState(false);
   const [videoUrl, setVideoUrl] = useState("");
+  const [showMediaPicker, setShowMediaPicker] = useState(false);
   const [openDrop, setOpenDrop] = useState<string | null>(null);
   const [showTableGrid, setShowTableGrid] = useState(false);
   const [tableGridHover, setTableGridHover] = useState({ rows: 0, cols: 0 });
@@ -261,38 +285,22 @@ function RichEditorInner({ content, onChange }: RichEditorProps) {
     return () => document.removeEventListener("mousedown", handleClick);
   }, [openDrop, showTableGrid]);
 
-  const rafRef = useRef(0);
+  const toolbarRafRef = useRef(0);
 
   const editor = useEditor({
-    extensions: [
-      StarterKit.configure({ heading: { levels: [1, 2, 3, 4, 5, 6] } }),
-      Image.configure({ inline: false, allowBase64: true }),
-      Link.configure({ openOnClick: false, HTMLAttributes: { class: "text-blue-600 underline dark:text-blue-400" } }),
-      Placeholder.configure({ placeholder: "Bắt đầu viết nội dung..." }),
-      Youtube.configure({ width: 640, height: 360, nocookie: true }),
-      Tiktok, Underline,
-      TextAlign.configure({ types: ["heading", "paragraph"] }),
-      Highlight.configure({ multicolor: true }),
-      Table.configure({ resizable: true }),
-      TableRow, TableCell, TableHeader,
-      Subscript, Superscript,
-      TextStyle, FontSize, FontFamily, LineHeight, Color, Typography,
-      TaskList, TaskItem.configure({ nested: true }),
-      Indent,
-    ],
+    extensions: EXTENSIONS,
     content,
     onTransaction: () => {
-      cancelAnimationFrame(rafRef.current);
-      rafRef.current = requestAnimationFrame(() => {
+      cancelAnimationFrame(toolbarRafRef.current);
+      toolbarRafRef.current = requestAnimationFrame(() => {
         setToolbarKey((k) => k + 1);
       });
     },
     onUpdate: ({ editor: e }) => {
-      const html = e.getHTML();
-      cancelAnimationFrame(rafRef.current);
-      rafRef.current = requestAnimationFrame(() => {
+      onChangeRef.current(e.getHTML());
+      cancelAnimationFrame(toolbarRafRef.current);
+      toolbarRafRef.current = requestAnimationFrame(() => {
         setToolbarKey((k) => k + 1);
-        onChangeRef.current(html);
       });
     },
     editorProps: EDITOR_PROPS,
@@ -514,8 +522,14 @@ function RichEditorInner({ content, onChange }: RichEditorProps) {
           if (editor.isActive("link")) { cmd().unsetLink().run(); }
           else { setLinkText(editor.state.doc.textBetween(editor.state.selection.from, editor.state.selection.to, "")); setShowLinkInput(!showLinkInput); setShowVideoInput(false); }
         }} active={isMark("link")} title="Chèn link">{Icon.link}</Btn>
-        <Btn onClick={() => fileInputRef.current?.click()} title="Chèn ảnh">{Icon.image}</Btn>
+        <Btn onClick={() => fileInputRef.current?.click()} title="Tải ảnh lên">{Icon.image}</Btn>
         <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={async (e) => { const f = e.target.files?.[0]; if (f) await uploadImage(f); e.target.value = ""; }} />
+        <Btn onClick={() => setShowMediaPicker(true)} title="Chèn ảnh từ thư viện">
+          <span className="flex items-center gap-1">
+            {Icon.image}
+            <span className="text-xs">Thư viện</span>
+          </span>
+        </Btn>
         <Btn onClick={() => { setShowVideoInput(!showVideoInput); setShowLinkInput(false); }} title="Chèn video">{Icon.video}</Btn>
         <Btn onClick={() => cmd().setHorizontalRule().run()} title="Đường kẻ ngang">{Icon.hr}</Btn>
         <Btn onClick={() => cmd().clearNodes().unsetAllMarks().run()} title="Xóa format">{Icon.clear}</Btn>
@@ -526,6 +540,9 @@ function RichEditorInner({ content, onChange }: RichEditorProps) {
           <Btn onClick={() => cmd().redo().run()} disabled={!editor.can().redo()} title="Làm lại (Ctrl+Y)">{Icon.redo}</Btn>
         </div>
       </div>
+
+      {/* --- Image Toolbar --- */}
+      {toolbarKey >= 0 && editor?.isActive("image") && <ImageToolbar editor={editor} />}
 
       {/* --- Table Context Toolbar --- */}
       {toolbarKey >= 0 && editor?.isActive("table") && (
@@ -576,6 +593,26 @@ function RichEditorInner({ content, onChange }: RichEditorProps) {
           <button onClick={addVideo} className="px-3 py-1.5 text-xs font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700">Chèn</button>
           <button onClick={() => { setShowVideoInput(false); setVideoUrl(""); }} className="px-3 py-1.5 text-xs font-medium text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">Hủy</button>
         </div>
+      )}
+
+      {/* --- Media picker --- */}
+      {showMediaPicker && (
+        <MediaPicker
+          onSelect={(item) => {
+            cmd()
+              .setImage({
+                src: item.url,
+                ...(item.altText ? { alt: item.altText } : {}),
+                ...(item.title ? { title: item.title } : {}),
+                ...(item.width ? { width: item.width } : {}),
+                ...(item.height ? { height: item.height } : {}),
+              })
+              .blur()
+              .run();
+            setShowMediaPicker(false);
+          }}
+          onClose={() => setShowMediaPicker(false)}
+        />
       )}
 
       <div className="max-h-[70vh] overflow-y-auto">

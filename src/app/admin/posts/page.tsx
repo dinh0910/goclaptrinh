@@ -2,6 +2,8 @@ import { getAllPosts } from "@/lib/posts";
 import Link from "next/link";
 import PostActions from "@/components/admin/PostActions";
 import { formatDateTime } from "@/lib/utils";
+import { db } from "@/lib/db";
+import { categories } from "@/lib/db/schema";
 
 export const metadata = {
   title: "Quản lý bài viết",
@@ -9,9 +11,11 @@ export const metadata = {
 
 export default async function AdminPostsPage() {
   const posts = await getAllPosts();
+  const categoryList = db.select().from(categories).all();
+  const categoryName = Object.fromEntries(categoryList.map((c) => [c.slug, c.name]));
 
   return (
-    <div className="max-w-5xl mx-auto">
+    <div>
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Bài viết</h1>
         <Link
@@ -45,7 +49,7 @@ export default async function AdminPostsPage() {
                   )}
                 </td>
                 <td className="p-4">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">{post.category}</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">{categoryName[post.category] || post.category}</span>
                 </td>
                 <td className="p-4">
                   <span className="text-sm text-gray-500 dark:text-gray-400">

@@ -2,8 +2,10 @@
 
 import { useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { toast } from "sonner";
 import RichEditor from "./RichEditor";
+import MediaPicker from "./MediaPicker";
 
 const SEO_LIMITS = {
   title: 60,
@@ -120,6 +122,7 @@ export default function PostEditor({ mode, initialData, slug, categories }: Post
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadDragOver, setUploadDragOver] = useState(false);
+  const [showMediaPicker, setShowMediaPicker] = useState(false);
 
   const updateField = <K extends keyof PostFormData>(key: K, value: PostFormData[K]) => {
     setForm((prev) => {
@@ -226,13 +229,30 @@ export default function PostEditor({ mode, initialData, slug, categories }: Post
 
   return (
     <div>
-      {/* Top bar */}
-      <div className="flex items-center gap-3 mb-6">
-        <div className="flex-1" />
+      {/* Breadcrumb */}
+      <nav className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 mb-4">
+        <Link href="/admin" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+          Dashboard
+        </Link>
+        <span>/</span>
+        <Link href="/admin/posts" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+          Bài viết
+        </Link>
+        <span>/</span>
+        <span className="text-gray-700 dark:text-gray-200 font-medium">
+          {mode === "edit" ? "Chỉnh sửa" : "Viết mới"}
+        </span>
+      </nav>
+
+      {/* Title + Save button */}
+      <div className="flex items-center justify-between gap-4 mb-8">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white truncate">
+          {mode === "edit" ? `Chỉnh sửa: ${initialData?.title || ""}` : "Viết bài mới"}
+        </h1>
         <button
           onClick={handleSave}
           disabled={saving}
-          className="px-6 py-2.5 text-sm font-semibold text-white bg-green-600 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="px-6 py-2.5 text-sm font-semibold text-white bg-green-600 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shrink-0"
         >
           {saving ? "Đang lưu..." : mode === "edit" ? "Cập nhật" : "Tạo bài viết"}
         </button>
@@ -241,6 +261,17 @@ export default function PostEditor({ mode, initialData, slug, categories }: Post
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6">
         {/* Main content */}
         <div className="space-y-6">
+          {/* Content Editor (TipTap) */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+              Nội dung *
+            </label>
+            <RichEditor
+              content={form.content}
+              onChange={onContentChange}
+            />
+          </div>
+
           {/* Title */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
@@ -289,17 +320,6 @@ export default function PostEditor({ mode, initialData, slug, categories }: Post
               rows={2}
               className={`${fieldClass(countChars(form.description) > SEO_LIMITS.description)} resize-none`}
               placeholder="Mô tả ngắn gọn nội dung bài viết..."
-            />
-          </div>
-
-          {/* Content Editor (TipTap) */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-              Nội dung *
-            </label>
-            <RichEditor
-              content={form.content}
-              onChange={onContentChange}
             />
           </div>
         </div>
@@ -365,6 +385,13 @@ export default function PostEditor({ mode, initialData, slug, categories }: Post
               className="mt-2 w-full px-3 py-2 text-sm bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
               placeholder="Hoặc dán URL ảnh..."
             />
+            <button
+              type="button"
+              onClick={() => setShowMediaPicker(true)}
+              className="mt-2 w-full px-3 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-500/20 transition-colors"
+            >
+              🖼️ Chọn từ thư viện media
+            </button>
           </div>
 
           {/* Category */}
@@ -481,6 +508,16 @@ export default function PostEditor({ mode, initialData, slug, categories }: Post
           </label>
         </div>
       </div>
+
+      {showMediaPicker && (
+        <MediaPicker
+          onSelect={(item) => {
+            updateField("image", item.url);
+            setShowMediaPicker(false);
+          }}
+          onClose={() => setShowMediaPicker(false)}
+        />
+      )}
     </div>
   );
 }

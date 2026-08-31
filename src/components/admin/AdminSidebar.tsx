@@ -15,6 +15,7 @@ const adminLinks = [
   { href: "/admin/posts", label: "Bài viết", icon: "📝" },
   { href: "/admin/posts/new", label: "Viết mới", icon: "✏️" },
   { href: "/admin/categories", label: "Danh mục", icon: "🗂️" },
+  { href: "/admin/media", label: "Hình ảnh", icon: "🖼️" },
   { href: "/", label: "Xem site", icon: "🌐" },
 ];
 
@@ -24,7 +25,7 @@ export default function AdminSidebar({ user, collapsed, onClose }: AdminSidebarP
   return (
     <aside className="w-full h-full bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex flex-col shrink-0 overflow-y-auto overflow-x-hidden">
       {/* Header */}
-      <div className={`border-b border-gray-200 dark:border-gray-800 flex items-center ${collapsed ? "flex-col py-4 px-2" : "justify-between p-6"}`}>
+      <div className={`border-b border-gray-200 dark:border-gray-800 flex items-center ${collapsed ? "flex-col py-4 px-2" : "justify-between py-4 px-6"}`}>
         <Link
           href="/admin"
           onClick={onClose}

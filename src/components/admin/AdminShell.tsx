@@ -67,7 +67,7 @@ export default function AdminShell({ user, children }: AdminShellProps) {
 
         {/* Page content */}
         <main className="flex-1 overflow-y-auto">
-          <div className="p-6 lg:p-8">{children}</div>
+          <div className="max-w-[1600px] mx-auto p-6 lg:p-8">{children}</div>
         </main>
       </div>
     </div>

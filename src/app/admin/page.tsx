@@ -1,5 +1,7 @@
 import { getAllPosts } from "@/lib/posts";
 import { formatDateTime } from "@/lib/utils";
+import { db } from "@/lib/db";
+import { categories as categoriesTable } from "@/lib/db/schema";
 
 export const metadata = {
   title: "Admin Dashboard",
@@ -7,11 +9,13 @@ export const metadata = {
 
 export default async function AdminDashboard() {
   const posts = await getAllPosts();
+  const categoryList = db.select().from(categoriesTable).all();
+  const categoryName = Object.fromEntries(categoryList.map((c) => [c.slug, c.name]));
   const categories = [...new Set(posts.map((p) => p.category))];
   const totalTags = [...new Set(posts.flatMap((p) => p.tags))];
 
   return (
-    <div className="max-w-5xl mx-auto">
+    <div>
       <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-8">Dashboard</h1>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -48,7 +52,7 @@ export default async function AdminDashboard() {
               <div>
                 <p className="text-sm font-semibold text-gray-900 dark:text-white">{post.title}</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  {post.category} · {formatDateTime(post.date)} · {post.readingTime}
+                  {categoryName[post.category] || post.category} · {formatDateTime(post.date)} · {post.readingTime}
                 </p>
               </div>
               <a
