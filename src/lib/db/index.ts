@@ -48,6 +48,8 @@ if (!mediaTable) {
       size INTEGER NOT NULL DEFAULT 0,
       width INTEGER NOT NULL DEFAULT 0,
       height INTEGER NOT NULL DEFAULT 0,
+      original_width INTEGER NOT NULL DEFAULT 0,
+      original_height INTEGER NOT NULL DEFAULT 0,
       title TEXT NOT NULL DEFAULT '',
       alt_text TEXT NOT NULL DEFAULT '',
       description TEXT NOT NULL DEFAULT '',
@@ -57,5 +59,28 @@ if (!mediaTable) {
     );
   `);
 }
+
+// Boot-time migration: add original_width/original_height to existing DBs.
+for (const col of ["original_width", "original_height"]) {
+  const hasCol = sqlite
+    .prepare(
+      `SELECT name FROM pragma_table_info('media') WHERE name = ?`
+    )
+    .get(col);
+  if (!hasCol) {
+    sqlite.exec(
+      `ALTER TABLE media ADD COLUMN ${col} INTEGER NOT NULL DEFAULT 0;`
+    );
+  }
+}
+
+// Backfill original dimensions for existing rows that don't have them yet,
+// falling back to the current dimensions so "restore" works for older media.
+sqlite
+  .prepare(
+    `UPDATE media SET original_width = width, original_height = height
+     WHERE original_width = 0 OR original_height = 0`
+  )
+  .run();
 
 export const db = drizzle(sqlite, { schema });

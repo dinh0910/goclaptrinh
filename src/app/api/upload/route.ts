@@ -63,6 +63,8 @@ export async function POST(request: NextRequest) {
         size: file.size,
         width,
         height,
+        originalWidth: width,
+        originalHeight: height,
         title,
         altText,
         description,

@@ -8,7 +8,7 @@ import fs from "fs";
 import sharp from "sharp";
 
 export async function POST(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await auth();
@@ -27,21 +27,8 @@ export async function POST(
     return NextResponse.json({ error: "Media not found" }, { status: 404 });
   }
 
-  const body = (await request.json()) as { width?: number; height?: number };
-  const width = Math.round(Number(body.width));
-  const height = Math.round(Number(body.height));
-
-  if (
-    !Number.isInteger(width) ||
-    !Number.isInteger(height) ||
-    width <= 0 ||
-    height <= 0
-  ) {
-    return NextResponse.json(
-      { error: "Width and height must be positive integers" },
-      { status: 400 }
-    );
-  }
+  const originalWidth = existing.originalWidth || existing.width;
+  const originalHeight = existing.originalHeight || existing.height;
 
   const filepath = resolveUploadPath(existing.filename);
   if (!fs.existsSync(filepath)) {
@@ -49,9 +36,8 @@ export async function POST(
   }
 
   try {
-    // Crop-resize to the exact requested dimensions, preserving aspect ratio.
     const output = await sharp(filepath)
-      .resize(width, height, { fit: "cover", position: "centre" })
+      .resize(originalWidth, originalHeight, { fit: "inside" })
       .toBuffer();
 
     fs.writeFileSync(filepath, output);
@@ -60,17 +46,21 @@ export async function POST(
 
     db.update(media)
       .set({
-        width: meta.width || width,
-        height: meta.height || height,
+        width: meta.width || originalWidth,
+        height: meta.height || originalHeight,
         size: output.length,
         updatedAt: new Date().toISOString(),
       })
       .where(eq(media.id, numericId))
       .run();
 
-    const updated = db.select().from(media).where(eq(media.id, numericId)).get();
+    const updated = db
+      .select()
+      .from(media)
+      .where(eq(media.id, numericId))
+      .get();
     return NextResponse.json(updated);
   } catch {
-    return NextResponse.json({ error: "Resize failed" }, { status: 500 });
+    return NextResponse.json({ error: "Restore failed" }, { status: 500 });
   }
 }

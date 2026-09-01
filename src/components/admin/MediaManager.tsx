@@ -12,6 +12,8 @@ export interface MediaItem {
   size: number;
   width: number;
   height: number;
+  originalWidth: number;
+  originalHeight: number;
   title: string;
   altText: string;
   description: string;
@@ -61,6 +63,7 @@ export default function MediaManager({
   const [resizeForm, setResizeForm] = useState({ width: 0, height: 0 });
   const [saving, setSaving] = useState(false);
   const [resizing, setResizing] = useState(false);
+  const [restoring, setRestoring] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [copied, setCopied] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -177,6 +180,26 @@ export default function MediaManager({
       setError(e instanceof Error ? e.message : "Đã có lỗi xảy ra");
     } finally {
       setResizing(false);
+    }
+  };
+
+  const handleRestore = async () => {
+    if (!selected) return;
+    setRestoring(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/media/${selected.id}/restore`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Không thể khôi phục kích thước");
+      setSelected(data as MediaItem);
+      setResizeForm({ width: data.width, height: data.height });
+      setItems((prev) => prev.map((m) => (m.id === data.id ? data : m)));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Đã có lỗi xảy ra");
+    } finally {
+      setRestoring(false);
     }
   };
 
@@ -459,8 +482,8 @@ export default function MediaManager({
                   Thay đổi kích thước
                 </h3>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-                  Ảnh sẽ được thay đổi kích thước để vừa trong khung bạn nhập
-                  (giữ nguyên tỷ lệ).
+                  Ảnh sẽ được crop giữ nguyên tỷ lệ để ra đúng kích thước
+                  chiều rộng × chiều cao bạn nhập (không bị méo).
                 </p>
                 <div className="flex items-end gap-4">
                   <div>
@@ -505,6 +528,19 @@ export default function MediaManager({
                     {resizing ? "Đang xử lý..." : "Resize ảnh"}
                   </button>
                 </div>
+                {selected.originalWidth > 0 &&
+                  (selected.width !== selected.originalWidth ||
+                    selected.height !== selected.originalHeight) && (
+                    <button
+                      onClick={handleRestore}
+                      disabled={restoring}
+                      className="mt-3 px-4 py-2 text-sm font-medium text-emerald-700 dark:text-emerald-300 border border-emerald-600 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-900/30 disabled:opacity-50 transition-colors"
+                    >
+                      {restoring
+                        ? "Đang khôi phục..."
+                        : `Khôi phục kích thước gốc (${selected.originalWidth}×${selected.originalHeight})`}
+                    </button>
+                  )}
               </div>
 
               {/* Danger zone */}

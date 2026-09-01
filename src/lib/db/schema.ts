@@ -43,6 +43,8 @@ export const media = sqliteTable("media", {
   size: integer("size").notNull().default(0),
   width: integer("width").notNull().default(0),
   height: integer("height").notNull().default(0),
+  originalWidth: integer("original_width").notNull().default(0),
+  originalHeight: integer("original_height").notNull().default(0),
   title: text("title").notNull().default(""),
   altText: text("alt_text").notNull().default(""),
   description: text("description").notNull().default(""),
