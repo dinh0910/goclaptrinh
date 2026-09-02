@@ -2,14 +2,15 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
+import ConfirmDialog from "@/components/shared/ConfirmDialog";
+import RowActionsMenu from "./RowActionsMenu";
 
 export default function PostActions({ slug }: { slug: string }) {
   const router = useRouter();
   const [deleting, setDeleting] = useState(false);
+  const [showDialog, setShowDialog] = useState(false);
 
   const handleDelete = async () => {
-    if (!confirm("Bạn có chắc muốn xóa bài viết này?")) return;
     setDeleting(true);
     try {
       const res = await fetch(`/api/posts/${slug}`, { method: "DELETE" });
@@ -18,24 +19,48 @@ export default function PostActions({ slug }: { slug: string }) {
       }
     } finally {
       setDeleting(false);
+      setShowDialog(false);
     }
   };
 
   return (
-    <div className="flex items-center justify-end gap-3">
-      <Link
-        href={`/admin/posts/${slug}/edit`}
-        className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
-      >
-        Sửa
-      </Link>
-      <button
-        onClick={handleDelete}
-        disabled={deleting}
-        className="text-sm text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 disabled:opacity-50 transition-colors"
-      >
-        {deleting ? "..." : "Xóa"}
-      </button>
-    </div>
+    <>
+      <div className="flex items-center justify-end">
+        <RowActionsMenu
+          actions={[
+            {
+              label: "Sửa",
+              icon: (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4" aria-hidden>
+                  <path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+                </svg>
+              ),
+              onClick: () => router.push(`/admin/posts/${slug}/edit`),
+            },
+            {
+              label: "Xóa",
+              variant: "danger",
+              icon: (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4" aria-hidden>
+                  <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                </svg>
+              ),
+              onClick: () => setShowDialog(true),
+            },
+          ]}
+        />
+      </div>
+      <ConfirmDialog
+        open={showDialog}
+        title="Xóa bài viết"
+        message="Bạn có chắc muốn xóa bài viết này không? Hành động này không thể hoàn tác."
+        confirmLabel="Xóa"
+        cancelLabel="Hủy"
+        danger
+        loading={deleting}
+        onConfirm={handleDelete}
+        onCancel={() => setShowDialog(false)}
+      />
+    </>
   );
 }

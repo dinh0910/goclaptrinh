@@ -4,6 +4,12 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { slugify } from "@/lib/utils";
 import type { CategoryWithCount } from "@/lib/categories";
+import ConfirmDialog from "@/components/shared/ConfirmDialog";
+import RowActionsMenu from "./RowActionsMenu";
+import { SearchBar } from "./SearchBar";
+import { SortableTh } from "./SortableTh";
+import { Pagination } from "./Pagination";
+import { useTableControls } from "./useTableControls";
 
 interface CategoryManagerProps {
   initialCategories: CategoryWithCount[];
@@ -24,7 +30,28 @@ export default function CategoryManager({
   const [editingSlug, setEditingSlug] = useState<string | null>(null);
   const [editForm, setEditForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<CategoryWithCount | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const ctrl = useTableControls<CategoryWithCount>({
+    searchKeys: [(c) => c.name, (c) => c.slug, (c) => c.description],
+  });
+  const { total, totalPages, page, pageItems } = ctrl.process(
+    categories,
+    (key, c) => {
+      switch (key) {
+        case "name":
+          return c.name;
+        case "slug":
+          return c.slug;
+        case "count":
+          return c.count;
+        default:
+          return "";
+      }
+    }
+  );
 
   const refresh = async (updater?: (data: CategoryWithCount[]) => CategoryWithCount[]) => {
     // optimistic update when provided, then re-sync from server
@@ -112,18 +139,26 @@ export default function CategoryManager({
     }
   };
 
-  const handleDelete = async (cat: CategoryWithCount) => {
-    if (!confirm(`Bạn có chắc muốn xóa danh mục "${cat.name}"?`)) return;
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
     setError(null);
-    const res = await fetch(`/api/categories/${encodeURIComponent(cat.slug)}`, {
-      method: "DELETE",
-    });
+    setDeleting(true);
+    const res = await fetch(
+      `/api/categories/${encodeURIComponent(deleteTarget.slug)}`,
+      {
+        method: "DELETE",
+      }
+    );
     const data = await res.json();
     if (!res.ok) {
       setError(data.error || "Không thể xóa danh mục");
+      setDeleting(false);
+      setDeleteTarget(null);
       return;
     }
-    await refresh((prev) => prev.filter((c) => c.slug !== cat.slug));
+    await refresh((prev) => prev.filter((c) => c.slug !== deleteTarget.slug));
+    setDeleting(false);
+    setDeleteTarget(null);
   };
 
   return (
@@ -199,29 +234,38 @@ export default function CategoryManager({
       </div>
 
       {/* List */}
-      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
+      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800">
+        <div className="p-4 border-b border-gray-200 dark:border-gray-800">
+          <SearchBar
+            value={ctrl.search}
+            onChange={ctrl.setSearchAndReset}
+            placeholder="Tìm theo tên, slug, mô tả..."
+          />
+        </div>
         {categories.length === 0 ? (
           <p className="p-6 text-sm text-gray-500 dark:text-gray-400">
             Chưa có danh mục nào. Hãy thêm danh mục đầu tiên.
           </p>
         ) : (
+          <>
+          <div className="max-h-[60vh] overflow-y-auto">
           <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-200 dark:border-gray-800">
-                <th className="text-left p-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tên</th>
-                <th className="text-left p-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Slug</th>
+            <thead className="sticky top-0 z-10 bg-gray-50 dark:bg-gray-900">
+              <tr className="border-b border-gray-200 dark:border-gray-700">
+                <SortableTh label="Tên" sortKey="name" currentKey={ctrl.sortKey} dir={ctrl.sortDir} onSort={ctrl.setColumnSort} />
+                <SortableTh label="Slug" sortKey="slug" currentKey={ctrl.sortKey} dir={ctrl.sortDir} onSort={ctrl.setColumnSort} />
                 <th className="text-left p-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Mô tả</th>
-                <th className="text-left p-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Bài viết</th>
-                <th className="text-right p-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Thao tác</th>
+                <SortableTh label="Bài viết" sortKey="count" currentKey={ctrl.sortKey} dir={ctrl.sortDir} onSort={ctrl.setColumnSort} />
+                <th className="px-4 py-3.5 text-right" aria-label="Thao tác" />
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
-              {categories.map((cat) => {
+              {pageItems.map((cat) => {
                 const isEditing = editingSlug === cat.slug;
                 return (
                   <tr
                     key={cat.id}
-                    className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                    className="hover:bg-gray-50 dark:hover:bg-gray-800/50"
                   >
                     <td className="p-4 align-top">
                       {isEditing ? (
@@ -298,29 +342,71 @@ export default function CategoryManager({
                           </button>
                         </div>
                       ) : (
-                        <div className="flex items-center justify-end gap-3">
-                          <button
-                            onClick={() => startEdit(cat)}
-                            className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
-                          >
-                            Sửa
-                          </button>
-                          <button
-                            onClick={() => handleDelete(cat)}
-                            className="text-sm text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors"
-                          >
-                            Xóa
-                          </button>
+                        <div className="flex items-center justify-end">
+                          <RowActionsMenu
+                            actions={[
+                              {
+                                label: "Sửa",
+                                icon: (
+                                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4" aria-hidden>
+                                    <path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+                                  </svg>
+                                ),
+                                onClick: () => startEdit(cat),
+                              },
+                              {
+                                label: "Xóa",
+                                variant: "danger",
+                                icon: (
+                                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4" aria-hidden>
+                                    <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                                  </svg>
+                                ),
+                                onClick: () => setDeleteTarget(cat),
+                              },
+                            ]}
+                          />
                         </div>
                       )}
                     </td>
                   </tr>
                 );
               })}
+              {pageItems.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="p-6 text-center text-sm text-gray-500 dark:text-gray-400">
+                    Không tìm thấy danh mục nào phù hợp.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
+          </div>
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            totalItems={total}
+            pageSize={ctrl.pageSize}
+            onPageChange={ctrl.setPage}
+            onPageSizeChange={ctrl.setPageSize}
+          />
+          </>
         )}
       </div>
+
+      {deleteTarget && (
+        <ConfirmDialog
+          open={true}
+          title="Xóa danh mục"
+          message={`Bạn có chắc muốn xóa danh mục "${deleteTarget.name}" không? Hành động này không thể hoàn tác.`}
+          confirmLabel="Xóa"
+          cancelLabel="Hủy"
+          danger
+          loading={deleting}
+          onConfirm={handleDelete}
+          onCancel={() => setDeleteTarget(null)}
+        />
+      )}
     </div>
   );
 }

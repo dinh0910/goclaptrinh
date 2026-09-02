@@ -37,7 +37,7 @@ export async function POST(
 
   try {
     const output = await sharp(filepath)
-      .resize(originalWidth, originalHeight, { fit: "inside" })
+      .resize(originalWidth, originalHeight, { fit: "fill" })
       .toBuffer();
 
     fs.writeFileSync(filepath, output);

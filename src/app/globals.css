@@ -24,6 +24,26 @@ body {
   color: var(--foreground);
 }
 
+button,
+[role="button"] {
+  cursor: pointer;
+}
+
+button:disabled,
+[role="button"]:disabled {
+  cursor: default;
+}
+
+/* Remove any focus outline/highlight that can appear as a stray dark line
+   when table column headers are clicked to sort. */
+button:focus,
+button:focus-visible,
+[role="button"]:focus,
+[role="button"]:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
 /* Hero Animations */
 @keyframes hero-float {
   0%, 100% { transform: translateY(0px); }

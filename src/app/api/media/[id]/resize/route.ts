@@ -7,6 +7,8 @@ import { resolveUploadPath } from "@/lib/media";
 import fs from "fs";
 import sharp from "sharp";
 
+const MAX_RESIZE_BYTES = 1 * 1024 * 1024; // 1MB
+
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -49,10 +51,19 @@ export async function POST(
   }
 
   try {
-    // Crop-resize to the exact requested dimensions, preserving aspect ratio.
+    // Resize to the exact requested dimensions.
     const output = await sharp(filepath)
-      .resize(width, height, { fit: "cover", position: "centre" })
+      .resize(width, height, { fit: "fill" })
       .toBuffer();
+
+    if (output.length > MAX_RESIZE_BYTES) {
+      return NextResponse.json(
+        {
+          error: "Ảnh sau khi resize vượt quá 1MB. Hãy giảm kích thước xuống.",
+        },
+        { status: 400 }
+      );
+    }
 
     fs.writeFileSync(filepath, output);
 
