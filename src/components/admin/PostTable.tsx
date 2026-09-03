@@ -41,6 +41,8 @@ export default function PostTable({
         return p.date;
       case "tags":
         return p.tags.length;
+      case "featured":
+        return p.featured ? 1 : 0;
       default:
         return "";
     }
@@ -56,7 +58,7 @@ export default function PostTable({
             placeholder="Tìm theo tiêu đề, danh mục, tag..."
           />
         </div>
-        <div className="max-h-[60vh] overflow-y-auto">
+        <div className="max-h-[calc(100dvh-22.5rem)] overflow-y-auto">
           <table className="w-full">
             <thead className="sticky top-0 z-10 bg-gray-50 dark:bg-gray-900">
               <tr className="border-b border-gray-200 dark:border-gray-700">
@@ -64,6 +66,7 @@ export default function PostTable({
                 <SortableTh label="Danh mục" sortKey="category" currentKey={ctrl.sortKey} dir={ctrl.sortDir} onSort={ctrl.setColumnSort} />
                 <SortableTh label="Ngày" sortKey="date" currentKey={ctrl.sortKey} dir={ctrl.sortDir} onSort={ctrl.setColumnSort} />
                 <SortableTh label="Tags" sortKey="tags" currentKey={ctrl.sortKey} dir={ctrl.sortDir} onSort={ctrl.setColumnSort} />
+                <SortableTh label="Featured" sortKey="featured" currentKey={ctrl.sortKey} dir={ctrl.sortDir} onSort={ctrl.setColumnSort} />
                 <th className="px-4 py-3.5 text-right" aria-label="Thao tác" />
               </tr>
             </thead>
@@ -72,11 +75,6 @@ export default function PostTable({
                 <tr key={post.slug} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                   <td className="p-4">
                     <p className="text-sm font-semibold text-gray-900 dark:text-white">{post.title}</p>
-                    {post.featured && (
-                      <span className="inline-block mt-1 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700 bg-amber-100 rounded dark:text-amber-400 dark:bg-amber-500/10">
-                        Featured
-                      </span>
-                    )}
                   </td>
                   <td className="p-4">
                     <span className="text-sm text-gray-600 dark:text-gray-400">{categoryName[post.category] || post.category}</span>
@@ -101,13 +99,24 @@ export default function PostTable({
                     </div>
                   </td>
                   <td className="p-4">
+                    {post.featured ? (
+                      <span className="inline-flex items-center justify-center w-6 h-6 text-amber-600 dark:text-amber-400" title="Featured">
+                        <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5" aria-hidden>
+                          <path d="M12 2l2.9 6.26L21.5 9.27l-4.75 4.64 1.12 6.53L12 17.77l-5.87 3.09 1.12-6.53L2.5 9.27l6.6-1.01Z" />
+                        </svg>
+                      </span>
+                    ) : (
+                      <span className="text-gray-300 dark:text-gray-600">—</span>
+                    )}
+                  </td>
+                  <td className="p-4">
                     <PostActions slug={post.slug} />
                   </td>
                 </tr>
               ))}
               {pageItems.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="p-6 text-center text-sm text-gray-500 dark:text-gray-400">
+                  <td colSpan={6} className="p-6 text-center text-sm text-gray-500 dark:text-gray-400">
                     Không tìm thấy bài viết nào phù hợp.
                   </td>
                 </tr>

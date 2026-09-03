@@ -248,7 +248,7 @@ export default function CategoryManager({
           </p>
         ) : (
           <>
-          <div className="max-h-[60vh] overflow-y-auto">
+          <div className="max-h-[calc(100dvh-33rem)] overflow-y-auto">
           <table className="w-full">
             <thead className="sticky top-0 z-10 bg-gray-50 dark:bg-gray-900">
               <tr className="border-b border-gray-200 dark:border-gray-700">
