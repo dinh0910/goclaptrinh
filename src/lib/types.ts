@@ -17,6 +17,7 @@ export interface Category {
   slug: string;
   description: string;
   count: number;
+  icon?: string;
 }
 
 export interface SiteConfig {

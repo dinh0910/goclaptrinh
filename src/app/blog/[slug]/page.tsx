@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getAllPostSlugs, getPostBySlug, getAllPosts } from "@/lib/posts";
-import { siteConfig } from "@/lib/constants";
+import { siteConfig, DEFAULT_CATEGORY_ICON } from "@/lib/constants";
+import { getCategoryBySlug } from "@/lib/categories";
 import PostContent from "@/components/client/PostContent";
 import PostCard from "@/components/client/PostCard";
 
@@ -55,15 +56,15 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 }
 
-const CATEGORY_META: Record<string, { icon: string; gradient: string; bg: string; darkBg: string }> = {
-  javascript: { icon: "⚡", gradient: "from-yellow-400 to-orange-400", bg: "bg-yellow-50", darkBg: "dark:bg-yellow-500/5" },
-  typescript: { icon: "🔷", gradient: "from-blue-400 to-blue-600", bg: "bg-blue-50", darkBg: "dark:bg-blue-500/5" },
-  react: { icon: "⚛️", gradient: "from-cyan-400 to-cyan-600", bg: "bg-cyan-50", darkBg: "dark:bg-cyan-500/5" },
-  nextjs: { icon: "▲", gradient: "from-gray-400 to-gray-600", bg: "bg-gray-100", darkBg: "dark:bg-gray-200/5" },
-  nodejs: { icon: "🟢", gradient: "from-green-400 to-green-600", bg: "bg-green-50", darkBg: "dark:bg-green-500/5" },
-  python: { icon: "🐍", gradient: "from-sky-400 to-sky-600", bg: "bg-sky-50", darkBg: "dark:bg-sky-500/5" },
-  devops: { icon: "🔧", gradient: "from-purple-400 to-purple-600", bg: "bg-purple-50", darkBg: "dark:bg-purple-500/5" },
-  "co-ban": { icon: "📚", gradient: "from-emerald-400 to-emerald-600", bg: "bg-emerald-50", darkBg: "dark:bg-emerald-500/5" },
+const CATEGORY_META: Record<string, { gradient: string; bg: string; darkBg: string }> = {
+  javascript: { gradient: "from-yellow-400 to-orange-400", bg: "bg-yellow-50", darkBg: "dark:bg-yellow-500/5" },
+  typescript: { gradient: "from-blue-400 to-blue-600", bg: "bg-blue-50", darkBg: "dark:bg-blue-500/5" },
+  react: { gradient: "from-cyan-400 to-cyan-600", bg: "bg-cyan-50", darkBg: "dark:bg-cyan-500/5" },
+  nextjs: { gradient: "from-gray-400 to-gray-600", bg: "bg-gray-100", darkBg: "dark:bg-gray-200/5" },
+  nodejs: { gradient: "from-green-400 to-green-600", bg: "bg-green-50", darkBg: "dark:bg-green-500/5" },
+  python: { gradient: "from-sky-400 to-sky-600", bg: "bg-sky-50", darkBg: "dark:bg-sky-500/5" },
+  devops: { gradient: "from-purple-400 to-purple-600", bg: "bg-purple-50", darkBg: "dark:bg-purple-500/5" },
+  "co-ban": { gradient: "from-emerald-400 to-emerald-600", bg: "bg-emerald-50", darkBg: "dark:bg-emerald-500/5" },
 };
 
 export default async function BlogPostPage({ params }: PageProps) {
@@ -85,7 +86,8 @@ export default async function BlogPostPage({ params }: PageProps) {
     .filter((p) => p.category === post.category && p.slug !== post.slug)
     .slice(0, 3);
 
-  const catMeta = CATEGORY_META[post.category.toLowerCase()] || { icon: "📄", gradient: "from-gray-400 to-gray-600", bg: "bg-gray-50", darkBg: "dark:bg-gray-500/5" };
+  const catMeta = CATEGORY_META[post.category.toLowerCase()] || { gradient: "from-gray-400 to-gray-600", bg: "bg-gray-50", darkBg: "dark:bg-gray-500/5" };
+  const catIcon = getCategoryBySlug(post.category)?.icon || DEFAULT_CATEGORY_ICON;
 
   return (
     <div>
@@ -120,7 +122,7 @@ export default async function BlogPostPage({ params }: PageProps) {
               href={`/categories/${post.category.toLowerCase()}`}
               className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg ${catMeta.bg} text-gray-700 ${catMeta.darkBg} dark:text-gray-300 transition-opacity hover:opacity-80`}
             >
-              <span>{catMeta.icon}</span>
+              <span>{catIcon}</span>
               {post.category}
             </Link>
             <div className="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400">

@@ -22,6 +22,8 @@ export async function POST(request: NextRequest) {
     const name = typeof body.name === "string" ? body.name.trim() : "";
     const description =
       typeof body.description === "string" ? body.description.trim() : "";
+    const icon =
+      typeof body.icon === "string" && body.icon.trim() ? body.icon.trim() : "📁";
 
     if (!name) {
       return NextResponse.json(
@@ -49,7 +51,7 @@ export async function POST(request: NextRequest) {
 
     const result = db
       .insert(categories)
-      .values({ slug, name, description })
+      .values({ slug, name, description, icon })
       .returning()
       .get();
 

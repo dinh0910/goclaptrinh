@@ -1,20 +1,10 @@
 import Link from "next/link";
 import { Category } from "@/lib/types";
+import { DEFAULT_CATEGORY_ICON } from "@/lib/constants";
 
 interface CategoryListProps {
   categories: Category[];
 }
-
-const CATEGORY_ICONS: Record<string, string> = {
-  javascript: "⚡",
-  typescript: "🔷",
-  react: "⚛️",
-  nextjs: "▲",
-  nodejs: "🟢",
-  python: "🐍",
-  devops: "🔧",
-  "co-ban": "📚",
-};
 
 const CATEGORY_GRADIENTS: Record<string, string> = {
   javascript: "from-yellow-400 to-orange-400",
@@ -43,7 +33,7 @@ export default function CategoryList({ categories }: CategoryListProps) {
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
       {categories.map((category) => {
         const slug = category.slug || category.name.toLowerCase();
-        const icon = CATEGORY_ICONS[slug] || "📄";
+        const icon = category.icon || DEFAULT_CATEGORY_ICON;
         const gradient = CATEGORY_GRADIENTS[slug] || "from-gray-400 to-gray-600";
         const bg = CATEGORY_BGS[slug] || "bg-gray-50 dark:bg-gray-500/5";
 

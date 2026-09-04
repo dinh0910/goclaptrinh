@@ -10,15 +10,60 @@ import { SearchBar } from "./SearchBar";
 import { SortableTh } from "./SortableTh";
 import { Pagination } from "./Pagination";
 import { useTableControls } from "./useTableControls";
+import { CATEGORY_ICON_OPTIONS, DEFAULT_CATEGORY_ICON } from "@/lib/constants";
 
 interface CategoryManagerProps {
   initialCategories: CategoryWithCount[];
 }
 
-const emptyForm = { name: "", slug: "", description: "" };
+const emptyForm = { name: "", slug: "", description: "", icon: DEFAULT_CATEGORY_ICON };
 
 const inputClass =
   "w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white";
+
+function IconPicker({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (icon: string) => void;
+}) {
+  return (
+    <div>
+      <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+        Icon{" "}
+        <span className="text-gray-400 dark:text-gray-500">
+          (hiển thị trên site)
+        </span>
+      </label>
+      <div className="flex items-center gap-2 mb-2">
+        <div className="w-9 h-9 shrink-0 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 flex items-center justify-center text-lg">
+          {value || DEFAULT_CATEGORY_ICON}
+        </div>
+        <span className="text-xs text-gray-400 dark:text-gray-500">
+          Icon đang chọn
+        </span>
+      </div>
+      <div className="grid grid-cols-8 gap-1 max-h-28 overflow-y-auto">
+        {CATEGORY_ICON_OPTIONS.map((icon) => (
+          <button
+            key={icon}
+            type="button"
+            onClick={() => onChange(icon)}
+            title={icon}
+            className={`w-8 h-8 rounded-lg text-base flex items-center justify-center transition-colors ${
+              value === icon
+                ? "bg-blue-100 dark:bg-blue-500/20 ring-2 ring-blue-500"
+                : "hover:bg-gray-100 dark:hover:bg-gray-800"
+            }`}
+          >
+            {icon}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function CategoryManager({
   initialCategories,
@@ -106,7 +151,12 @@ export default function CategoryManager({
 
   const startEdit = (cat: CategoryWithCount) => {
     setEditingSlug(cat.slug);
-    setEditForm({ name: cat.name, slug: cat.slug, description: cat.description });
+    setEditForm({
+      name: cat.name,
+      slug: cat.slug,
+      description: cat.description,
+      icon: cat.icon || DEFAULT_CATEGORY_ICON,
+    });
     setError(null);
   };
 
@@ -162,49 +212,47 @@ export default function CategoryManager({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="xl:grid xl:grid-cols-[400px_1fr] xl:gap-6 xl:items-start">
       {error && (
-        <div className="px-4 py-3 text-sm text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-lg">
+        <div className="xl:col-span-2 px-4 py-3 text-sm text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-lg">
           {error}
         </div>
       )}
 
       {/* Add form */}
-      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
+      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6 xl:sticky xl:top-0 mb-6 xl:mb-0">
         <h2 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">
           Thêm danh mục mới
         </h2>
         <div className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-                Tên danh mục
-              </label>
-              <input
-                type="text"
-                value={addForm.name}
-                onChange={handleAddNameChange}
-                placeholder="VD: Next.js"
-                className={inputClass}
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-                Slug{" "}
-                <span className="text-gray-400 dark:text-gray-500">
-                  (tự sinh theo tên)
-                </span>
-              </label>
-              <input
-                type="text"
-                value={addForm.slug}
-                onChange={(e) =>
-                  setAddForm((f) => ({ ...f, slug: e.target.value }))
-                }
-                placeholder="VD: nextjs"
-                className={inputClass}
-              />
-            </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+              Tên danh mục
+            </label>
+            <input
+              type="text"
+              value={addForm.name}
+              onChange={handleAddNameChange}
+              placeholder="VD: Next.js"
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+              Slug{" "}
+              <span className="text-gray-400 dark:text-gray-500">
+                (tự sinh theo tên)
+              </span>
+            </label>
+            <input
+              type="text"
+              value={addForm.slug}
+              onChange={(e) =>
+                setAddForm((f) => ({ ...f, slug: e.target.value }))
+              }
+              placeholder="VD: nextjs"
+              className={inputClass}
+            />
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
@@ -216,10 +264,14 @@ export default function CategoryManager({
                 setAddForm((f) => ({ ...f, description: e.target.value }))
               }
               placeholder="Mô tả ngắn về danh mục"
-              rows={2}
+              rows={3}
               className={inputClass}
             />
           </div>
+          <IconPicker
+            value={addForm.icon}
+            onChange={(icon) => setAddForm((f) => ({ ...f, icon }))}
+          />
           <div className="flex justify-end">
             <button
               type="button"
@@ -234,7 +286,7 @@ export default function CategoryManager({
       </div>
 
       {/* List */}
-      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800">
+      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 min-w-0">
         <div className="p-4 border-b border-gray-200 dark:border-gray-800">
           <SearchBar
             value={ctrl.search}
@@ -243,12 +295,23 @@ export default function CategoryManager({
           />
         </div>
         {categories.length === 0 ? (
-          <p className="p-6 text-sm text-gray-500 dark:text-gray-400">
-            Chưa có danh mục nào. Hãy thêm danh mục đầu tiên.
-          </p>
+          <div className="p-8 text-center">
+            <div className="flex flex-col items-center gap-2">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-10 h-10 text-gray-300 dark:text-gray-600" aria-hidden>
+                <rect x="3" y="4" width="18" height="16" rx="2" />
+                <path d="M3 10h18M7 15h4" />
+              </svg>
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                Chưa có danh mục nào.
+              </p>
+              <p className="text-xs text-gray-400 dark:text-gray-500">
+                Hãy thêm danh mục đầu tiên ở bên trái.
+              </p>
+            </div>
+          </div>
         ) : (
           <>
-          <div className="max-h-[calc(100dvh-33rem)] overflow-y-auto">
+          <div className="max-h-[calc(100dvh-23rem)] overflow-y-auto">
           <table className="w-full">
             <thead className="sticky top-0 z-10 bg-gray-50 dark:bg-gray-900">
               <tr className="border-b border-gray-200 dark:border-gray-700">
@@ -269,15 +332,28 @@ export default function CategoryManager({
                   >
                     <td className="p-4 align-top">
                       {isEditing ? (
-                        <input
-                          type="text"
-                          value={editForm.name}
-                          onChange={handleEditNameChange}
-                          className={inputClass}
-                        />
+                        <div className="space-y-3">
+                          <input
+                            type="text"
+                            value={editForm.name}
+                            onChange={handleEditNameChange}
+                            className={inputClass}
+                          />
+                          <IconPicker
+                            value={editForm.icon}
+                            onChange={(icon) =>
+                              setEditForm((f) => ({ ...f, icon }))
+                            }
+                          />
+                        </div>
                       ) : (
-                        <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                          {cat.name}
+                        <span className="flex items-center gap-2">
+                          <span className="text-base w-6 flex justify-center shrink-0">
+                            {cat.icon || DEFAULT_CATEGORY_ICON}
+                          </span>
+                          <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                            {cat.name}
+                          </span>
                         </span>
                       )}
                     </td>
@@ -374,8 +450,10 @@ export default function CategoryManager({
               })}
               {pageItems.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="p-6 text-center text-sm text-gray-500 dark:text-gray-400">
-                    Không tìm thấy danh mục nào phù hợp.
+                  <td colSpan={5} className="p-8 text-center">
+                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                      Không tìm thấy danh mục nào phù hợp.
+                    </p>
                   </td>
                 </tr>
               )}

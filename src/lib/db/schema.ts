@@ -32,6 +32,7 @@ export const categories = sqliteTable("categories", {
   slug: text("slug").notNull().unique(),
   name: text("name").notNull(),
   description: text("description").notNull().default(""),
+  icon: text("icon").notNull().default("📁"),
 });
 
 export const media = sqliteTable("media", {

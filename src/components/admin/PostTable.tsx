@@ -116,8 +116,23 @@ export default function PostTable({
               ))}
               {pageItems.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="p-6 text-center text-sm text-gray-500 dark:text-gray-400">
-                    Không tìm thấy bài viết nào phù hợp.
+                  <td colSpan={6} className="p-8 text-center">
+                    <div className="flex flex-col items-center gap-2">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-10 h-10 text-gray-300 dark:text-gray-600" aria-hidden>
+                        <rect x="3" y="4" width="18" height="16" rx="2" />
+                        <path d="M3 10h18M7 15h4" />
+                      </svg>
+                      <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                        {posts.length === 0
+                          ? "Chưa có bài viết nào."
+                          : "Không tìm thấy bài viết nào phù hợp."}
+                      </p>
+                      {posts.length === 0 && (
+                        <p className="text-xs text-gray-400 dark:text-gray-500">
+                          Hãy viết bài viết đầu tiên để bắt đầu.
+                        </p>
+                      )}
+                    </div>
                   </td>
                 </tr>
               )}

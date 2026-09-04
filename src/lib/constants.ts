@@ -58,3 +58,11 @@ export const CATEGORIES = [
 ];
 
 export const POSTS_PER_PAGE = 6;
+
+export const CATEGORY_ICON_OPTIONS = [
+  "💻", "📝", "⚡", "🔷", "⚛️", "▲", "🟢", "🐍", "🔧", "📚",
+  "🎨", "🌐", "📱", "🤖", "☁️", "🗄️", "🧪", "🔒", "🚀", "⚙️",
+  "📊", "🧠", "🛠️", "📦", "🔗", "💡", "🎯", "🧩", "🖥️", "📡",
+  "🎬", "🎮", "🕸️", "🏗️", "🧾", "🔬",
+];
+export const DEFAULT_CATEGORY_ICON = "📁";

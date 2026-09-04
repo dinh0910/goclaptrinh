@@ -83,4 +83,35 @@ sqlite
   )
   .run();
 
+// Boot-time migration: add icon to existing categories DBs.
+const hasIconCol = sqlite
+  .prepare(`SELECT name FROM pragma_table_info('categories') WHERE name = ?`)
+  .get("icon");
+if (!hasIconCol) {
+  sqlite.exec(`ALTER TABLE categories ADD COLUMN icon TEXT NOT NULL DEFAULT '';`);
+}
+
+// Backfill default icons for categories that don't have one yet.
+const DEFAULT_CATEGORY_ICONS: Record<string, string> = {
+  javascript: "⚡",
+  typescript: "🔷",
+  react: "⚛️",
+  nextjs: "▲",
+  nodejs: "🟢",
+  python: "🐍",
+  devops: "🔧",
+  "co-ban": "📚",
+};
+const backfillIcons = sqlite.prepare(
+  `UPDATE categories SET icon = ? WHERE slug = ? AND (icon IS NULL OR icon = '')`
+);
+for (const [slug, icon] of Object.entries(DEFAULT_CATEGORY_ICONS)) {
+  backfillIcons.run(icon, slug);
+}
+sqlite
+  .prepare(
+    `UPDATE categories SET icon = '📁' WHERE icon IS NULL OR icon = ''`
+  )
+  .run();
+
 export const db = drizzle(sqlite, { schema });

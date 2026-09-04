@@ -2,11 +2,14 @@ import { asc, count, eq } from "drizzle-orm";
 import { db } from "./db";
 import { categories, posts } from "./db/schema";
 
+export const DEFAULT_CATEGORY_ICON = "📁";
+
 export interface CategoryWithCount {
   id: number;
   slug: string;
   name: string;
   description: string;
+  icon: string;
   count: number;
 }
 
@@ -17,6 +20,7 @@ export function getCategoriesWithCounts(): CategoryWithCount[] {
       slug: categories.slug,
       name: categories.name,
       description: categories.description,
+      icon: categories.icon,
       count: count(posts.id),
     })
     .from(categories)

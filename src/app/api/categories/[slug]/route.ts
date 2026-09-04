@@ -33,6 +33,8 @@ export async function PUT(
 
     const description =
       typeof body.description === "string" ? body.description.trim() : "";
+    const icon =
+      typeof body.icon === "string" && body.icon.trim() ? body.icon.trim() : existing.icon;
     const newSlug = slugify(
       typeof body.slug === "string" && body.slug.trim()
         ? body.slug
@@ -63,7 +65,7 @@ export async function PUT(
 
     const result = db
       .update(categories)
-      .set({ slug: newSlug, name, description })
+      .set({ slug: newSlug, name, description, icon })
       .where(eq(categories.slug, slug))
       .returning()
       .get();
