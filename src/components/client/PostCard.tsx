@@ -1,29 +1,15 @@
 import Link from "next/link";
 import { Post } from "@/lib/types";
 import { formatDate } from "@/lib/utils";
+import { categoryColor } from "@/lib/categoryColors";
 
 interface PostCardProps {
   post: Post;
   featured?: boolean;
 }
 
-const CATEGORY_COLORS: Record<string, { bg: string; text: string; darkBg: string; darkText: string; gradient: string }> = {
-  javascript: { bg: "bg-yellow-50", text: "text-yellow-700", darkBg: "dark:bg-yellow-500/10", darkText: "dark:text-yellow-400", gradient: "from-yellow-400 to-orange-400" },
-  typescript: { bg: "bg-blue-50", text: "text-blue-700", darkBg: "dark:bg-blue-500/10", darkText: "dark:text-blue-400", gradient: "from-blue-400 to-blue-600" },
-  react: { bg: "bg-cyan-50", text: "text-cyan-700", darkBg: "dark:bg-cyan-500/10", darkText: "dark:text-cyan-400", gradient: "from-cyan-400 to-cyan-600" },
-  nextjs: { bg: "bg-gray-50", text: "text-gray-700", darkBg: "dark:bg-gray-200/10", darkText: "dark:text-gray-300", gradient: "from-gray-400 to-gray-600" },
-  nodejs: { bg: "bg-green-50", text: "text-green-700", darkBg: "dark:bg-green-500/10", darkText: "dark:text-green-400", gradient: "from-green-400 to-green-600" },
-  python: { bg: "bg-sky-50", text: "text-sky-700", darkBg: "dark:bg-sky-500/10", darkText: "dark:text-sky-400", gradient: "from-sky-400 to-sky-600" },
-  devops: { bg: "bg-purple-50", text: "text-purple-700", darkBg: "dark:bg-purple-500/10", darkText: "dark:text-purple-400", gradient: "from-purple-400 to-purple-600" },
-  "co-ban": { bg: "bg-emerald-50", text: "text-emerald-700", darkBg: "dark:bg-emerald-500/10", darkText: "dark:text-emerald-400", gradient: "from-emerald-400 to-emerald-600" },
-};
-
-function getCategoryStyle(category: string) {
-  return CATEGORY_COLORS[category.toLowerCase()] || { bg: "bg-gray-50", text: "text-gray-700", darkBg: "dark:bg-gray-500/10", darkText: "dark:text-gray-400", gradient: "from-gray-400 to-gray-600" };
-}
-
 export default function PostCard({ post, featured = false }: PostCardProps) {
-  const catStyle = getCategoryStyle(post.category);
+  const catStyle = categoryColor(post.categoryColor || post.category);
 
   if (featured) {
     return (
@@ -37,7 +23,7 @@ export default function PostCard({ post, featured = false }: PostCardProps) {
               href={`/categories/${post.category.toLowerCase()}`}
               className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-lg ${catStyle.bg} ${catStyle.text} ${catStyle.darkBg} ${catStyle.darkText} transition-colors hover:opacity-80`}
             >
-              {post.category}
+              {post.categoryName || post.category}
             </Link>
             <span className="text-sm text-gray-400 dark:text-gray-500">
               {formatDate(post.date)}
@@ -109,7 +95,7 @@ export default function PostCard({ post, featured = false }: PostCardProps) {
             href={`/categories/${post.category.toLowerCase()}`}
             className={`inline-flex items-center px-2.5 py-0.5 text-[11px] font-semibold rounded-md ${catStyle.bg} ${catStyle.text} ${catStyle.darkBg} ${catStyle.darkText} transition-colors hover:opacity-80`}
           >
-            {post.category}
+            {post.categoryName || post.category}
           </Link>
           <span className="text-xs text-gray-400 dark:text-gray-500">
             {formatDate(post.date)}

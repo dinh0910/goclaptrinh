@@ -9,6 +9,15 @@ export const users = sqliteTable("users", {
   createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
 });
 
+export const roles = sqliteTable("roles", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  slug: text("slug").notNull().unique(),
+  name: text("name").notNull(),
+  description: text("description").notNull().default(""),
+  permissions: text("permissions", { mode: "json" }).notNull().$type<string[]>().default([]),
+  createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
+});
+
 export const posts = sqliteTable("posts", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   slug: text("slug").notNull().unique(),
@@ -33,6 +42,7 @@ export const categories = sqliteTable("categories", {
   name: text("name").notNull(),
   description: text("description").notNull().default(""),
   icon: text("icon").notNull().default("📁"),
+  color: text("color").notNull().default("gray"),
 });
 
 export const media = sqliteTable("media", {
@@ -56,6 +66,8 @@ export const media = sqliteTable("media", {
 
 export type UserRow = typeof users.$inferSelect;
 export type UserInsert = typeof users.$inferInsert;
+export type RoleRow = typeof roles.$inferSelect;
+export type RoleInsert = typeof roles.$inferInsert;
 export type PostRow = typeof posts.$inferSelect;
 export type PostInsert = typeof posts.$inferInsert;
 export type CategoryRow = typeof categories.$inferSelect;

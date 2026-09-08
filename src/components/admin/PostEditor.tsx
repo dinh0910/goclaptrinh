@@ -6,6 +6,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import RichEditor from "./RichEditor";
 import MediaPicker from "./MediaPicker";
+import FieldSelect from "./FieldSelect";
 
 const SEO_LIMITS = {
   title: 60,
@@ -31,7 +32,7 @@ interface PostEditorProps {
   mode: "create" | "edit";
   initialData?: Partial<PostFormData>;
   slug?: string;
-  categories?: { slug: string; name: string }[];
+  categories?: { slug: string; name: string; icon?: string }[];
 }
 
 function estimateReadingTime(html: string): string {
@@ -213,10 +214,12 @@ export default function PostEditor({ mode, initialData, slug, categories }: Post
       if (mode === "edit") {
         toast.success("Cập nhật bài viết thành công!");
         if (slug && form.slug !== slug) {
+          document.dispatchEvent(new CustomEvent("admin:navigation"));
           router.replace(`/admin/posts/${encodeURIComponent(form.slug)}/edit`);
         }
         router.refresh();
       } else {
+        document.dispatchEvent(new CustomEvent("admin:navigation"));
         router.push("/admin/posts");
         router.refresh();
       }
@@ -399,17 +402,17 @@ export default function PostEditor({ mode, initialData, slug, categories }: Post
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
               Danh mục *
             </label>
-            <select
+            <FieldSelect
               value={form.category}
-              onChange={(e) => updateField("category", e.target.value)}
-              className="w-full px-4 py-3 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-            >
-              {categories?.map((cat) => (
-                <option key={cat.slug} value={cat.slug}>
-                  {cat.name}
-                </option>
-              ))}
-            </select>
+              onChange={(v) => updateField("category", v)}
+              options={(categories ?? []).map((c) => ({
+                value: c.slug,
+                label: c.name,
+                icon: c.icon,
+              }))}
+              placeholder="Chọn danh mục..."
+              searchable
+            />
           </div>
 
           {/* Tags */}

@@ -4,15 +4,24 @@ import { eq, sql } from "drizzle-orm";
 import { db } from "./db";
 import { posts, type PostRow } from "./db/schema";
 import { Post } from "./types";
+import { getCategoryBySlug } from "./categories";
 import { embedUrlsToIframes } from "./embeds";
 
+function categoryDisplayName(slug: string): { name: string; color: string } {
+  const cat = getCategoryBySlug(slug);
+  return { name: cat?.name || slug, color: cat?.color || "gray" };
+}
+
 function rowToPost(row: PostRow, contentHtml: string): Post {
+  const { name, color } = categoryDisplayName(row.category);
   return {
     slug: row.slug,
     title: row.title,
     description: row.description,
     date: row.date,
     category: row.category,
+    categoryName: name,
+    categoryColor: color,
     tags: (row.tags as string[]) || [],
     author: row.author,
     image: row.image || "",

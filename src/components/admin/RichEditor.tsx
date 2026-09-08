@@ -25,6 +25,7 @@ import { Indent } from "./indent";
 import { useRef, useState, useCallback, useEffect, memo } from "react";
 import MediaPicker from "./MediaPicker";
 import ImageToolbar from "./ImageToolbar";
+import FloatingPanel from "./FloatingPanel";
 
 interface RichEditorProps {
   content: string;
@@ -55,24 +56,25 @@ const Btn = ({
 const Divider = () => <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1" />;
 
 const Dropdown = ({
-  name, label, menuWidth, open, onToggle, children,
+  name, label, open, onToggle, children,
 }: {
-  name: string; label: React.ReactNode; menuWidth?: string;
+  name: string; label: React.ReactNode;
   open: string | null; onToggle: (n: string) => void; children: React.ReactNode;
-}) => (
-  <div className="relative">
-    <button type="button" onClick={() => onToggle(name)}
-      onMouseDown={(e) => e.preventDefault()}
-      className="flex items-center gap-1 px-1.5 py-1 text-sm rounded-md transition-colors text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700">
-      {label}
-    </button>
-    {open === name && (
-      <div className={`absolute top-full left-0 mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50 py-1 ${menuWidth || ""}`}>
+}) => {
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  return (
+    <div className="relative">
+      <button ref={triggerRef} type="button" onClick={() => onToggle(name)}
+        onMouseDown={(e) => e.preventDefault()}
+        className="flex items-center gap-1 px-1.5 py-1 text-sm rounded-md transition-colors text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700">
+        {label}
+      </button>
+      <FloatingPanel open={open === name} anchorRef={triggerRef} onClose={() => onToggle(name)} className="min-w-44">
         {children}
-      </div>
-    )}
-  </div>
-);
+      </FloatingPanel>
+    </div>
+  );
+};
 
 const DropdownItem = ({
   active, onClick, children, style,
@@ -268,22 +270,10 @@ function RichEditorInner({ content, onChange }: RichEditorProps) {
   const [showTableGrid, setShowTableGrid] = useState(false);
   const [tableGridHover, setTableGridHover] = useState({ rows: 0, cols: 0 });
   const [toolbarKey, setToolbarKey] = useState(0);
-  const toolbarRef = useRef<HTMLDivElement>(null);
-  const tableGridRef = useRef<HTMLDivElement>(null);
+  const headingBtnRef = useRef<HTMLButtonElement>(null);
+  const tableBtnRef = useRef<HTMLSpanElement>(null);
   const onChangeRef = useRef(onChange);
   useEffect(() => { onChangeRef.current = onChange; });
-
-  useEffect(() => {
-    if (!openDrop && !showTableGrid) return;
-    const handleClick = (e: MouseEvent) => {
-      if (toolbarRef.current && !toolbarRef.current.contains(e.target as Node)) {
-        setOpenDrop(null);
-        setShowTableGrid(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [openDrop, showTableGrid]);
 
   const toolbarRafRef = useRef(0);
 
@@ -355,38 +345,36 @@ function RichEditorInner({ content, onChange }: RichEditorProps) {
 
   return (
     <div className="border border-gray-300 dark:border-gray-700 rounded-xl overflow-hidden bg-white dark:bg-gray-900">
-      <div ref={toolbarRef} className="flex flex-wrap items-center gap-0.5 px-2 py-1.5 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+      <div className="flex flex-wrap items-center gap-0.5 px-2 py-1.5 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
 
         {/* --- Heading --- */}
         <div className="relative">
-          <button type="button" onClick={() => toggle("heading")}
+          <button ref={headingBtnRef} type="button" onClick={() => toggle("heading")}
             onMouseDown={(e) => e.preventDefault()}
             className="flex items-center gap-1 px-2 py-1.5 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700 transition-colors min-w-[70px]">
             <span className="text-xs font-bold">{headingLevel() > 0 ? `H${headingLevel()}` : "P"}</span>
             <Chevron />
           </button>
-          {openDrop === "heading" && (
-            <div className="absolute top-full left-0 mt-1 w-52 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50 py-1">
-              {HEADING_OPTIONS.map((o) => (
-                <DropdownItem key={o.level}
-                  active={o.level === 0 ? headingLevel() === 0 : editor.isActive("heading", { level: o.level })}
-                  onClick={() => {
-                    if (o.level === 0) cmd().setParagraph().run();
-                    else cmd().toggleHeading({ level: o.level as 1|2|3|4|5|6 }).run();
-                    setOpenDrop(null);
-                  }}>
-                  <span className={`font-bold ${o.level === 0 ? "text-sm" : o.level <= 2 ? o.level === 1 ? "text-xl" : "text-lg" : "text-xs"}`}>{o.tag}</span>
-                  <span className="text-xs text-gray-400 dark:text-gray-500 ml-2">{o.label}</span>
-                </DropdownItem>
-              ))}
-            </div>
-          )}
+          <FloatingPanel open={openDrop === "heading"} anchorRef={headingBtnRef} onClose={() => setOpenDrop(null)} className="min-w-52">
+            {HEADING_OPTIONS.map((o) => (
+              <DropdownItem key={o.level}
+                active={o.level === 0 ? headingLevel() === 0 : editor.isActive("heading", { level: o.level })}
+                onClick={() => {
+                  if (o.level === 0) cmd().setParagraph().run();
+                  else cmd().toggleHeading({ level: o.level as 1|2|3|4|5|6 }).run();
+                  setOpenDrop(null);
+                }}>
+                <span className={`font-bold ${o.level === 0 ? "text-sm" : o.level <= 2 ? o.level === 1 ? "text-xl" : "text-lg" : "text-xs"}`}>{o.tag}</span>
+                <span className="text-xs text-gray-400 dark:text-gray-500 ml-2">{o.label}</span>
+              </DropdownItem>
+            ))}
+          </FloatingPanel>
         </div>
 
         <Divider />
 
         {/* --- Font size --- */}
-        <Dropdown name="fontSize" label={<><span className="text-xs">Aa</span><Chevron /></>} open={openDrop} onToggle={toggle} menuWidth="w-48">
+        <Dropdown name="fontSize" label={<><span className="text-xs">Aa</span><Chevron /></>} open={openDrop} onToggle={toggle} >
           {FONT_SIZES.map((fs) => (
             <DropdownItem key={fs.value} onClick={() => { if (fs.value) mark("textStyle", { fontSize: fs.value }); else unsetMark("textStyle"); setOpenDrop(null); }}>
               {fs.label}
@@ -395,7 +383,7 @@ function RichEditorInner({ content, onChange }: RichEditorProps) {
         </Dropdown>
 
         {/* --- Font family --- */}
-        <Dropdown name="fontFamily" label={<><span className="text-xs font-serif">Aa</span><Chevron /></>} open={openDrop} onToggle={toggle} menuWidth="w-52">
+        <Dropdown name="fontFamily" label={<><span className="text-xs font-serif">Aa</span><Chevron /></>} open={openDrop} onToggle={toggle} >
           {FONT_FAMILIES.map((ff) => (
             <DropdownItem key={ff.value} onClick={() => { if (ff.value) mark("textStyle", { fontFamily: ff.value }); else unsetMark("textStyle"); setOpenDrop(null); }}
               style={{ fontFamily: ff.value || "inherit" }}>
@@ -408,7 +396,7 @@ function RichEditorInner({ content, onChange }: RichEditorProps) {
         <Dropdown name="lineHeight" label={<>
           <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
           <Chevron />
-        </>} open={openDrop} onToggle={toggle} menuWidth="w-44">
+        </>} open={openDrop} onToggle={toggle} >
           {LINE_HEIGHTS.map((lh) => (
             <DropdownItem key={lh.value} onClick={() => { if (lh.value) mark("textStyle", { lineHeight: lh.value }); else unsetMark("textStyle"); setOpenDrop(null); }}>
               {lh.label}
@@ -430,7 +418,7 @@ function RichEditorInner({ content, onChange }: RichEditorProps) {
         <Divider />
 
         {/* --- Color --- */}
-        <Dropdown name="color" label={<><span className="font-bold">A</span><div className="w-4 h-1 rounded-full bg-current" /></>} open={openDrop} onToggle={toggle} menuWidth="w-40">
+        <Dropdown name="color" label={<><span className="font-bold">A</span><div className="w-4 h-1 rounded-full bg-current" /></>} open={openDrop} onToggle={toggle} >
           {TEXT_COLORS.map((tc) => (
             <DropdownItem key={tc.color || "default"} onClick={() => { if (tc.color) editor.chain().focus().setColor(tc.color).run(); else editor.chain().focus().unsetColor().run(); setOpenDrop(null); }}>
               <span className="w-4 h-4 rounded-full border border-gray-200 dark:border-gray-600 shrink-0 mr-2" style={{ backgroundColor: tc.color || "#e5e7eb" }} />
@@ -458,9 +446,11 @@ function RichEditorInner({ content, onChange }: RichEditorProps) {
 
         {/* --- Table --- */}
         <div className="relative">
-          <Btn onClick={() => { setShowTableGrid(!showTableGrid); setOpenDrop(null); }} active={showTableGrid} title="Chèn bảng">{Icon.table}</Btn>
-          {showTableGrid && (
-            <div ref={tableGridRef} className="absolute top-full left-0 mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50 p-3">
+          <span ref={tableBtnRef} className="inline-flex">
+            <Btn onClick={() => { setShowTableGrid(!showTableGrid); setOpenDrop(null); }} active={showTableGrid} title="Chèn bảng">{Icon.table}</Btn>
+          </span>
+          <FloatingPanel open={showTableGrid} anchorRef={tableBtnRef} onClose={() => setShowTableGrid(false)}>
+            <div className="p-3">
               <div className="text-xs text-gray-500 dark:text-gray-400 mb-2 text-center">
                 {tableGridHover.rows > 0 && tableGridHover.cols > 0
                   ? `${tableGridHover.rows} × ${tableGridHover.cols}`
@@ -503,7 +493,7 @@ function RichEditorInner({ content, onChange }: RichEditorProps) {
                 </button>
               </div>
             </div>
-          )}
+          </FloatingPanel>
         </div>
 
         <Divider />

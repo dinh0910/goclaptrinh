@@ -3,6 +3,7 @@ import { db } from "./db";
 import { categories, posts } from "./db/schema";
 
 export const DEFAULT_CATEGORY_ICON = "📁";
+export const DEFAULT_CATEGORY_COLOR = "gray";
 
 export interface CategoryWithCount {
   id: number;
@@ -10,6 +11,7 @@ export interface CategoryWithCount {
   name: string;
   description: string;
   icon: string;
+  color: string;
   count: number;
 }
 
@@ -21,6 +23,7 @@ export function getCategoriesWithCounts(): CategoryWithCount[] {
       name: categories.name,
       description: categories.description,
       icon: categories.icon,
+      color: categories.color,
       count: count(posts.id),
     })
     .from(categories)

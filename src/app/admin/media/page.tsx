@@ -2,6 +2,8 @@ import MediaManager from "@/components/admin/MediaManager";
 import { db } from "@/lib/db";
 import { media } from "@/lib/db/schema";
 import { desc } from "drizzle-orm";
+import { requireAuth, PERMISSIONS } from "@/lib/permissions";
+import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
@@ -10,6 +12,9 @@ export const metadata = {
 };
 
 export default async function AdminMediaPage() {
+  if (!(await requireAuth([PERMISSIONS.media]))) {
+    notFound();
+  }
   const items = db.select().from(media).orderBy(desc(media.createdAt)).all();
 
   return (

@@ -6,21 +6,35 @@ import { signOut } from "next-auth/react";
 
 interface AdminSidebarProps {
   user?: { name?: string | null; email?: string | null } | null;
+  permissions?: string[];
   collapsed: boolean;
   onClose: () => void;
 }
 
-const adminLinks = [
+interface AdminLink {
+  href: string;
+  label: string;
+  icon: string;
+  permission?: string;
+}
+
+const adminLinks: AdminLink[] = [
   { href: "/admin", label: "Dashboard", icon: "📊" },
-  { href: "/admin/posts", label: "Bài viết", icon: "📝" },
-  { href: "/admin/posts/new", label: "Viết mới", icon: "✏️" },
-  { href: "/admin/categories", label: "Danh mục", icon: "🗂️" },
-  { href: "/admin/media", label: "Hình ảnh", icon: "🖼️" },
+  { href: "/admin/posts", label: "Bài viết", icon: "📝", permission: "posts" },
+  { href: "/admin/posts/new", label: "Viết mới", icon: "✏️", permission: "posts" },
+  { href: "/admin/categories", label: "Danh mục", icon: "🗂️", permission: "categories" },
+  { href: "/admin/media", label: "Hình ảnh", icon: "🖼️", permission: "media" },
+  { href: "/admin/users", label: "Người dùng", icon: "👥", permission: "users" },
+  { href: "/admin/roles", label: "Vai trò", icon: "🛡️", permission: "users" },
   { href: "/", label: "Xem site", icon: "🌐" },
 ];
 
-export default function AdminSidebar({ user, collapsed, onClose }: AdminSidebarProps) {
+export default function AdminSidebar({ user, permissions, collapsed, onClose }: AdminSidebarProps) {
   const pathname = usePathname();
+  const perms = permissions ?? [];
+  const visibleLinks = adminLinks.filter(
+    (link) => !link.permission || perms.includes(link.permission)
+  );
 
   return (
     <aside className="w-full h-full bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex flex-col shrink-0 overflow-y-auto overflow-x-hidden">
@@ -51,7 +65,7 @@ export default function AdminSidebar({ user, collapsed, onClose }: AdminSidebarP
 
       {/* Navigation */}
       <nav className={`flex-1 space-y-1 ${collapsed ? "p-2" : "p-4"}`}>
-        {adminLinks.map((link) => {
+        {visibleLinks.map((link) => {
           const isActive =
             link.href === "/"
               ? false

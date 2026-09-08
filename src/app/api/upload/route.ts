@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { media } from "@/lib/db/schema";
 import { getImageDimensions, resolveUploadPath, UPLOAD_DIR } from "@/lib/media";
 import sharp from "sharp";
 import fs from "fs";
+import { requireAuth, unauthorizedJson, PERMISSIONS } from "@/lib/permissions";
 
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
@@ -15,9 +15,10 @@ const ESTIMATED_QUALITY = 80;
 const COMPRESSIBLE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 export async function POST(request: NextRequest) {
-  const session = await auth();
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (
+    !(await requireAuth([PERMISSIONS.media, PERMISSIONS.posts]))
+  ) {
+    return unauthorizedJson();
   }
 
   try {

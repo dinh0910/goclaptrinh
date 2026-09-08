@@ -15,6 +15,13 @@ export async function proxy(request: NextRequest) {
     }
   }
 
+  const sessionOnly = ["/api/media", "/api/upload", "/api/users", "/api/roles"];
+  if (sessionOnly.some((prefix) => pathname.startsWith(prefix))) {
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+  }
+
   // Protect API write routes
   if (
     ["/api/posts", "/api/categories"].some((prefix) =>
@@ -31,5 +38,13 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/api/posts/:path*", "/api/categories/:path*"],
+  matcher: [
+    "/admin/:path*",
+    "/api/posts/:path*",
+    "/api/categories/:path*",
+    "/api/media/:path*",
+    "/api/upload/:path*",
+    "/api/users/:path*",
+    "/api/roles/:path*",
+  ],
 };

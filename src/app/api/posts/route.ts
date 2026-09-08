@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { posts } from "@/lib/db/schema";
+import { requireAuth, unauthorizedJson, PERMISSIONS } from "@/lib/permissions";
 
 export async function GET() {
   try {
@@ -14,6 +15,9 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    if (!(await requireAuth([PERMISSIONS.posts]))) {
+      return unauthorizedJson();
+    }
     const body = await request.json();
     const { slug, title, description, date, category, tags, author, image, featured, content, rawContent, readingTime } = body;
 

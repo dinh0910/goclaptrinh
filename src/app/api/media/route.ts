@@ -1,13 +1,12 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { media } from "@/lib/db/schema";
 import { desc } from "drizzle-orm";
+import { requireAuth, unauthorizedJson, PERMISSIONS } from "@/lib/permissions";
 
 export async function GET() {
-  const session = await auth();
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!(await requireAuth([PERMISSIONS.media, PERMISSIONS.posts]))) {
+    return unauthorizedJson();
   }
 
   const rows = db.select().from(media).orderBy(desc(media.createdAt)).all();

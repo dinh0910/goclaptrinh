@@ -3,12 +3,16 @@ import { eq, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { categories, posts } from "@/lib/db/schema";
 import { slugify } from "@/lib/utils";
+import { requireAuth, unauthorizedJson, PERMISSIONS } from "@/lib/permissions";
 
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
+    if (!(await requireAuth([PERMISSIONS.categories]))) {
+      return unauthorizedJson();
+    }
     const { slug } = await params;
     const existing = db
       .select()
@@ -35,6 +39,9 @@ export async function PUT(
       typeof body.description === "string" ? body.description.trim() : "";
     const icon =
       typeof body.icon === "string" && body.icon.trim() ? body.icon.trim() : existing.icon;
+    const color = typeof body.color === "string" && body.color.trim()
+      ? body.color.trim()
+      : existing.color;
     const newSlug = slugify(
       typeof body.slug === "string" && body.slug.trim()
         ? body.slug
@@ -65,7 +72,7 @@ export async function PUT(
 
     const result = db
       .update(categories)
-      .set({ slug: newSlug, name, description, icon })
+      .set({ slug: newSlug, name, description, icon, color })
       .where(eq(categories.slug, slug))
       .returning()
       .get();
@@ -84,6 +91,9 @@ export async function DELETE(
   { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
+    if (!(await requireAuth([PERMISSIONS.categories]))) {
+      return unauthorizedJson();
+    }
     const { slug } = await params;
     const existing = db
       .select()

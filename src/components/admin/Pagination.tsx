@@ -1,5 +1,7 @@
 "use client";
 
+import FieldSelect from "./FieldSelect";
+
 const PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
 
 export function Pagination({
@@ -43,17 +45,16 @@ export function Pagination({
         {onPageSizeChange && (
           <label className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
             Hiển thị
-            <select
-              value={pageSize}
-              onChange={(e) => onPageSizeChange(Number(e.target.value))}
-              className="h-7 px-1.5 text-xs bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              {PAGE_SIZE_OPTIONS.map((n) => (
-                <option key={n} value={n}>
-                  {n}
-                </option>
-              ))}
-            </select>
+            <FieldSelect
+              value={String(pageSize)}
+              onChange={(v) => onPageSizeChange(Number(v))}
+              options={PAGE_SIZE_OPTIONS.map((n) => ({
+                value: String(n),
+                label: String(n),
+              }))}
+              size="sm"
+              className="w-16"
+            />
             / trang
           </label>
         )}

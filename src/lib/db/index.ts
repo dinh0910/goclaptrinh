@@ -114,4 +114,68 @@ sqlite
   )
   .run();
 
+// Boot-time migration: add color to existing categories DBs.
+const hasColorCol = sqlite
+  .prepare(`SELECT name FROM pragma_table_info('categories') WHERE name = ?`)
+  .get("color");
+if (!hasColorCol) {
+  sqlite.exec(`ALTER TABLE categories ADD COLUMN color TEXT NOT NULL DEFAULT '';`);
+}
+
+// Backfill default colors for categories that don't have one yet.
+const DEFAULT_CATEGORY_COLORS: Record<string, string> = {
+  javascript: "yellow",
+  typescript: "blue",
+  react: "cyan",
+  nextjs: "gray",
+  nodejs: "green",
+  python: "sky",
+  devops: "purple",
+  "co-ban": "emerald",
+};
+const backfillColors = sqlite.prepare(
+  `UPDATE categories SET color = ? WHERE slug = ? AND (color IS NULL OR color = '')`
+);
+for (const [slug, color] of Object.entries(DEFAULT_CATEGORY_COLORS)) {
+  backfillColors.run(color, slug);
+}
+sqlite
+  .prepare(
+    `UPDATE categories SET color = 'gray' WHERE color IS NULL OR color = ''`
+  )
+  .run();
+
+// Boot-time migration: create roles table for user/role management.
+const rolesTable = sqlite
+  .prepare(
+    "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'roles'"
+  )
+  .get();
+
+if (!rolesTable) {
+  sqlite.exec(`
+    CREATE TABLE roles (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      slug TEXT NOT NULL UNIQUE,
+      name TEXT NOT NULL,
+      description TEXT NOT NULL DEFAULT '',
+      permissions TEXT NOT NULL DEFAULT '[]',
+      created_at TEXT NOT NULL
+    );
+  `);
+  const insertRole = sqlite.prepare(
+    "INSERT OR IGNORE INTO roles (slug, name, description, permissions, created_at) VALUES (?, ?, ?, ?, ?)"
+  );
+  const now = new Date().toISOString();
+  const defaultRoles: [string, string, string, string[]][] = [
+    ["admin", "Quản trị viên", "Toàn quyền trên toàn hệ thống", ["all"]],
+    ["editor", "Biên tập viên", "Quản lý bài viết, danh mục, media", ["posts", "categories", "media"]],
+    ["author", "Tác giả", "Chỉ viết và chỉnh sửa bài viết", ["posts"]],
+    ["viewer", "Xem", "Chỉ xem nội dung admin", []],
+  ];
+  for (const [slug, name, description, permissions] of defaultRoles) {
+    insertRole.run(slug, name, description, JSON.stringify(permissions), now);
+  }
+}
+
 export const db = drizzle(sqlite, { schema });

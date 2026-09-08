@@ -4,6 +4,7 @@ import { posts } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { getCategoriesWithCounts } from "@/lib/categories";
 import PostEditor from "@/components/admin/PostEditor";
+import { requireAuth, PERMISSIONS } from "@/lib/permissions";
 
 export const metadata = {
   title: "Chỉnh sửa bài viết",
@@ -14,6 +15,9 @@ export default async function EditPostPage({
 }: {
   params: Promise<{ slug: string }>;
 }) {
+  if (!(await requireAuth([PERMISSIONS.posts]))) {
+    notFound();
+  }
   const { slug } = await params;
 
   const post = db.select().from(posts).where(eq(posts.slug, slug)).get();

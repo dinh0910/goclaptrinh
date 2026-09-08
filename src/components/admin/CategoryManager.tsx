@@ -10,13 +10,28 @@ import { SearchBar } from "./SearchBar";
 import { SortableTh } from "./SortableTh";
 import { Pagination } from "./Pagination";
 import { useTableControls } from "./useTableControls";
-import { CATEGORY_ICON_OPTIONS, DEFAULT_CATEGORY_ICON } from "@/lib/constants";
+import {
+  CATEGORY_ICON_GROUPS,
+  CATEGORY_ICON_OPTIONS,
+  DEFAULT_CATEGORY_ICON,
+} from "@/lib/constants";
+import {
+  CATEGORY_COLOR_OPTIONS,
+  DEFAULT_CATEGORY_COLOR,
+  categoryColor,
+} from "@/lib/categoryColors";
 
 interface CategoryManagerProps {
   initialCategories: CategoryWithCount[];
 }
 
-const emptyForm = { name: "", slug: "", description: "", icon: DEFAULT_CATEGORY_ICON };
+const emptyForm = {
+  name: "",
+  slug: "",
+  description: "",
+  icon: DEFAULT_CATEGORY_ICON,
+  color: DEFAULT_CATEGORY_COLOR,
+};
 
 const inputClass =
   "w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white";
@@ -28,6 +43,38 @@ function IconPicker({
   value: string;
   onChange: (icon: string) => void;
 }) {
+  const [query, setQuery] = useState("");
+  const q = query.trim().toLowerCase();
+  const selected =
+    CATEGORY_ICON_OPTIONS.find((o) => o.icon === value) || null;
+
+  const searchResults = q
+    ? CATEGORY_ICON_OPTIONS.filter(
+        (o) =>
+          o.label.toLowerCase().includes(q) ||
+          o.keywords.some((k) => k.toLowerCase().includes(q))
+      )
+    : null;
+
+  const renderIcon = (o: { icon: string; label: string }) => (
+    <button
+      key={o.icon}
+      type="button"
+      onClick={() => onChange(o.icon)}
+      title={`${o.label} ${o.icon}`}
+      className={`flex flex-col items-center gap-0.5 px-1 pt-1.5 pb-1 rounded-lg transition-colors min-w-0 ${
+        value === o.icon
+          ? "bg-blue-100 dark:bg-blue-500/20 ring-1 ring-blue-500"
+          : "hover:bg-gray-100 dark:hover:bg-gray-800"
+      }`}
+    >
+      <span className="text-lg leading-none">{o.icon}</span>
+      <span className="w-full text-[9px] leading-tight text-gray-600 dark:text-gray-400 truncate text-center">
+        {o.label}
+      </span>
+    </button>
+  );
+
   return (
     <div>
       <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
@@ -40,26 +87,98 @@ function IconPicker({
         <div className="w-9 h-9 shrink-0 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 flex items-center justify-center text-lg">
           {value || DEFAULT_CATEGORY_ICON}
         </div>
-        <span className="text-xs text-gray-400 dark:text-gray-500">
-          Icon đang chọn
+        <span className="text-xs text-gray-500 dark:text-gray-400 truncate">
+          {selected ? selected.label : "Chọn icon bên dưới"}
         </span>
       </div>
-      <div className="grid grid-cols-8 gap-1 max-h-28 overflow-y-auto">
-        {CATEGORY_ICON_OPTIONS.map((icon) => (
+      <div className="relative mb-2">
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Tìm icon... (vd: python, react)"
+          className="w-full px-3 py-1.5 pr-8 text-xs bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white"
+        />
+        {query && (
           <button
-            key={icon}
             type="button"
-            onClick={() => onChange(icon)}
-            title={icon}
-            className={`w-8 h-8 rounded-lg text-base flex items-center justify-center transition-colors ${
-              value === icon
-                ? "bg-blue-100 dark:bg-blue-500/20 ring-2 ring-blue-500"
-                : "hover:bg-gray-100 dark:hover:bg-gray-800"
-            }`}
+            onClick={() => setQuery("")}
+            title="Xóa tìm kiếm"
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
           >
-            {icon}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4" aria-hidden>
+              <path d="M18 6 6 18M6 6l12 12" />
+            </svg>
           </button>
-        ))}
+        )}
+      </div>
+
+      {searchResults !== null ? (
+        searchResults.length > 0 ? (
+          <div className="max-h-48 overflow-y-auto">
+            <div className="grid grid-cols-6 gap-1">
+              {searchResults.map(renderIcon)}
+            </div>
+          </div>
+        ) : (
+          <p className="text-xs text-gray-400 dark:text-gray-500 py-3 text-center">
+            Không tìm thấy icon nào phù hợp.
+          </p>
+        )
+      ) : (
+        <div className="max-h-48 overflow-y-auto pr-1 space-y-2">
+          {CATEGORY_ICON_GROUPS.map((group) => (
+            <div key={group.group}>
+              <h4 className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-1">
+                {group.group}
+              </h4>
+              <div className="grid grid-cols-6 gap-1">
+                {group.icons.map(renderIcon)}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ColorPicker({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (color: string) => void;
+}) {
+  return (
+    <div>
+      <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+        Màu sắc{" "}
+        <span className="text-gray-400 dark:text-gray-500">
+          (nền, gradient trên site)
+        </span>
+      </label>
+      <div className="flex flex-wrap gap-1.5">
+        {CATEGORY_COLOR_OPTIONS.map((c) => {
+          const active = value === c.key;
+          return (
+            <button
+              key={c.key}
+              type="button"
+              title={`${c.label} (${c.key})`}
+              onClick={() => onChange(c.key)}
+              className={`w-7 h-7 rounded-lg ${c.swatch} flex items-center justify-center ring-offset-2 ring-offset-white dark:ring-offset-gray-900 transition-all ${
+                active ? "ring-2 ring-gray-900 dark:ring-white scale-110" : ""
+              } hover:scale-105`}
+            >
+              {active && (
+                <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 drop-shadow" aria-hidden>
+                  <path d="M20 6 9 17l-5-5" />
+                </svg>
+              )}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -143,7 +262,7 @@ export default function CategoryManager({
         return;
       }
       setAddForm(emptyForm);
-      await refresh((prev) => [...prev, data as CategoryWithCount]);
+      await refresh((prev) => [...prev, { ...data, count: 0 } as CategoryWithCount]);
     } finally {
       setAdding(false);
     }
@@ -156,6 +275,7 @@ export default function CategoryManager({
       slug: cat.slug,
       description: cat.description,
       icon: cat.icon || DEFAULT_CATEGORY_ICON,
+      color: cat.color || DEFAULT_CATEGORY_COLOR,
     });
     setError(null);
   };
@@ -181,7 +301,9 @@ export default function CategoryManager({
       setEditingSlug(null);
       await refresh((prev) =>
         prev.map((c) =>
-          c.slug === editingSlug ? (data as CategoryWithCount) : c
+          c.slug === editingSlug
+            ? ({ ...data, count: c.count } as CategoryWithCount)
+            : c
         )
       );
     } finally {
@@ -272,6 +394,10 @@ export default function CategoryManager({
             value={addForm.icon}
             onChange={(icon) => setAddForm((f) => ({ ...f, icon }))}
           />
+          <ColorPicker
+            value={addForm.color}
+            onChange={(color) => setAddForm((f) => ({ ...f, color }))}
+          />
           <div className="flex justify-end">
             <button
               type="button"
@@ -345,9 +471,19 @@ export default function CategoryManager({
                               setEditForm((f) => ({ ...f, icon }))
                             }
                           />
+                          <ColorPicker
+                            value={editForm.color}
+                            onChange={(color) =>
+                              setEditForm((f) => ({ ...f, color }))
+                            }
+                          />
                         </div>
                       ) : (
                         <span className="flex items-center gap-2">
+                          <span
+                            className={`w-3.5 h-3.5 rounded-full shrink-0 ${categoryColor(cat.color).swatch}`}
+                            title={categoryColor(cat.color).label}
+                          />
                           <span className="text-base w-6 flex justify-center shrink-0">
                             {cat.icon || DEFAULT_CATEGORY_ICON}
                           </span>

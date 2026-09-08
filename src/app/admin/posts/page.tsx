@@ -3,12 +3,17 @@ import Link from "next/link";
 import PostTable from "@/components/admin/PostTable";
 import { db } from "@/lib/db";
 import { categories } from "@/lib/db/schema";
+import { requireAuth, PERMISSIONS } from "@/lib/permissions";
+import { notFound } from "next/navigation";
 
 export const metadata = {
   title: "Quản lý bài viết",
 };
 
 export default async function AdminPostsPage() {
+  if (!(await requireAuth([PERMISSIONS.posts]))) {
+    notFound();
+  }
   const posts = await getAllPosts();
   const categoryList = db.select().from(categories).all();
   const categoryName = Object.fromEntries(

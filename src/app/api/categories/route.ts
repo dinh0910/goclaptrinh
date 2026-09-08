@@ -4,6 +4,7 @@ import { categories } from "@/lib/db/schema";
 import { getCategoriesWithCounts } from "@/lib/categories";
 import { slugify } from "@/lib/utils";
 import { eq } from "drizzle-orm";
+import { requireAuth, unauthorizedJson, PERMISSIONS } from "@/lib/permissions";
 
 export async function GET() {
   try {
@@ -18,12 +19,18 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    if (!(await requireAuth([PERMISSIONS.categories]))) {
+      return unauthorizedJson();
+    }
     const body = await request.json();
     const name = typeof body.name === "string" ? body.name.trim() : "";
     const description =
       typeof body.description === "string" ? body.description.trim() : "";
     const icon =
       typeof body.icon === "string" && body.icon.trim() ? body.icon.trim() : "📁";
+    const color = typeof body.color === "string" && body.color.trim()
+      ? body.color.trim()
+      : "gray";
 
     if (!name) {
       return NextResponse.json(
@@ -51,7 +58,7 @@ export async function POST(request: NextRequest) {
 
     const result = db
       .insert(categories)
-      .values({ slug, name, description, icon })
+      .values({ slug, name, description, icon, color })
       .returning()
       .get();
 

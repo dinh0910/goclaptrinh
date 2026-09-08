@@ -4,6 +4,8 @@ export interface Post {
   description: string;
   date: string;
   category: string;
+  categoryName?: string;
+  categoryColor?: string;
   tags: string[];
   author: string;
   image?: string;
@@ -13,11 +15,12 @@ export interface Post {
 }
 
 export interface Category {
-  name: string;
   slug: string;
+  name: string;
   description: string;
   count: number;
   icon?: string;
+  color?: string;
 }
 
 export interface SiteConfig {

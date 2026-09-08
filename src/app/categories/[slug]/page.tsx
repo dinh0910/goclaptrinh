@@ -4,6 +4,7 @@ import Link from "next/link";
 import { siteConfig, DEFAULT_CATEGORY_ICON } from "@/lib/constants";
 import { getCategoryBySlug, getCategoriesWithCounts } from "@/lib/categories";
 import { getPostsByCategory } from "@/lib/posts";
+import { categoryColor, DEFAULT_CATEGORY_COLOR } from "@/lib/categoryColors";
 import PostCard from "@/components/client/PostCard";
 
 interface PageProps {
@@ -33,32 +34,21 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-const CATEGORY_META: Record<string, { gradient: string; bg: string; darkBg: string }> = {
-  javascript: { gradient: "from-yellow-400 to-orange-400", bg: "bg-yellow-50", darkBg: "dark:bg-yellow-500/5" },
-  typescript: { gradient: "from-blue-400 to-blue-600", bg: "bg-blue-50", darkBg: "dark:bg-blue-500/5" },
-  react: { gradient: "from-cyan-400 to-cyan-600", bg: "bg-cyan-50", darkBg: "dark:bg-cyan-500/5" },
-  nextjs: { gradient: "from-gray-400 to-gray-600", bg: "bg-gray-100", darkBg: "dark:bg-gray-200/5" },
-  nodejs: { gradient: "from-green-400 to-green-600", bg: "bg-green-50", darkBg: "dark:bg-green-500/5" },
-  python: { gradient: "from-sky-400 to-sky-600", bg: "bg-sky-50", darkBg: "dark:bg-sky-500/5" },
-  devops: { gradient: "from-purple-400 to-purple-600", bg: "bg-purple-50", darkBg: "dark:bg-purple-500/5" },
-  "co-ban": { gradient: "from-emerald-400 to-emerald-600", bg: "bg-emerald-50", darkBg: "dark:bg-emerald-500/5" },
-};
-
 export default async function CategoryPage({ params }: PageProps) {
   const { slug } = await params;
   const category = getCategoryBySlug(slug);
   if (!category) notFound();
 
   const posts = await getPostsByCategory(category.slug);
-  const meta = CATEGORY_META[slug] || { gradient: "from-gray-400 to-gray-600", bg: "bg-gray-50", darkBg: "dark:bg-gray-500/5" };
+  const color = categoryColor(category.color || DEFAULT_CATEGORY_COLOR);
   const icon = category.icon || DEFAULT_CATEGORY_ICON;
 
   return (
     <div>
       {/* Hero */}
-      <section className={`relative overflow-hidden ${meta.bg} ${meta.darkBg}`}>
+      <section className={`relative overflow-hidden ${color.bg} ${color.darkBg}`}>
         <div className="absolute inset-0">
-          <div className={`absolute top-[-10%] left-[-5%] w-[400px] h-[400px] rounded-full bg-gradient-to-br ${meta.gradient} opacity-10 blur-[100px]`} />
+          <div className={`absolute top-[-10%] left-[-5%] w-[400px] h-[400px] rounded-full bg-gradient-to-br ${color.gradient} opacity-10 blur-[100px]`} />
         </div>
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
           <nav className="mb-6">
@@ -80,7 +70,7 @@ export default async function CategoryPage({ params }: PageProps) {
           </nav>
 
           <div className="flex items-center gap-4">
-            <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${meta.gradient} flex items-center justify-center text-3xl shadow-lg`}>
+            <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${color.gradient} flex items-center justify-center text-3xl shadow-lg`}>
               {icon}
             </div>
             <div>

@@ -1,16 +1,66 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import AdminSidebar from "./AdminSidebar";
+import { LoadingScreen } from "@/components/shared/LoadingSpinner";
+
+const MIN_NAV_MS = 350;
 
 interface AdminShellProps {
   user?: { name?: string | null; email?: string | null } | null;
+  permissions?: string[];
   children: React.ReactNode;
 }
 
-export default function AdminShell({ user, children }: AdminShellProps) {
+export default function AdminShell({ user, permissions, children }: AdminShellProps) {
   const [open, setOpen] = useState(true);
   const [collapsed, setCollapsed] = useState(false);
+  const [navigating, setNavigating] = useState(false);
+  const pathname = usePathname();
+  const pathRef = useRef(pathname);
+  const navStartRef = useRef(0);
+  const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Finished navigating when pathname changed; keep the loading state visible
+  // for a moment so fast transitions don't just flash.
+  useEffect(() => {
+    if (pathRef.current === pathname) return;
+    pathRef.current = pathname;
+    const elapsed = Date.now() - navStartRef.current;
+    const delay = Math.max(0, MIN_NAV_MS - elapsed);
+    if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+    hideTimerRef.current = setTimeout(() => setNavigating(false), delay);
+  }, [pathname]);
+
+  useEffect(() => {
+    const startNav = () => {
+      navStartRef.current = Date.now();
+      setNavigating(true);
+    };
+    const onClick = (e: MouseEvent) => {
+      if (e.defaultPrevented) return;
+      if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey)
+        return;
+      const anchor = (e.target as HTMLElement | null)?.closest?.("a");
+      if (!anchor) return;
+      if (anchor.target && anchor.target !== "_self") return;
+      const href = anchor.getAttribute("href") || "";
+      if (!href.startsWith("/") || href.startsWith("//") || href.startsWith("#"))
+        return;
+      const [linkPath] = href.split(/[?#]/);
+      if (linkPath === location.pathname) return;
+      startNav();
+    };
+    const onNavEvent = () => startNav();
+    document.addEventListener("click", onClick, true);
+    document.addEventListener("admin:navigation", onNavEvent);
+    return () => {
+      document.removeEventListener("click", onClick, true);
+      document.removeEventListener("admin:navigation", onNavEvent);
+      if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+    };
+  }, []);
 
   return (
     <div className="flex h-full w-full">
@@ -35,6 +85,7 @@ export default function AdminShell({ user, children }: AdminShellProps) {
       >
         <AdminSidebar
           user={user}
+          permissions={permissions}
           collapsed={collapsed}
           onClose={() => setOpen(false)}
         />
@@ -67,7 +118,13 @@ export default function AdminShell({ user, children }: AdminShellProps) {
 
         {/* Page content */}
         <main className="flex-1 overflow-y-auto">
-          <div className="max-w-[1600px] mx-auto p-6 lg:p-8">{children}</div>
+          <div className="max-w-[1600px] mx-auto p-6 lg:p-8">
+            {navigating ? (
+              <LoadingScreen label="Đang tải trang..." />
+            ) : (
+              children
+            )}
+          </div>
         </main>
       </div>
     </div>

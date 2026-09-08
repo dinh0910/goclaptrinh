@@ -2,12 +2,17 @@ import { getAllPosts } from "@/lib/posts";
 import { formatDateTime } from "@/lib/utils";
 import { db } from "@/lib/db";
 import { categories as categoriesTable } from "@/lib/db/schema";
+import { requireAuth } from "@/lib/permissions";
+import { notFound } from "next/navigation";
 
 export const metadata = {
   title: "Admin Dashboard",
 };
 
 export default async function AdminDashboard() {
+  if (!(await requireAuth([]))) {
+    notFound();
+  }
   const posts = await getAllPosts();
   const categoryList = db.select().from(categoriesTable).all();
   const categoryName = Object.fromEntries(categoryList.map((c) => [c.slug, c.name]));

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { siteConfig, DEFAULT_CATEGORY_ICON } from "@/lib/constants";
 import { getCategoriesWithCounts } from "@/lib/categories";
+import { categoryColor, DEFAULT_CATEGORY_COLOR } from "@/lib/categoryColors";
 
 export const metadata: Metadata = {
   title: "Danh mục",
@@ -16,22 +17,11 @@ export const metadata: Metadata = {
   },
 };
 
-const CATEGORY_META: Record<string, { gradient: string; bg: string; darkBg: string }> = {
-  javascript: { gradient: "from-yellow-400 to-orange-400", bg: "bg-yellow-50", darkBg: "dark:bg-yellow-500/5" },
-  typescript: { gradient: "from-blue-400 to-blue-600", bg: "bg-blue-50", darkBg: "dark:bg-blue-500/5" },
-  react: { gradient: "from-cyan-400 to-cyan-600", bg: "bg-cyan-50", darkBg: "dark:bg-cyan-500/5" },
-  nextjs: { gradient: "from-gray-400 to-gray-600", bg: "bg-gray-100", darkBg: "dark:bg-gray-200/5" },
-  nodejs: { gradient: "from-green-400 to-green-600", bg: "bg-green-50", darkBg: "dark:bg-green-500/5" },
-  python: { gradient: "from-sky-400 to-sky-600", bg: "bg-sky-50", darkBg: "dark:bg-sky-500/5" },
-  devops: { gradient: "from-purple-400 to-purple-600", bg: "bg-purple-50", darkBg: "dark:bg-purple-500/5" },
-  "co-ban": { gradient: "from-emerald-400 to-emerald-600", bg: "bg-emerald-50", darkBg: "dark:bg-emerald-500/5" },
-};
-
 export default function CategoriesPage() {
   const categories = getCategoriesWithCounts().map((cat) => ({
     ...cat,
     icon: cat.icon || DEFAULT_CATEGORY_ICON,
-    meta: CATEGORY_META[cat.slug] || { gradient: "from-gray-400 to-gray-600", bg: "bg-gray-50", darkBg: "dark:bg-gray-500/5" },
+    color: categoryColor(cat.color || DEFAULT_CATEGORY_COLOR),
   }));
 
   const totalCount = categories.reduce((sum, cat) => sum + cat.count, 0);
@@ -61,14 +51,14 @@ export default function CategoriesPage() {
             <Link
               key={cat.slug}
               href={`/categories/${cat.slug}`}
-              className={`group relative overflow-hidden rounded-2xl ${cat.meta.bg} ${cat.meta.darkBg} border border-gray-200/60 dark:border-gray-800 hover:shadow-xl hover:shadow-blue-500/5 hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-300`}
+className={`group relative overflow-hidden rounded-2xl ${cat.color.bg} ${cat.color.darkBg} border border-gray-200/60 dark:border-gray-800 hover:shadow-xl hover:shadow-blue-500/5 hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-300`}
             >
               {/* Gradient accent */}
-              <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${cat.meta.gradient} opacity-60 group-hover:opacity-100 transition-opacity`} />
+              <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${cat.color.gradient} opacity-60 group-hover:opacity-100 transition-opacity`} />
 
               <div className="p-6">
                 <div className="flex items-start justify-between mb-4">
-<div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${cat.meta.gradient} flex items-center justify-center text-2xl shadow-lg`}>
+                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${cat.color.gradient} flex items-center justify-center text-2xl shadow-lg`}>
     {cat.icon}
   </div>
                   <div className="text-right">

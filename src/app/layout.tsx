@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/shared/ThemeProvider";
 import ToasterProvider from "@/components/shared/ToasterProvider";
 import Header from "@/components/shared/Header";
 import Footer from "@/components/shared/Footer";
+import TopProgressBar from "@/components/client/TopProgressBar";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -97,6 +98,7 @@ export default function RootLayout({
       <body className="min-h-screen flex flex-col bg-gray-50 text-gray-900 antialiased dark:bg-gray-950 dark:text-gray-100">
         <ThemeProvider>
           <ToasterProvider />
+          <TopProgressBar />
           <Header />
           <main className="flex-1">{children}</main>
           <Footer />

@@ -1,11 +1,16 @@
 import { getCategoriesWithCounts } from "@/lib/categories";
 import CategoryManager from "@/components/admin/CategoryManager";
+import { requireAuth, PERMISSIONS } from "@/lib/permissions";
+import { notFound } from "next/navigation";
 
 export const metadata = {
   title: "Quản lý danh mục",
 };
 
 export default async function AdminCategoriesPage() {
+  if (!(await requireAuth([PERMISSIONS.categories]))) {
+    notFound();
+  }
   const categories = getCategoriesWithCounts();
 
   return (
