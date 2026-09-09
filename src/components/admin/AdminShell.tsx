@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import AdminSidebar from "./AdminSidebar";
+import { AdminSettingsProvider, useAdminSettings } from "./AdminSettings";
 import { LoadingScreen } from "@/components/shared/LoadingSpinner";
 
 const MIN_NAV_MS = 350;
@@ -14,8 +15,18 @@ interface AdminShellProps {
 }
 
 export default function AdminShell({ user, permissions, children }: AdminShellProps) {
+  return (
+    <AdminSettingsProvider>
+      <Shell user={user} permissions={permissions}>
+        {children}
+      </Shell>
+    </AdminSettingsProvider>
+  );
+}
+
+function Shell({ user, permissions, children }: AdminShellProps) {
+  const { settings, setCollapsed } = useAdminSettings();
   const [open, setOpen] = useState(true);
-  const [collapsed, setCollapsed] = useState(false);
   const [navigating, setNavigating] = useState(false);
   const pathname = usePathname();
   const pathRef = useRef(pathname);
@@ -79,14 +90,14 @@ export default function AdminShell({ user, permissions, children }: AdminShellPr
           transition-all duration-300 ease-in-out
           lg:static lg:transition-[width]
           ${open ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
-          ${collapsed ? "lg:w-16" : "lg:w-64"}
+          ${settings.collapsed ? "lg:w-16" : "lg:w-64"}
           w-64
         `}
       >
         <AdminSidebar
           user={user}
           permissions={permissions}
-          collapsed={collapsed}
+          collapsed={settings.collapsed}
           onClose={() => setOpen(false)}
         />
       </div>
@@ -106,7 +117,7 @@ export default function AdminShell({ user, permissions, children }: AdminShellPr
           </button>
           <button
             type="button"
-            onClick={() => setCollapsed((c) => !c)}
+            onClick={() => setCollapsed(!settings.collapsed)}
             className="hidden lg:block p-2 rounded-lg text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 transition-colors"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">

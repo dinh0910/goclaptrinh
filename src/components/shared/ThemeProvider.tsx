@@ -7,9 +7,11 @@ type Theme = "light" | "dark";
 const ThemeContext = createContext<{
   theme: Theme;
   toggleTheme: () => void;
+  setTheme: (t: Theme) => void;
 }>({
   theme: "light",
   toggleTheme: () => {},
+  setTheme: () => {},
 });
 
 export function useTheme() {
@@ -23,28 +25,29 @@ function getStoredTheme(): Theme {
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>("light");
+  const [theme, setThemeState] = useState<Theme>("light");
 
   useLayoutEffect(() => {
     const initial = getStoredTheme();
     // Sync persisted theme into React state on mount; the class is also set
     // synchronously by the inline <head> script in the root layout to avoid flash.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setTheme(initial);
+    setThemeState(initial);
     document.documentElement.classList.toggle("dark", initial === "dark");
   }, []);
 
-  const toggleTheme = useCallback(() => {
-    setTheme((prev) => {
-      const next = prev === "light" ? "dark" : "light";
-      localStorage.setItem("theme", next);
-      document.documentElement.classList.toggle("dark", next === "dark");
-      return next;
-    });
+  const applyTheme = useCallback((next: Theme) => {
+    localStorage.setItem("theme", next);
+    document.documentElement.classList.toggle("dark", next === "dark");
+    setThemeState(next);
   }, []);
 
+  const toggleTheme = useCallback(() => {
+    applyTheme(theme === "light" ? "dark" : "light");
+  }, [theme, applyTheme]);
+
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+    <ThemeContext.Provider value={{ theme, toggleTheme, setTheme: applyTheme }}>
       {children}
     </ThemeContext.Provider>
   );
