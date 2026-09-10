@@ -45,5 +45,6 @@ export const PERMISSION_OPTIONS: { key: string; label: string }[] = [
   { key: "posts", label: "Bài viết" },
   { key: "categories", label: "Danh mục" },
   { key: "media", label: "Hình ảnh" },
+  { key: "banners", label: "Banner" },
   { key: "users", label: "Người dùng & vai trò" },
 ];

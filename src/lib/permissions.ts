@@ -10,6 +10,7 @@ export const PERMISSIONS = {
   categories: "categories",
   media: "media",
   users: "users",
+  banners: "banners",
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
@@ -19,6 +20,7 @@ export const ADMIN_PERMISSIONS: Permission[] = [
   PERMISSIONS.categories,
   PERMISSIONS.media,
   PERMISSIONS.users,
+  PERMISSIONS.banners,
 ];
 
 const cache = new Map<string, string[]>();

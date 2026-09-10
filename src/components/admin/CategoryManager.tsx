@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { slugify } from "@/lib/utils";
 import type { CategoryWithCount } from "@/lib/categories";
@@ -196,7 +197,6 @@ export default function CategoryManager({
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<CategoryWithCount | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
   const ctrl = useTableControls<CategoryWithCount>({
     searchKeys: [(c) => c.name, (c) => c.slug, (c) => c.description],
@@ -245,10 +245,9 @@ export default function CategoryManager({
 
   const handleAdd = async () => {
     if (!addForm.name.trim()) {
-      setError("Tên danh mục là bắt buộc");
+      toast.error("Tên danh mục là bắt buộc");
       return;
     }
-    setError(null);
     setAdding(true);
     try {
       const res = await fetch("/api/categories", {
@@ -258,11 +257,12 @@ export default function CategoryManager({
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error || "Không thể tạo danh mục");
+        toast.error(data.error || "Không thể tạo danh mục");
         return;
       }
       setAddForm(emptyForm);
       await refresh((prev) => [...prev, { ...data, count: 0 } as CategoryWithCount]);
+      toast.success("Đã tạo danh mục");
     } finally {
       setAdding(false);
     }
@@ -277,15 +277,13 @@ export default function CategoryManager({
       icon: cat.icon || DEFAULT_CATEGORY_ICON,
       color: cat.color || DEFAULT_CATEGORY_COLOR,
     });
-    setError(null);
   };
 
   const handleSaveEdit = async () => {
     if (!editingSlug || !editForm.name.trim()) {
-      setError("Tên danh mục là bắt buộc");
+      toast.error("Tên danh mục là bắt buộc");
       return;
     }
-    setError(null);
     setSaving(true);
     try {
       const res = await fetch(`/api/categories/${encodeURIComponent(editingSlug)}`, {
@@ -295,7 +293,7 @@ export default function CategoryManager({
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error || "Không thể cập nhật danh mục");
+        toast.error(data.error || "Không thể cập nhật danh mục");
         return;
       }
       setEditingSlug(null);
@@ -306,6 +304,7 @@ export default function CategoryManager({
             : c
         )
       );
+      toast.success("Đã cập nhật danh mục");
     } finally {
       setSaving(false);
     }
@@ -313,7 +312,6 @@ export default function CategoryManager({
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
-    setError(null);
     setDeleting(true);
     const res = await fetch(
       `/api/categories/${encodeURIComponent(deleteTarget.slug)}`,
@@ -323,7 +321,7 @@ export default function CategoryManager({
     );
     const data = await res.json();
     if (!res.ok) {
-      setError(data.error || "Không thể xóa danh mục");
+      toast.error(data.error || "Không thể xóa danh mục");
       setDeleting(false);
       setDeleteTarget(null);
       return;
@@ -331,16 +329,11 @@ export default function CategoryManager({
     await refresh((prev) => prev.filter((c) => c.slug !== deleteTarget.slug));
     setDeleting(false);
     setDeleteTarget(null);
+    toast.success("Đã xóa danh mục");
   };
 
   return (
     <div className="xl:grid xl:grid-cols-[400px_1fr] xl:gap-6 xl:items-start">
-      {error && (
-        <div className="xl:col-span-2 px-4 py-3 text-sm text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-lg">
-          {error}
-        </div>
-      )}
-
       {/* Add form */}
       <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6 xl:sticky xl:top-0 mb-6 xl:mb-0">
         <h2 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">
@@ -546,7 +539,6 @@ export default function CategoryManager({
                           <button
                             onClick={() => {
                               setEditingSlug(null);
-                              setError(null);
                             }}
                             className="text-sm text-gray-500 dark:text-gray-400 hover:underline"
                           >

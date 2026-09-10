@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import RowActionsMenu from "./RowActionsMenu";
@@ -45,7 +46,6 @@ export default function RoleManager({ initialRoles }: RoleManagerProps) {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<RoleListItem | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
   const ctrl = useTableControls<RoleListItem>({
     searchKeys: [() => ""],
@@ -65,10 +65,9 @@ export default function RoleManager({ initialRoles }: RoleManagerProps) {
 
   const handleAdd = async () => {
     if (!addForm.name.trim() || !addForm.slug.trim()) {
-      setError("Tên và slug vai trò là bắt buộc");
+      toast.error("Tên và slug vai trò là bắt buộc");
       return;
     }
-    setError(null);
     setAdding(true);
     try {
       const res = await fetch("/api/roles", {
@@ -78,12 +77,13 @@ export default function RoleManager({ initialRoles }: RoleManagerProps) {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error || "Không thể tạo vai trò");
+        toast.error(data.error || "Không thể tạo vai trò");
         return;
       }
       setAddForm(emptyForm);
       setRoles((prev) => [...prev, data]);
       router.refresh();
+      toast.success("Đã tạo vai trò");
     } finally {
       setAdding(false);
     }
@@ -97,15 +97,13 @@ export default function RoleManager({ initialRoles }: RoleManagerProps) {
       description: role.description,
       permissions: [...role.permissions],
     });
-    setError(null);
   };
 
   const handleSaveEdit = async () => {
     if (!editingId || !editForm.name.trim() || !editForm.slug.trim()) {
-      setError("Tên và slug vai trò là bắt buộc");
+      toast.error("Tên và slug vai trò là bắt buộc");
       return;
     }
-    setError(null);
     setSaving(true);
     try {
       const res = await fetch(`/api/roles/${editingId}`, {
@@ -115,7 +113,7 @@ export default function RoleManager({ initialRoles }: RoleManagerProps) {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error || "Không thể cập nhật vai trò");
+        toast.error(data.error || "Không thể cập nhật vai trò");
         return;
       }
       setEditingId(null);
@@ -123,6 +121,7 @@ export default function RoleManager({ initialRoles }: RoleManagerProps) {
         prev.map((r) => (r.id === editingId ? { ...r, ...data } : r))
       );
       router.refresh();
+      toast.success("Đã cập nhật vai trò");
     } finally {
       setSaving(false);
     }
@@ -130,14 +129,13 @@ export default function RoleManager({ initialRoles }: RoleManagerProps) {
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
-    setError(null);
     setDeleting(true);
     const res = await fetch(`/api/roles/${deleteTarget.id}`, {
       method: "DELETE",
     });
     const data = await res.json();
     if (!res.ok) {
-      setError(data.error || "Không thể xóa vai trò");
+      toast.error(data.error || "Không thể xóa vai trò");
       setDeleting(false);
       setDeleteTarget(null);
       return;
@@ -145,6 +143,7 @@ export default function RoleManager({ initialRoles }: RoleManagerProps) {
     setRoles((prev) => prev.filter((r) => r.id !== deleteTarget.id));
     setDeleting(false);
     setDeleteTarget(null);
+    toast.success("Đã xóa vai trò");
   };
 
   const renderPermissionsForm = (
@@ -174,12 +173,6 @@ export default function RoleManager({ initialRoles }: RoleManagerProps) {
 
   return (
     <div className="xl:grid xl:grid-cols-[380px_1fr] xl:gap-6 xl:items-start">
-      {error && (
-        <div className="xl:col-span-2 px-4 py-3 text-sm text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-lg">
-          {error}
-        </div>
-      )}
-
       {/* Add form */}
       <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6 xl:sticky xl:top-0 mb-6 xl:mb-0">
         <h2 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">
@@ -362,7 +355,7 @@ export default function RoleManager({ initialRoles }: RoleManagerProps) {
                                 {saving ? "..." : "Lưu"}
                               </button>
                               <button
-                                onClick={() => { setEditingId(null); setError(null); }}
+                                onClick={() => { setEditingId(null); }}
                                 className="text-sm text-gray-500 dark:text-gray-400 hover:underline"
                               >
                                 Hủy

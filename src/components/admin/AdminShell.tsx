@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import AdminSidebar from "./AdminSidebar";
+import AdminBreadcrumbs from "./AdminBreadcrumbs";
 import { AdminSettingsProvider, useAdminSettings } from "./AdminSettings";
 import { LoadingScreen } from "@/components/shared/LoadingSpinner";
+import type { AdminTheme } from "@/lib/admin-prefs";
 
 const MIN_NAV_MS = 350;
 
@@ -24,6 +26,42 @@ export default function AdminShell({ user, permissions, children }: AdminShellPr
   );
 }
 
+function useAdminTheme() {
+  const applyTheme = useCallback((theme: AdminTheme) => {
+    document.documentElement.classList.toggle("dark", theme === "dark");
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/admin/theme")
+      .then((res) => (res.ok ? (res.json() as Promise<{ theme?: AdminTheme }>) : null))
+      .then((data) => {
+        if (!cancelled && data?.theme) applyTheme(data.theme);
+      })
+      .catch(() => {
+        // Không áp dụng được — giữ nguyên theme mặc định của client
+      });
+
+    const onThemeEvent = (e: Event) => {
+      const theme = (e as CustomEvent).detail;
+      if (theme === "light" || theme === "dark") applyTheme(theme);
+    };
+    window.addEventListener("admin:theme", onThemeEvent);
+
+    return () => {
+      cancelled = true;
+      window.removeEventListener("admin:theme", onThemeEvent);
+      // Rời khỏi admin — khôi phục theme của site (client) như cũ
+      const stored = localStorage.getItem("theme");
+      const dark =
+        stored === "dark" ||
+        (!stored &&
+          window.matchMedia("(prefers-color-scheme: dark)").matches);
+      document.documentElement.classList.toggle("dark", dark);
+    };
+  }, [applyTheme]);
+}
+
 function Shell({ user, permissions, children }: AdminShellProps) {
   const { settings, setCollapsed } = useAdminSettings();
   const [open, setOpen] = useState(true);
@@ -32,6 +70,8 @@ function Shell({ user, permissions, children }: AdminShellProps) {
   const pathRef = useRef(pathname);
   const navStartRef = useRef(0);
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useAdminTheme();
 
   // Finished navigating when pathname changed; keep the loading state visible
   // for a moment so fast transitions don't just flash.
@@ -130,6 +170,7 @@ function Shell({ user, permissions, children }: AdminShellProps) {
         {/* Page content */}
         <main className="flex-1 overflow-y-auto">
           <div className="max-w-[1600px] mx-auto p-6 lg:p-8">
+            <AdminBreadcrumbs />
             {navigating ? (
               <LoadingScreen label="Đang tải trang..." />
             ) : (

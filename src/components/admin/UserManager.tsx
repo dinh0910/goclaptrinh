@@ -83,9 +83,7 @@ export default function UserManager({
   const [resetShow, setResetShow] = useState(false);
   const [resetDone, setResetDone] = useState(false);
   const [resetCopy, setResetCopy] = useState(false);
-  const [resetError, setResetError] = useState<string | null>(null);
   const [resetting, setResetting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const ctrl = useTableControls<UserListItem>({
     searchKeys: [(u) => u.name, (u) => u.email, (u) => u.roleName],
@@ -113,10 +111,9 @@ export default function UserManager({
       !addForm.password ||
       !addForm.role
     ) {
-      setError("Tên, email, mật khẩu và vai trò là bắt buộc");
+      toast.error("Tên, email, mật khẩu và vai trò là bắt buộc");
       return;
     }
-    setError(null);
     setAdding(true);
     try {
       const res = await fetch("/api/users", {
@@ -126,7 +123,7 @@ export default function UserManager({
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error || "Không thể tạo người dùng");
+        toast.error(data.error || "Không thể tạo người dùng");
         return;
       }
       setAddForm(emptyForm);
@@ -142,6 +139,7 @@ export default function UserManager({
           createdAt: data.createdAt,
         },
       ]);
+      toast.success("Đã tạo người dùng");
     } finally {
       setAdding(false);
     }
@@ -155,15 +153,13 @@ export default function UserManager({
       password: "",
       role: user.role,
     });
-    setError(null);
   };
 
   const handleSaveEdit = async () => {
     if (!editingId || !editForm.name.trim() || !editForm.email.trim()) {
-      setError("Tên và email là bắt buộc");
+      toast.error("Tên và email là bắt buộc");
       return;
     }
-    setError(null);
     setSaving(true);
     try {
       const res = await fetch(`/api/users/${editingId}`, {
@@ -173,7 +169,7 @@ export default function UserManager({
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error || "Không thể cập nhật người dùng");
+        toast.error(data.error || "Không thể cập nhật người dùng");
         return;
       }
       setEditingId(null);
@@ -190,6 +186,7 @@ export default function UserManager({
             : u
         )
       );
+      toast.success("Đã cập nhật người dùng");
     } finally {
       setSaving(false);
     }
@@ -197,14 +194,13 @@ export default function UserManager({
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
-    setError(null);
     setDeleting(true);
     const res = await fetch(`/api/users/${deleteTarget.id}`, {
       method: "DELETE",
     });
     const data = await res.json();
     if (!res.ok) {
-      setError(data.error || "Không thể xóa người dùng");
+      toast.error(data.error || "Không thể xóa người dùng");
       setDeleting(false);
       setDeleteTarget(null);
       return;
@@ -212,6 +208,7 @@ export default function UserManager({
     await refreshAsync((prev) => prev.filter((u) => u.id !== deleteTarget.id));
     setDeleting(false);
     setDeleteTarget(null);
+    toast.success("Đã xóa người dùng");
   };
 
   const openReset = (user: UserListItem) => {
@@ -220,7 +217,6 @@ export default function UserManager({
     setResetShow(false);
     setResetDone(false);
     setResetCopy(false);
-    setResetError(null);
   };
 
   const generatePassword = () => {
@@ -231,7 +227,6 @@ export default function UserManager({
     crypto.getRandomValues(buf);
     for (const n of buf) out += chars[n % chars.length];
     setResetPassword(out);
-    setResetError(null);
     setResetDone(false);
   };
 
@@ -249,10 +244,9 @@ export default function UserManager({
   const handleResetPassword = async () => {
     if (!resetTarget) return;
     if (resetPassword.length < 6) {
-      setResetError("Mật khẩu phải có ít nhất 6 ký tự");
+      toast.error("Mật khẩu phải có ít nhất 6 ký tự");
       return;
     }
-    setResetError(null);
     setResetting(true);
     try {
       const res = await fetch(`/api/users/${resetTarget.id}/reset-password`, {
@@ -262,7 +256,7 @@ export default function UserManager({
       });
       const data = await res.json();
       if (!res.ok) {
-        setResetError(data.error || "Không thể đặt lại mật khẩu");
+        toast.error(data.error || "Không thể đặt lại mật khẩu");
         return;
       }
       setResetDone(true);
@@ -285,12 +279,6 @@ export default function UserManager({
 
   return (
     <div className="xl:grid xl:grid-cols-[380px_1fr] xl:gap-6 xl:items-start">
-      {error && (
-        <div className="xl:col-span-2 px-4 py-3 text-sm text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-lg">
-          {error}
-        </div>
-      )}
-
       {/* Add form */}
       <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6 xl:sticky xl:top-0 mb-6 xl:mb-0">
         <h2 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">
@@ -525,7 +513,7 @@ export default function UserManager({
                                 {saving ? "..." : "Lưu"}
                               </button>
                               <button
-                                onClick={() => { setEditingId(null); setError(null); }}
+                                onClick={() => { setEditingId(null); }}
                                 className="text-sm text-gray-500 dark:text-gray-400 hover:underline"
                               >
                                 Hủy
@@ -743,11 +731,6 @@ export default function UserManager({
                     </button>
                   </div>
                 </div>
-                {resetError && (
-                  <p className="mt-3 text-xs text-red-600 dark:text-red-400">
-                    {resetError}
-                  </p>
-                )}
               </div>
             )}
 

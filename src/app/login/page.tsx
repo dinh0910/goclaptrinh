@@ -3,17 +3,16 @@
 import { Suspense, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { toast } from "sonner";
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/admin";
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setError("");
     setLoading(true);
 
     const formData = new FormData(e.currentTarget);
@@ -29,7 +28,7 @@ function LoginForm() {
     setLoading(false);
 
     if (result?.error) {
-      setError("Email hoặc mật khẩu không đúng");
+      toast.error("Email hoặc mật khẩu không đúng");
     } else {
       router.push(callbackUrl);
       router.refresh();
@@ -41,12 +40,6 @@ function LoginForm() {
       onSubmit={handleSubmit}
       className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-8 shadow-sm"
     >
-      {error && (
-        <div className="mb-4 p-3 text-sm text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-500/10 rounded-lg">
-          {error}
-        </div>
-      )}
-
       <div className="mb-4">
         <label
           htmlFor="email"

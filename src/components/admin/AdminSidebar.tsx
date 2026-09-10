@@ -26,6 +26,7 @@ const adminLinks: AdminLink[] = [
   { href: "/admin/posts/new", label: "Viết mới", icon: "✏️", permission: "posts" },
   { href: "/admin/categories", label: "Danh mục", icon: "🗂️", permission: "categories" },
   { href: "/admin/media", label: "Hình ảnh", icon: "🖼️", permission: "media" },
+  { href: "/admin/banners", label: "Banner", icon: "🎨", permission: "banners" },
   { href: "/admin/users", label: "Người dùng", icon: "👥", permission: "users" },
   { href: "/admin/roles", label: "Vai trò", icon: "🛡️", permission: "users" },
   { href: "/admin/settings", label: "Cài đặt", icon: "⚙️" },

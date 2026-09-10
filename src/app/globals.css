@@ -119,6 +119,35 @@ button:focus-visible,
   animation: about-glow 4s ease-in-out infinite;
 }
 
+/* Modern hero image banner effects */
+@keyframes hero-zoom {
+  from { transform: scale(1); }
+  to { transform: scale(1.08); }
+}
+
+@keyframes hero-caption-in {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-hero-zoom {
+  animation: hero-zoom 10s ease-out forwards;
+  will-change: transform;
+}
+
+.animate-hero-caption-in {
+  animation: hero-caption-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes hero-progress {
+  from { width: 0%; }
+  to { width: 100%; }
+}
+
+.animate-hero-progress {
+  animation: hero-progress linear forwards;
+}
+
 /* Prose */
 .prose pre {
   border-radius: 0.75rem;

@@ -5,6 +5,7 @@ import { getCategoriesWithCounts } from "@/lib/categories";
 import PostCard from "@/components/client/PostCard";
 import CategoryList from "@/components/client/CategoryList";
 import HeroBanner from "@/components/client/HeroBanner";
+import { getHeroConfig } from "@/lib/hero";
 
 export default async function Home() {
   const posts = await getAllPosts();
@@ -12,6 +13,8 @@ export default async function Home() {
   const latestPosts = posts.slice(0, 6);
 
   const categories = getCategoriesWithCounts().filter((cat) => cat.count > 0);
+
+  const heroConfig = getHeroConfig();
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -32,7 +35,7 @@ export default async function Home() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <HeroBanner />
+      <HeroBanner hero={heroConfig} />
 
       {/* Ad Banner Top - Responsive Banner 728x90 */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 mt-8">

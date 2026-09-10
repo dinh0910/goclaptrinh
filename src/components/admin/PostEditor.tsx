@@ -2,7 +2,6 @@
 
 import { useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { toast } from "sonner";
 import RichEditor from "./RichEditor";
 import MediaPicker from "./MediaPicker";
@@ -232,21 +231,6 @@ export default function PostEditor({ mode, initialData, slug, categories }: Post
 
   return (
     <div>
-      {/* Breadcrumb */}
-      <nav className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 mb-4">
-        <Link href="/admin" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-          Dashboard
-        </Link>
-        <span>/</span>
-        <Link href="/admin/posts" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-          Bài viết
-        </Link>
-        <span>/</span>
-        <span className="text-gray-700 dark:text-gray-200 font-medium">
-          {mode === "edit" ? "Chỉnh sửa" : "Viết mới"}
-        </span>
-      </nav>
-
       {/* Title + Save button */}
       <div className="flex items-center justify-between gap-4 mb-8">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white truncate">

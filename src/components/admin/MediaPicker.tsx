@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import { toast } from "sonner";
 import type { MediaItem } from "./MediaManager";
 
 interface MediaPickerProps {
@@ -21,7 +22,6 @@ export default function MediaPicker({ onSelect, onClose }: MediaPickerProps) {
   const [items, setItems] = useState<MediaItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/media")
@@ -30,7 +30,9 @@ export default function MediaPicker({ onSelect, onClose }: MediaPickerProps) {
         return res.json() as Promise<MediaItem[]>;
       })
       .then(setItems)
-      .catch((e) => setError(e instanceof Error ? e.message : "Đã có lỗi xảy ra"))
+      .catch((e) =>
+        toast.error(e instanceof Error ? e.message : "Đã có lỗi xảy ra")
+      )
       .finally(() => setLoading(false));
   }, []);
 
@@ -72,9 +74,6 @@ export default function MediaPicker({ onSelect, onClose }: MediaPickerProps) {
         </div>
 
         <div className="flex-1 overflow-y-auto p-6">
-          {error && (
-            <p className="text-sm text-red-600 dark:text-red-400 mb-4">{error}</p>
-          )}
           {loading ? (
             <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-8">
               Đang tải...

@@ -1,12 +1,23 @@
 "use client";
 
-import { useState } from "react";
-import { useTheme } from "@/components/shared/ThemeProvider";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import {
   FONT_SCALES,
   useAdminSettings,
   type FontScale,
 } from "@/components/admin/AdminSettings";
+import type { AdminTheme } from "@/lib/admin-prefs";
+
+interface Draft {
+  theme: AdminTheme;
+  fontScale: FontScale;
+}
+
+const DEFAULTS: Draft = {
+  theme: "light",
+  fontScale: "md",
+};
 
 function OptionCard({
   label,
@@ -50,41 +61,83 @@ function OptionCard({
 }
 
 export default function AdminSettingsPage() {
-  const { theme, setTheme } = useTheme();
-  const { settings, setCollapsed, setFontScale, reset } = useAdminSettings();
-  const [saved, setSaved] = useState(false);
+  const { settings, setFontScale } = useAdminSettings();
+  const [adminTheme, setAdminTheme] = useState<AdminTheme>("light");
+  const [draft, setDraft] = useState<Draft | null>(null);
 
-  const markSaved = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 1500);
+  useEffect(() => {
+    fetch("/api/admin/theme")
+      .then((res) =>
+        res.ok
+          ? (res.json() as Promise<{ theme?: AdminTheme }>)
+          : Promise.reject(new Error("Không thể tải theme"))
+      )
+      .then((data) => {
+        if (data.theme === "light" || data.theme === "dark") {
+          setAdminTheme(data.theme);
+        }
+      })
+      .catch(() => {
+        // Giữ theme mặc định
+      });
+  }, []);
+
+  const current = draft ?? {
+    theme: adminTheme,
+    fontScale: settings.fontScale,
+  };
+
+  const save = async () => {
+    if (!draft) return;
+    setFontScale(draft.fontScale);
+    try {
+      const res = await fetch("/api/admin/theme", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ theme: draft.theme }),
+      });
+      if (!res.ok) throw new Error("Không thể lưu theme");
+      setAdminTheme(draft.theme);
+      window.dispatchEvent(
+        new CustomEvent("admin:theme", { detail: draft.theme })
+      );
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Đã có lỗi xảy ra");
+      return;
+    }
+    setDraft(null);
+    toast.success("Đã lưu cài đặt của bạn");
   };
 
   return (
-    <div className="max-w-3xl">
+    <div>
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Cài đặt</h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Tùy chỉnh giao diện admin cho bạn — tự động lưu ngay khi thay đổi.
+            Tùy chỉnh giao diện admin cho tài khoản của bạn — thay đổi có
+            hiệu lực khi bấm <b>Lưu cài đặt</b>. Theme chỉ áp dụng riêng cho
+            tài khoản này, không ảnh hưởng tới trang chủ (client).
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => {
-            reset();
-            markSaved();
-          }}
-          className="text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
-        >
-          Khôi phục mặc định
-        </button>
-      </div>
-
-      {saved && (
-        <div className="mb-6 px-4 py-3 rounded-xl bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/20 text-sm text-green-700 dark:text-green-400">
-          Đã lưu cài đặt của bạn.
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setDraft({ ...DEFAULTS })}
+            className="text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+          >
+            Khôi phục mặc định
+          </button>
+          <button
+            type="button"
+            onClick={save}
+            disabled={!draft}
+            className="px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+          >
+            Lưu cài đặt
+          </button>
         </div>
-      )}
+      </div>
 
       {/* Giao diện */}
       <section className="mb-10">
@@ -95,11 +148,8 @@ export default function AdminSettingsPage() {
           <OptionCard
             label="Sáng"
             description="Giao diện nền sáng"
-            active={theme === "light"}
-            onClick={() => {
-              setTheme("light");
-              markSaved();
-            }}
+            active={current.theme === "light"}
+            onClick={() => setDraft({ ...current, theme: "light" })}
           >
             <div className="flex flex-col gap-1 rounded-lg border border-gray-200 bg-white p-2">
               <div className="h-2 w-3/4 rounded bg-gray-200" />
@@ -110,67 +160,13 @@ export default function AdminSettingsPage() {
           <OptionCard
             label="Tối"
             description="Giao diện nền tối"
-            active={theme === "dark"}
-            onClick={() => {
-              setTheme("dark");
-              markSaved();
-            }}
+            active={current.theme === "dark"}
+            onClick={() => setDraft({ ...current, theme: "dark" })}
           >
             <div className="flex flex-col gap-1 rounded-lg border border-gray-700 bg-gray-900 p-2">
               <div className="h-2 w-3/4 rounded bg-gray-600" />
               <div className="h-1.5 w-full rounded bg-gray-800" />
               <div className="h-1.5 w-2/3 rounded bg-gray-800" />
-            </div>
-          </OptionCard>
-        </div>
-      </section>
-
-      {/* Layout */}
-      <section className="mb-10">
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
-          Layout
-        </h2>
-        <div className="flex flex-wrap gap-4">
-          <OptionCard
-            label="Thanh bên mở rộng"
-            description="Hiển thị đầy đủ nhãn menu"
-            active={!settings.collapsed}
-            onClick={() => {
-              setCollapsed(false);
-              markSaved();
-            }}
-          >
-            <div className="flex gap-1.5">
-              <div className="w-8 shrink-0 space-y-1 rounded border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-1">
-                <div className="h-1 w-full rounded bg-gray-300 dark:bg-gray-600" />
-                <div className="h-1 w-full rounded bg-gray-200 dark:bg-gray-700" />
-                <div className="h-1 w-full rounded bg-gray-200 dark:bg-gray-700" />
-              </div>
-              <div className="flex-1 space-y-1 rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-1">
-                <div className="h-1.5 w-3/4 rounded bg-gray-200 dark:bg-gray-700" />
-                <div className="h-1.5 w-full rounded bg-gray-100 dark:bg-gray-800" />
-              </div>
-            </div>
-          </OptionCard>
-          <OptionCard
-            label="Thanh bên thu gọn"
-            description="Chỉ hiển thị icon, rộng hơn cho nội dung"
-            active={settings.collapsed}
-            onClick={() => {
-              setCollapsed(true);
-              markSaved();
-            }}
-          >
-            <div className="flex gap-1.5">
-              <div className="w-5 shrink-0 space-y-1 rounded border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-1">
-                <div className="mx-auto h-1.5 w-1.5 rounded-full bg-gray-300 dark:bg-gray-600" />
-                <div className="mx-auto h-1.5 w-1.5 rounded-full bg-gray-200 dark:bg-gray-700" />
-                <div className="mx-auto h-1.5 w-1.5 rounded-full bg-gray-200 dark:bg-gray-700" />
-              </div>
-              <div className="flex-1 space-y-1 rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-1">
-                <div className="h-1.5 w-3/4 rounded bg-gray-200 dark:bg-gray-700" />
-                <div className="h-1.5 w-full rounded bg-gray-100 dark:bg-gray-800" />
-              </div>
             </div>
           </OptionCard>
         </div>
@@ -189,11 +185,8 @@ export default function AdminSettingsPage() {
                 key={key}
                 label={opt.label}
                 description={`${opt.px}px`}
-                active={settings.fontScale === key}
-                onClick={() => {
-                  setFontScale(key);
-                  markSaved();
-                }}
+                active={current.fontScale === key}
+                onClick={() => setDraft({ ...current, fontScale: key })}
               >
                 <p className={`text-gray-700 dark:text-gray-300 ${opt.preview}`}>
                   Aa

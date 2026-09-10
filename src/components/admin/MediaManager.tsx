@@ -2,6 +2,7 @@
 
 import { useCallback, useRef, useState } from "react";
 import Image from "next/image";
+import { toast } from "sonner";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import { SearchBar } from "./SearchBar";
 import { Pagination } from "./Pagination";
@@ -99,7 +100,6 @@ export default function MediaManager({
   const [items, setItems] = useState<MediaItem[]>(initialItems);
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<MediaItem | null>(null);
 
   const [metaForm, setMetaForm] = useState({
@@ -158,7 +158,6 @@ export default function MediaManager({
 
   const uploadFiles = useCallback(
     async (files: FileList | File[]) => {
-      setError(null);
       const list = Array.from(files);
       if (list.length === 0) return;
 
@@ -166,7 +165,7 @@ export default function MediaManager({
         (f) => f.size > MAX_SIZE || !ALLOWED_TYPES.includes(f.type)
       );
       if (invalid) {
-        setError(
+        toast.error(
           `File "${invalid.name}" không hợp lệ (tối đa 5MB, định dạng JPG/PNG/WebP/GIF)`
         );
         return;
@@ -184,8 +183,9 @@ export default function MediaManager({
           }
         }
         await refreshMedia();
+        toast.success(`Đã tải lên ${list.length} hình ảnh`);
       } catch (e) {
-        setError(e instanceof Error ? e.message : "Upload thất bại");
+        toast.error(e instanceof Error ? e.message : "Upload thất bại");
       } finally {
         setUploading(false);
         if (inputRef.current) inputRef.current.value = "";
@@ -204,12 +204,10 @@ export default function MediaManager({
     });
     setResizeForm({ width: item.width || 0, height: item.height || 0 });
     setCopied(false);
-    setError(null);
   };
 
   const closeEdit = () => {
     if (saving || resizing || deleting) return;
-    setError(null);
     setSelected(null);
   };
 
@@ -221,12 +219,11 @@ export default function MediaManager({
     const description = metaForm.description.trim();
 
     if (!altText) {
-      setError("Vui lòng nhập Alt text — yếu tố quan trọng nhất cho SEO hình ảnh.");
+      toast.error("Vui lòng nhập Alt text — yếu tố quan trọng nhất cho SEO hình ảnh.");
       return;
     }
 
     setSaving(true);
-    setError(null);
     try {
       const tags = metaForm.tagsText
         .split(",")
@@ -246,8 +243,9 @@ export default function MediaManager({
       if (!res.ok) throw new Error(data.error || "Không thể lưu metadata");
       setSelected(data as MediaItem);
       setItems((prev) => prev.map((m) => (m.id === data.id ? data : m)));
+      toast.success("Đã lưu metadata");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Đã có lỗi xảy ra");
+      toast.error(e instanceof Error ? e.message : "Đã có lỗi xảy ra");
     } finally {
       setSaving(false);
     }
@@ -258,7 +256,7 @@ export default function MediaManager({
     const w = Number(resizeForm.width) || 0;
     const h = Number(resizeForm.height) || 0;
     if (w <= 0 || h <= 0) {
-      setError("Vui lòng nhập kích thước hợp lệ");
+      toast.error("Vui lòng nhập kích thước hợp lệ");
       return;
     }
     // Rough size estimate proportional to pixel count.
@@ -266,12 +264,11 @@ export default function MediaManager({
       const estimated =
         (selected.size * w * h) / (selected.width * selected.height || 1);
       if (estimated > MAX_RESIZE_BYTES) {
-        setError("Kích thước ảnh sau khi resize ước tính trên 1MB. Vui lòng giảm kích thước xuống.");
+        toast.error("Kích thước ảnh sau khi resize ước tính trên 1MB. Vui lòng giảm kích thước xuống.");
         return;
       }
     }
     setResizing(true);
-    setError(null);
     try {
       const res = await fetch(`/api/media/${selected.id}/resize`, {
         method: "POST",
@@ -283,8 +280,9 @@ export default function MediaManager({
       setSelected(data as MediaItem);
       setResizeForm({ width: data.width, height: data.height });
       setItems((prev) => prev.map((m) => (m.id === data.id ? data : m)));
+      toast.success("Đã thay đổi kích thước");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Đã có lỗi xảy ra");
+      toast.error(e instanceof Error ? e.message : "Đã có lỗi xảy ra");
     } finally {
       setResizing(false);
     }
@@ -293,7 +291,6 @@ export default function MediaManager({
   const handleRestore = async () => {
     if (!selected) return;
     setRestoring(true);
-    setError(null);
     try {
       const res = await fetch(`/api/media/${selected.id}/restore`, {
         method: "POST",
@@ -304,8 +301,9 @@ export default function MediaManager({
       setResizeForm({ width: data.width, height: data.height });
       setItems((prev) => prev.map((m) => (m.id === data.id ? data : m)));
       setShowRestoreDialog(false);
+      toast.success("Đã khôi phục kích thước gốc");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Đã có lỗi xảy ra");
+      toast.error(e instanceof Error ? e.message : "Đã có lỗi xảy ra");
       setShowRestoreDialog(false);
     } finally {
       setRestoring(false);
@@ -314,7 +312,6 @@ export default function MediaManager({
 
   const openRestoreDialog = () => {
     if (!selected) return;
-    setError(null);
     setShowRestoreDialog(true);
   };
 
@@ -388,14 +385,12 @@ export default function MediaManager({
 
   const openDeleteDialog = () => {
     if (!selected) return;
-    setError(null);
     setShowDeleteDialog(true);
   };
 
   const handleDelete = async () => {
     if (!selected) return;
     setDeleting(true);
-    setError(null);
     try {
       const res = await fetch(`/api/media/${selected.id}`, { method: "DELETE" });
       if (!res.ok) {
@@ -405,8 +400,9 @@ export default function MediaManager({
       setItems((prev) => prev.filter((m) => m.id !== selected.id));
       setSelected(null);
       setShowDeleteDialog(false);
+      toast.success("Đã xóa hình ảnh");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Đã có lỗi xảy ra");
+      toast.error(e instanceof Error ? e.message : "Đã có lỗi xảy ra");
       setShowDeleteDialog(false);
     } finally {
       setDeleting(false);
@@ -419,7 +415,7 @@ export default function MediaManager({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      setError("Không thể sao chép URL");
+      toast.error("Không thể sao chép URL");
     }
   };
 
@@ -427,12 +423,6 @@ export default function MediaManager({
 
   return (
     <div className="space-y-6">
-      {error && !selected && (
-        <div className="px-4 py-3 text-sm text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-lg">
-          {error}
-        </div>
-      )}
-
       {/* Upload zone */}
       <div
         onDragOver={(e) => {
@@ -593,11 +583,6 @@ export default function MediaManager({
             </div>
 
             <div className="flex-1 overflow-y-auto p-6 space-y-6">
-              {error && (
-                <div className="sticky top-0 z-10 -mx-6 px-6 py-3 text-sm text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-950 border-b border-red-200 dark:border-red-500/20 shadow-sm">
-                  {error}
-                </div>
-              )}
               {/* Preview */}
               <div className="relative rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 aspect-video flex items-center justify-center">
                 {resizeMode ? (

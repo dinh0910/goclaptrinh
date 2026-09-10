@@ -178,4 +178,32 @@ if (!rolesTable) {
   }
 }
 
+// Give the editor role the "banners" permission (existing DBs may not have it).
+const editorRoleRow = sqlite
+  .prepare("SELECT permissions FROM roles WHERE slug = 'editor'")
+  .get() as { permissions: string } | undefined;
+if (editorRoleRow) {
+  const editorPerms = JSON.parse(editorRoleRow.permissions) as string[];
+  if (!editorPerms.includes("banners")) {
+    editorPerms.push("banners");
+    sqlite
+      .prepare("UPDATE roles SET permissions = ? WHERE slug = 'editor'")
+      .run(JSON.stringify(editorPerms));
+  }
+}
+
+// Boot-time migration: create a generic key/value settings table.
+const settingsTable = sqlite
+  .prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'settings'")
+  .get();
+
+if (!settingsTable) {
+  sqlite.exec(`
+    CREATE TABLE settings (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL DEFAULT '{}'
+    );
+  `);
+}
+
 export const db = drizzle(sqlite, { schema });
