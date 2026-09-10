@@ -62,17 +62,22 @@ export default function RowActionsMenu({ actions }: { actions: RowAction[] }) {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setOpen(false);
     };
-    const onScrollOrResize = () => setOpen(false);
+    const onScroll = () => {
+      if (!triggerRef.current || !menuRef.current) return;
+      const rect = triggerRef.current.getBoundingClientRect();
+      const menuRect = menuRef.current.getBoundingClientRect();
+      setPos(placeMenu(rect, menuRect.width || 176, menuRect.height || 120));
+    };
 
     document.addEventListener("mousedown", onDocClick);
     document.addEventListener("keydown", onKey);
-    window.addEventListener("scroll", onScrollOrResize);
-    window.addEventListener("resize", onScrollOrResize);
+    document.addEventListener("scroll", onScroll, true);
+    window.addEventListener("resize", onScroll);
     return () => {
       document.removeEventListener("mousedown", onDocClick);
       document.removeEventListener("keydown", onKey);
-      window.removeEventListener("scroll", onScrollOrResize);
-      window.removeEventListener("resize", onScrollOrResize);
+      document.removeEventListener("scroll", onScroll, true);
+      window.removeEventListener("resize", onScroll);
     };
   }, [open]);
 
@@ -84,8 +89,7 @@ export default function RowActionsMenu({ actions }: { actions: RowAction[] }) {
     const rect = triggerRef.current?.getBoundingClientRect();
     if (!rect) return;
     setOpen(true);
-    const est = 16 + actions.length * 40;
-    setPos(placeMenu(rect, 176, est));
+    setPos(placeMenu(rect, 176, 120));
   };
 
   useEffect(() => {
