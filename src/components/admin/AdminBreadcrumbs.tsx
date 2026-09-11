@@ -11,6 +11,7 @@ const SECTION_LABELS: Record<string, string> = {
   roles: "Vai trò",
   settings: "Cài đặt",
   banners: "Banner",
+  welcome: "Giới thiệu",
 };
 
 function leafLabel(section: string, rest: string[]): string {
@@ -23,6 +24,9 @@ function leafLabel(section: string, rest: string[]): string {
     case "banners":
       if (rest[0] === "new") return "Thêm biến thể mới";
       return "Chỉnh sửa biến thể";
+    case "welcome":
+      if (rest[0] === "new") return "Popup mới";
+      return "Chỉnh sửa popup";
     default:
       return rest[0] || "Chi tiết";
   }

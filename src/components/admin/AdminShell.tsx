@@ -33,13 +33,27 @@ function useAdminTheme() {
 
   useEffect(() => {
     let cancelled = false;
+
+    const readCookie = (): AdminTheme | null => {
+      const match = document.cookie
+        .split(";")
+        .find((c) => c.trim().startsWith("admin_theme="));
+      if (!match) return null;
+      const val = match.split("=").slice(1).join("=");
+      return val === "dark" || val === "light" ? val : null;
+    };
+
+    // Áp dụng ngay từ cookie để không bị flash khi SPA navigate vào /admin
+    const cookieTheme = readCookie();
+    if (cookieTheme) applyTheme(cookieTheme);
+
     fetch("/api/admin/theme")
       .then((res) => (res.ok ? (res.json() as Promise<{ theme?: AdminTheme }>) : null))
       .then((data) => {
         if (!cancelled && data?.theme) applyTheme(data.theme);
       })
       .catch(() => {
-        // Không áp dụng được — giữ nguyên theme mặc định của client
+        // Cookie đã đúng — giữ nguyên
       });
 
     const onThemeEvent = (e: Event) => {

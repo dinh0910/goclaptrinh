@@ -6,10 +6,23 @@ import {
   type AdminTheme,
 } from "@/lib/admin-prefs";
 
+const COOKIE_OPTIONS = {
+  path: "/",
+  maxAge: 60 * 60 * 24 * 365,
+  sameSite: "lax" as const,
+  secure: process.env.NODE_ENV === "production",
+};
+
+function withCookie(res: NextResponse, theme: AdminTheme) {
+  res.cookies.set("admin_theme", theme, COOKIE_OPTIONS);
+  return res;
+}
+
 export async function GET() {
   const session = await requireAuth();
   if (!session?.user?.id) return unauthorizedJson();
-  return NextResponse.json({ theme: getAdminTheme(String(session.user.id)) });
+  const theme = getAdminTheme(String(session.user.id));
+  return withCookie(NextResponse.json({ theme }), theme);
 }
 
 export async function PUT(request: Request) {
@@ -28,5 +41,5 @@ export async function PUT(request: Request) {
   }
 
   setAdminTheme(String(session.user.id), theme as AdminTheme);
-  return NextResponse.json({ ok: true });
+  return withCookie(NextResponse.json({ ok: true }), theme as AdminTheme);
 }

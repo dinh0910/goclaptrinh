@@ -46,5 +46,6 @@ export const PERMISSION_OPTIONS: { key: string; label: string }[] = [
   { key: "categories", label: "Danh mục" },
   { key: "media", label: "Hình ảnh" },
   { key: "banners", label: "Banner" },
+  { key: "welcome", label: "Popup giới thiệu" },
   { key: "users", label: "Người dùng & vai trò" },
 ];

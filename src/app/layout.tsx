@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { siteConfig } from "@/lib/constants";
 import { ThemeProvider } from "@/components/shared/ThemeProvider";
 import ToasterProvider from "@/components/shared/ToasterProvider";
+import WelcomeDialog from "@/components/client/WelcomeDialog";
 import Header from "@/components/shared/Header";
 import Footer from "@/components/shared/Footer";
 import TopProgressBar from "@/components/client/TopProgressBar";
@@ -91,7 +92,7 @@ export default function RootLayout({
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem("theme");var d=t==="dark"||(!t&&window.matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.classList.toggle("dark",d)}catch(e){}})()`,
+            __html: `(function(){try{var t=null;if(location.pathname.indexOf("/admin")===0){var c=document.cookie.split(";").find(function(x){return x.trim().indexOf("admin_theme=")===0});if(c){var v=c.split("=").slice(1).join("=");if(v==="dark"||v==="light")t=v}}var d=t?t==="dark":(localStorage.getItem("theme")==="dark"||(!localStorage.getItem("theme")&&window.matchMedia("(prefers-color-scheme: dark)").matches));document.documentElement.classList.toggle("dark",d)}catch(e){}})()`,
           }}
         />
       </head>
@@ -99,6 +100,7 @@ export default function RootLayout({
         <ThemeProvider>
           <ToasterProvider />
           <TopProgressBar />
+          <WelcomeDialog />
           <Header />
           <main className="flex-1">{children}</main>
           <Footer />

@@ -16,22 +16,191 @@ interface AdminSidebarProps {
 interface AdminLink {
   href: string;
   label: string;
+  permission?: string;
+}
+
+interface AdminTopLink {
+  kind: "link";
+  href: string;
+  label: string;
   icon: string;
   permission?: string;
 }
 
-const adminLinks: AdminLink[] = [
-  { href: "/admin", label: "Dashboard", icon: "📊" },
-  { href: "/admin/posts", label: "Bài viết", icon: "📝", permission: "posts" },
-  { href: "/admin/posts/new", label: "Viết mới", icon: "✏️", permission: "posts" },
-  { href: "/admin/categories", label: "Danh mục", icon: "🗂️", permission: "categories" },
-  { href: "/admin/media", label: "Hình ảnh", icon: "🖼️", permission: "media" },
-  { href: "/admin/banners", label: "Banner", icon: "🎨", permission: "banners" },
-  { href: "/admin/users", label: "Người dùng", icon: "👥", permission: "users" },
-  { href: "/admin/roles", label: "Vai trò", icon: "🛡️", permission: "users" },
-  { href: "/admin/settings", label: "Cài đặt", icon: "⚙️" },
-  { href: "/", label: "Xem site", icon: "🌐" },
+interface AdminSection {
+  kind: "section";
+  key: string;
+  label: string;
+  icon: string;
+  permission?: string;
+  children: AdminLink[];
+}
+
+type NavItem = AdminTopLink | AdminSection;
+
+const navItems: NavItem[] = [
+  { kind: "link", href: "/admin", label: "Dashboard", icon: "📊" },
+  {
+    kind: "section",
+    key: "posts",
+    label: "Bài viết",
+    icon: "📝",
+    permission: "posts",
+    children: [
+      { href: "/admin/posts", label: "Danh sách" },
+      { href: "/admin/posts/new", label: "Thêm mới" },
+    ],
+  },
+  { kind: "link", href: "/admin/categories", label: "Danh mục", icon: "🗂️", permission: "categories" },
+  { kind: "link", href: "/admin/media", label: "Hình ảnh", icon: "🖼️", permission: "media" },
+  {
+    kind: "section",
+    key: "banners",
+    label: "Banner",
+    icon: "🎨",
+    permission: "banners",
+    children: [
+      { href: "/admin/banners", label: "Danh sách" },
+      { href: "/admin/banners/new", label: "Thêm mới" },
+    ],
+  },
+  { kind: "link", href: "/admin/users", label: "Người dùng", icon: "👥", permission: "users" },
+  { kind: "link", href: "/admin/roles", label: "Vai trò", icon: "🛡️", permission: "users" },
+  { kind: "link", href: "/admin/welcome", label: "Giới thiệu", icon: "🎉", permission: "welcome" },
+  { kind: "link", href: "/admin/settings", label: "Cài đặt", icon: "⚙️" },
+  { kind: "link", href: "/", label: "Xem site", icon: "🌐" },
 ];
+
+const sectionChildActive = (child: AdminLink, pathname: string): boolean => {
+  if (child.href === "/admin/posts" || child.href === "/admin/banners") {
+    return (
+      pathname === child.href ||
+      (pathname.startsWith(child.href + "/") && !pathname.startsWith(child.href + "/new"))
+    );
+  }
+  return pathname === child.href;
+};
+
+const sectionActive = (section: AdminSection, pathname: string): boolean =>
+  section.children.some((c) => sectionChildActive(c, pathname));
+
+function SidebarSection({
+  section,
+  collapsed,
+  open,
+  active,
+  pathname,
+  onToggle,
+  onClose,
+}: {
+  section: AdminSection;
+  collapsed: boolean;
+  open: boolean;
+  active: boolean;
+  pathname: string;
+  onToggle: () => void;
+  onClose: () => void;
+}) {
+  const btnRef = useRef<HTMLButtonElement | null>(null);
+  const [flyoutOpen, setFlyoutOpen] = useState(false);
+
+  const handleClick = () => {
+    if (collapsed) setFlyoutOpen((o) => !o);
+    else onToggle();
+  };
+
+  return (
+    <div>
+      <button
+        ref={btnRef}
+        type="button"
+        onClick={handleClick}
+        title={collapsed ? section.label : undefined}
+        className={`w-full flex items-center gap-3 rounded-lg transition-colors ${
+          collapsed ? "justify-center px-2 py-2.5" : "px-3 py-2.5"
+        } text-sm font-medium ${
+          active
+            ? "bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400"
+            : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+        }`}
+      >
+        <span className="shrink-0">{section.icon}</span>
+        {!collapsed && (
+          <>
+            <span className="whitespace-nowrap flex-1 text-left">{section.label}</span>
+            <svg
+              className={`shrink-0 w-3.5 h-3.5 text-gray-400 dark:text-gray-500 transition-transform ${open ? "rotate-180" : ""}`}
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="m6 9 6 6 6-6" />
+            </svg>
+          </>
+        )}
+      </button>
+
+      {!collapsed && open && (
+        <div className="mt-0.5 ml-4 pl-3 border-l border-gray-200 dark:border-gray-700 space-y-0.5">
+          {section.children.map((child) => {
+            const childIsActive = sectionChildActive(child, pathname);
+            return (
+              <Link
+                key={child.href}
+                href={child.href}
+                onClick={onClose}
+                className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
+                  childIsActive
+                    ? "bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400 font-medium"
+                    : "text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
+                }`}
+              >
+                <span className="w-1.5 h-1.5 rounded-full shrink-0 bg-current opacity-40" />
+                <span className="whitespace-nowrap">{child.label}</span>
+              </Link>
+            );
+          })}
+        </div>
+      )}
+
+      {collapsed && (
+        <FloatingPanel
+          open={flyoutOpen}
+          anchorRef={btnRef}
+          onClose={() => setFlyoutOpen(false)}
+          className="py-1 min-w-40"
+        >
+          <p className="px-3.5 py-2 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+            {section.label}
+          </p>
+          {section.children.map((child) => {
+            const childIsActive = sectionChildActive(child, pathname);
+            return (
+              <Link
+                key={child.href}
+                href={child.href}
+                onClick={() => {
+                  setFlyoutOpen(false);
+                  onClose();
+                }}
+                className={`flex items-center gap-2.5 px-3.5 py-2 text-sm text-left transition-colors ${
+                  childIsActive
+                    ? "text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 font-medium"
+                    : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                }`}
+              >
+                {child.label}
+              </Link>
+            );
+          })}
+        </FloatingPanel>
+      )}
+    </div>
+  );
+}
 
 export default function AdminSidebar({ user, permissions, collapsed, onClose }: AdminSidebarProps) {
   const pathname = usePathname();
@@ -39,9 +208,16 @@ export default function AdminSidebar({ user, permissions, collapsed, onClose }: 
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLButtonElement>(null);
   const perms = permissions ?? [];
-  const visibleLinks = adminLinks.filter(
-    (link) => !link.permission || perms.includes(link.permission)
+  const visibleNavItems = navItems.filter(
+    (item) => !item.permission || perms.includes(item.permission)
   );
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => {
+    const init: Record<string, boolean> = {};
+    for (const item of visibleNavItems) {
+      if (item.kind === "section" && sectionActive(item, pathname)) init[item.key] = true;
+    }
+    return init;
+  });
 
   return (
     <aside className="w-full h-full bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex flex-col shrink-0 overflow-y-auto overflow-x-hidden">
@@ -71,35 +247,42 @@ export default function AdminSidebar({ user, permissions, collapsed, onClose }: 
       </div>
 
       {/* Navigation */}
-      <nav className={`flex-1 space-y-1 ${collapsed ? "p-2" : "p-4"}`}>
-        {visibleLinks.map((link) => {
-          const isActive =
-            link.href === "/"
-              ? false
-              : link.href === "/admin/posts/new"
-                ? pathname === "/admin/posts/new"
-                : link.href === "/admin/posts"
-                  ? pathname === "/admin/posts" || (pathname.startsWith("/admin/posts/") && !pathname.startsWith("/admin/posts/new"))
-                  : pathname === link.href;
-          return (
+      <nav className={`flex-1 space-y-0.5 ${collapsed ? "p-2" : "p-4"}`}>
+        {visibleNavItems.map((item, index) =>
+          item.kind === "section" ? (
+            <SidebarSection
+              key={item.key}
+              section={item}
+              collapsed={collapsed}
+              open={!!openSections[item.key]}
+              active={sectionActive(item, pathname)}
+              pathname={pathname}
+              onToggle={() =>
+                setOpenSections((s) => ({ ...s, [item.key]: !s[item.key] }))
+              }
+              onClose={onClose}
+            />
+          ) : (
             <Link
-              key={link.href}
-              href={link.href}
+              key={item.href ?? index}
+              href={item.href}
               onClick={onClose}
-              title={collapsed ? link.label : undefined}
+              title={collapsed ? item.label : undefined}
               className={`flex items-center gap-3 rounded-lg transition-colors ${
                 collapsed ? "justify-center px-2 py-2.5" : "px-3 py-2.5"
               } text-sm font-medium ${
-                isActive
-                  ? "bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400"
-                  : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+                item.href === "/"
+                  ? "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+                  : pathname === item.href
+                    ? "bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400"
+                    : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
               }`}
             >
-              <span className="shrink-0">{link.icon}</span>
-              {!collapsed && <span className="whitespace-nowrap">{link.label}</span>}
+              <span className="shrink-0">{item.icon}</span>
+              {!collapsed && <span className="whitespace-nowrap">{item.label}</span>}
             </Link>
-          );
-        })}
+          )
+        )}
       </nav>
 
       {/* User info + menu */}

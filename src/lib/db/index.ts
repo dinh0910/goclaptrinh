@@ -184,12 +184,14 @@ const editorRoleRow = sqlite
   .get() as { permissions: string } | undefined;
 if (editorRoleRow) {
   const editorPerms = JSON.parse(editorRoleRow.permissions) as string[];
-  if (!editorPerms.includes("banners")) {
-    editorPerms.push("banners");
-    sqlite
-      .prepare("UPDATE roles SET permissions = ? WHERE slug = 'editor'")
-      .run(JSON.stringify(editorPerms));
+  for (const perm of ["banners", "welcome"]) {
+    if (!editorPerms.includes(perm)) {
+      editorPerms.push(perm);
+    }
   }
+  sqlite
+    .prepare("UPDATE roles SET permissions = ? WHERE slug = 'editor'")
+    .run(JSON.stringify(editorPerms));
 }
 
 // Boot-time migration: create a generic key/value settings table.

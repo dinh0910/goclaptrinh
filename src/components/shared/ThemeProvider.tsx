@@ -29,11 +29,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   useLayoutEffect(() => {
     const initial = getStoredTheme();
-    // Sync persisted theme into React state on mount; the class is also set
-    // synchronously by the inline <head> script in the root layout to avoid flash.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setThemeState(initial);
-    document.documentElement.classList.toggle("dark", initial === "dark");
+    // Admin pages use a per-account theme set by the head script + AdminShell;
+    // skip toggling the class here to avoid overwriting it.
+    if (!location.pathname.startsWith("/admin")) {
+      document.documentElement.classList.toggle("dark", initial === "dark");
+    }
   }, []);
 
   const applyTheme = useCallback((next: Theme) => {
