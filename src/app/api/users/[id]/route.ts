@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { updateUser, deleteUser } from "@/lib/users";
+import { updateUser, deleteUser, getUsers } from "@/lib/users";
 import { getRoles } from "@/lib/users";
 import { requireAuth, unauthorizedJson, PERMISSIONS } from "@/lib/permissions";
 
@@ -31,23 +31,51 @@ export async function PUT(
     const role = typeof body.role === "string" ? body.role : "";
     const password = typeof body.password === "string" ? body.password.trim() : "";
 
-    if (!email || !name) {
+    if (!name) {
       return NextResponse.json(
-        { error: "Email và tên là bắt buộc" },
+        { field: "name", error: "Tên hiển thị là bắt buộc" },
+        { status: 400 }
+      );
+    }
+    if (!email) {
+      return NextResponse.json(
+        { field: "email", error: "Email là bắt buộc" },
+        { status: 400 }
+      );
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return NextResponse.json(
+        { field: "email", error: "Email không đúng định dạng" },
         { status: 400 }
       );
     }
     if (password && password.length < 6) {
       return NextResponse.json(
-        { error: "Mật khẩu phải có ít nhất 6 ký tự" },
+        { field: "password", error: "Mật khẩu phải có ít nhất 6 ký tự" },
+        { status: 400 }
+      );
+    }
+    if (!role) {
+      return NextResponse.json(
+        { field: "role", error: "Vai trò là bắt buộc" },
         { status: 400 }
       );
     }
     const validRoles = getRoles().map((r) => r.slug);
     if (!validRoles.includes(role)) {
       return NextResponse.json(
-        { error: `Vai trò không hợp lệ: ${role}` },
+        { field: "role", error: `Vai trò không hợp lệ: ${role}` },
         { status: 400 }
+      );
+    }
+
+    const existingEmail = getUsers().find(
+      (u) => u.email === email && u.id !== userId
+    );
+    if (existingEmail) {
+      return NextResponse.json(
+        { field: "email", error: "Email đã tồn tại" },
+        { status: 409 }
       );
     }
 

@@ -30,7 +30,7 @@ export async function PUT(
     const name = typeof body.name === "string" ? body.name.trim() : "";
     if (!name) {
       return NextResponse.json(
-        { error: "Tên danh mục là bắt buộc" },
+        { field: "name", error: "Tên danh mục là bắt buộc" },
         { status: 400 }
       );
     }
@@ -50,7 +50,7 @@ export async function PUT(
 
     if (!newSlug) {
       return NextResponse.json(
-        { error: "Slug không hợp lệ" },
+        { field: "slug", error: "Slug không hợp lệ" },
         { status: 400 }
       );
     }
@@ -62,7 +62,10 @@ export async function PUT(
         .where(eq(categories.slug, newSlug))
         .get();
       if (duplicate) {
-        return NextResponse.json({ error: "Slug đã tồn tại" }, { status: 409 });
+        return NextResponse.json(
+          { field: "slug", error: "Slug đã tồn tại" },
+          { status: 409 }
+        );
       }
       db.update(posts)
         .set({ category: newSlug })

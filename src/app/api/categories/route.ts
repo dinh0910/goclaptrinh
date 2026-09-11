@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
 
     if (!name) {
       return NextResponse.json(
-        { error: "Tên danh mục là bắt buộc" },
+        { field: "name", error: "Tên danh mục là bắt buộc" },
         { status: 400 }
       );
     }
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
     const slug = slugify(typeof body.slug === "string" ? body.slug : name);
     if (!slug) {
       return NextResponse.json(
-        { error: "Slug không hợp lệ" },
+        { field: "slug", error: "Slug không hợp lệ" },
         { status: 400 }
       );
     }
@@ -53,7 +53,10 @@ export async function POST(request: NextRequest) {
       .where(eq(categories.slug, slug))
       .get();
     if (existing) {
-      return NextResponse.json({ error: "Slug đã tồn tại" }, { status: 409 });
+      return NextResponse.json(
+        { field: "slug", error: "Slug đã tồn tại" },
+        { status: 409 }
+      );
     }
 
     const result = db

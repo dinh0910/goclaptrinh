@@ -11,6 +11,12 @@ import { Pagination } from "./Pagination";
 import { useTableControls } from "./useTableControls";
 import { roleMeta } from "@/lib/userRoles";
 import FieldSelect, { type FieldSelectOption } from "./FieldSelect";
+import FieldError, { errorInputClass } from "@/components/shared/FieldError";
+import {
+  isValidEmail,
+  fieldErrorsFrom,
+  type FieldErrors,
+} from "@/lib/validation";
 
 export interface UserListItem {
   id: number;
@@ -71,10 +77,12 @@ export default function UserManager({
   const router = useRouter();
   const [users, setUsers] = useState(initialUsers);
   const [addForm, setAddForm] = useState(emptyForm);
+  const [addErrors, setAddErrors] = useState<FieldErrors>({});
   const [addPasswordShow, setAddPasswordShow] = useState(false);
   const [adding, setAdding] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editForm, setEditForm] = useState(emptyForm);
+  const [editErrors, setEditErrors] = useState<FieldErrors>({});
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<UserListItem | null>(null);
@@ -105,15 +113,26 @@ export default function UserManager({
   );
 
   const handleAdd = async () => {
-    if (
-      !addForm.name.trim() ||
-      !addForm.email.trim() ||
-      !addForm.password ||
-      !addForm.role
-    ) {
-      toast.error("Tên, email, mật khẩu và vai trò là bắt buộc");
+    const errors: FieldErrors = {};
+    if (!addForm.name.trim()) errors.name = "Tên hiển thị là bắt buộc";
+    if (!addForm.email.trim()) {
+      errors.email = "Email là bắt buộc";
+    } else if (!isValidEmail(addForm.email)) {
+      errors.email = "Email không đúng định dạng";
+    }
+    if (!addForm.password) {
+      errors.password = "Mật khẩu là bắt buộc";
+    } else if (addForm.password.length < 6) {
+      errors.password = "Mật khẩu phải có ít nhất 6 ký tự";
+    }
+    if (!addForm.role) errors.role = "Vai trò là bắt buộc";
+
+    if (Object.keys(errors).length > 0) {
+      setAddErrors(errors);
+      toast.error(Object.values(errors)[0]);
       return;
     }
+    setAddErrors({});
     setAdding(true);
     try {
       const res = await fetch("/api/users", {
@@ -123,10 +142,13 @@ export default function UserManager({
       });
       const data = await res.json();
       if (!res.ok) {
-        toast.error(data.error || "Không thể tạo người dùng");
+        const { errors: serverErrors, message } = fieldErrorsFrom(data);
+        setAddErrors(serverErrors);
+        toast.error(message);
         return;
       }
       setAddForm(emptyForm);
+      setAddErrors({});
       setAddPasswordShow(false);
       await refreshAsync((prev) => [
         ...prev,
@@ -147,6 +169,7 @@ export default function UserManager({
 
   const startEdit = (user: UserListItem) => {
     setEditingId(user.id);
+    setEditErrors({});
     setEditForm({
       name: user.name,
       email: user.email,
@@ -156,10 +179,25 @@ export default function UserManager({
   };
 
   const handleSaveEdit = async () => {
-    if (!editingId || !editForm.name.trim() || !editForm.email.trim()) {
-      toast.error("Tên và email là bắt buộc");
+    const errors: FieldErrors = {};
+    if (!editForm.name.trim()) errors.name = "Tên hiển thị là bắt buộc";
+    if (!editForm.email.trim()) {
+      errors.email = "Email là bắt buộc";
+    } else if (!isValidEmail(editForm.email)) {
+      errors.email = "Email không đúng định dạng";
+    }
+    if (editForm.password && editForm.password.length < 6) {
+      errors.password = "Mật khẩu phải có ít nhất 6 ký tự";
+    }
+    if (!editForm.role) errors.role = "Vai trò là bắt buộc";
+
+    if (Object.keys(errors).length > 0) {
+      setEditErrors(errors);
+      toast.error(Object.values(errors)[0]);
       return;
     }
+    if (!editingId) return;
+    setEditErrors({});
     setSaving(true);
     try {
       const res = await fetch(`/api/users/${editingId}`, {
@@ -169,7 +207,9 @@ export default function UserManager({
       });
       const data = await res.json();
       if (!res.ok) {
-        toast.error(data.error || "Không thể cập nhật người dùng");
+        const { errors: serverErrors, message } = fieldErrorsFrom(data);
+        setEditErrors(serverErrors);
+        toast.error(message);
         return;
       }
       setEditingId(null);
@@ -292,13 +332,17 @@ export default function UserManager({
             <input
               type="text"
               value={addForm.name}
-              onChange={(e) => setAddForm((f) => ({ ...f, name: e.target.value }))}
+              onChange={(e) => {
+                setAddForm((f) => ({ ...f, name: e.target.value }));
+                setAddErrors((er) => ({ ...er, name: "" }));
+              }}
               placeholder="VD: Minh Editor"
               autoComplete="off"
               readOnly
               onFocus={unlockReadonly}
-              className={inputClass}
+              className={`${inputClass} ${errorInputClass(addErrors, "name")}`}
             />
+            <FieldError message={addErrors.name} />
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
@@ -307,13 +351,17 @@ export default function UserManager({
             <input
               type="email"
               value={addForm.email}
-              onChange={(e) => setAddForm((f) => ({ ...f, email: e.target.value }))}
+              onChange={(e) => {
+                setAddForm((f) => ({ ...f, email: e.target.value }));
+                setAddErrors((er) => ({ ...er, email: "" }));
+              }}
               placeholder="VD: minh@goclaptrinh.io.vn"
               autoComplete="off"
               readOnly
               onFocus={unlockReadonly}
-              className={inputClass}
+              className={`${inputClass} ${errorInputClass(addErrors, "email")}`}
             />
+            <FieldError message={addErrors.email} />
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
@@ -326,12 +374,15 @@ export default function UserManager({
               <input
                 type={addPasswordShow ? "text" : "password"}
                 value={addForm.password}
-                onChange={(e) => setAddForm((f) => ({ ...f, password: e.target.value }))}
+                onChange={(e) => {
+                  setAddForm((f) => ({ ...f, password: e.target.value }));
+                  setAddErrors((er) => ({ ...er, password: "" }));
+                }}
                 placeholder="••••••••"
                 autoComplete="new-password"
                 readOnly
                 onFocus={unlockReadonly}
-                className={`${inputClass} pr-11`}
+                className={`${inputClass} pr-11 ${errorInputClass(addErrors, "password")}`}
               />
               <button
                 type="button"
@@ -352,6 +403,7 @@ export default function UserManager({
                 )}
               </button>
             </div>
+            <FieldError message={addErrors.password} />
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
@@ -359,10 +411,14 @@ export default function UserManager({
             </label>
             <FieldSelect
               value={addForm.role}
-              onChange={(v) => setAddForm((f) => ({ ...f, role: v }))}
+              onChange={(v) => {
+                setAddForm((f) => ({ ...f, role: v }));
+                setAddErrors((er) => ({ ...er, role: "" }));
+              }}
               options={roleOptions(roles)}
               placeholder="Chọn vai trò..."
             />
+            <FieldError message={addErrors.role} />
           </div>
           <div className="flex justify-end">
             <button
@@ -424,23 +480,35 @@ export default function UserManager({
                         <td className="p-4 align-top">
                           {isEditing ? (
                             <div className="space-y-3 max-w-md">
-                              <input
-                                type="text"
-                                value={editForm.name}
-                                onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))}
-                                placeholder="Tên hiển thị"
-                                className={inputClass}
-                              />
-                              <input
-                                type="password"
-                                value={editForm.password}
-                                onChange={(e) => setEditForm((f) => ({ ...f, password: e.target.value }))}
-                                placeholder="Để trống nếu không đổi mật khẩu"
-                                autoComplete="new-password"
-                                readOnly
-                                onFocus={unlockReadonly}
-                                className={inputClass}
-                              />
+                              <div>
+                                <input
+                                  type="text"
+                                  value={editForm.name}
+                                  onChange={(e) => {
+                                    setEditForm((f) => ({ ...f, name: e.target.value }));
+                                    setEditErrors((er) => ({ ...er, name: "" }));
+                                  }}
+                                  placeholder="Tên hiển thị"
+                                  className={`${inputClass} ${errorInputClass(editErrors, "name")}`}
+                                />
+                                <FieldError message={editErrors.name} />
+                              </div>
+                              <div>
+                                <input
+                                  type="password"
+                                  value={editForm.password}
+                                  onChange={(e) => {
+                                    setEditForm((f) => ({ ...f, password: e.target.value }));
+                                    setEditErrors((er) => ({ ...er, password: "" }));
+                                  }}
+                                  placeholder="Để trống nếu không đổi mật khẩu"
+                                  autoComplete="new-password"
+                                  readOnly
+                                  onFocus={unlockReadonly}
+                                  className={`${inputClass} ${errorInputClass(editErrors, "password")}`}
+                                />
+                                <FieldError message={editErrors.password} />
+                              </div>
                             </div>
                           ) : (
                             <span className="flex items-center gap-3">
@@ -465,15 +533,21 @@ export default function UserManager({
                         </td>
                         <td className="p-4 align-top">
                           {isEditing ? (
-                            <input
-                              type="text"
-                              value={editForm.email}
-                              onChange={(e) => setEditForm((f) => ({ ...f, email: e.target.value }))}
-                              autoComplete="off"
-                              readOnly
-                              onFocus={unlockReadonly}
-                              className={`${inputClass} max-w-md`}
-                            />
+                            <div className="max-w-md">
+                              <input
+                                type="text"
+                                value={editForm.email}
+                                onChange={(e) => {
+                                  setEditForm((f) => ({ ...f, email: e.target.value }));
+                                  setEditErrors((er) => ({ ...er, email: "" }));
+                                }}
+                                autoComplete="off"
+                                readOnly
+                                onFocus={unlockReadonly}
+                                className={`${inputClass} max-w-md ${errorInputClass(editErrors, "email")}`}
+                              />
+                              <FieldError message={editErrors.email} />
+                            </div>
                           ) : (
                             <span className="text-sm text-gray-600 dark:text-gray-400 break-all">
                               {user.email}
@@ -482,12 +556,18 @@ export default function UserManager({
                         </td>
                         <td className="p-4 align-top">
                           {isEditing ? (
-                            <FieldSelect
-                              value={editForm.role}
-                              onChange={(v) => setEditForm((f) => ({ ...f, role: v }))}
-                              options={roleOptions(roles)}
-                              className="min-w-40 max-w-56"
-                            />
+                            <div>
+                              <FieldSelect
+                                value={editForm.role}
+                                onChange={(v) => {
+                                  setEditForm((f) => ({ ...f, role: v }));
+                                  setEditErrors((er) => ({ ...er, role: "" }));
+                                }}
+                                options={roleOptions(roles)}
+                                className="min-w-40 max-w-56"
+                              />
+                              <FieldError message={editErrors.role} />
+                            </div>
                           ) : (
                             <span className={`inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-md ${meta.bg} ${meta.text} ${meta.darkBg} ${meta.darkText}`}>
                               <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${meta.swatch}`} aria-hidden />

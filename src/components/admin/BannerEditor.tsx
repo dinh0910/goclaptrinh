@@ -10,21 +10,76 @@ import {
   type HeroPreset,
   type HeroTemplate,
 } from "@/lib/hero-config";
+import FieldError, { errorInputClass } from "@/components/shared/FieldError";
+import type { FieldErrors } from "@/lib/validation";
 
 const inputClass =
   "w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white";
 
-const TEXT_FIELDS = [
-  ["badge", "Badge (dòng nhỏ phía trên tiêu đề)"],
-  ["heading", "Tiêu đề chính (phần trước)"],
-  ["highlight", "Từ nổi bật (gradient)"],
-  ["headingSuffix", "Phần sau tiêu đề"],
-  ["subtitle", "Mô tả"],
-  ["primaryText", "Nút chính — chữ"],
-  ["primaryLink", "Nút chính — liên kết"],
-  ["secondaryText", "Nút phụ — chữ"],
-  ["secondaryLink", "Nút phụ — liên kết"],
-] as const;
+const TEXT_FIELDS: {
+  key: "badge" | "heading" | "highlight" | "headingSuffix" | "subtitle" | "primaryText" | "primaryLink" | "secondaryText" | "secondaryLink";
+  label: string;
+  placeholder: string;
+  required: boolean;
+  isLink?: boolean;
+}[] = [
+  {
+    key: "badge",
+    label: "Badge (dòng nhỏ phía trên tiêu đề)",
+    placeholder: "Ví dụ: Mới ra mắt",
+    required: true,
+  },
+  {
+    key: "heading",
+    label: "Tiêu đề chính (phần trước)",
+    placeholder: "Ví dụ: Lập trình web",
+    required: true,
+  },
+  {
+    key: "highlight",
+    label: "Từ nổi bật (gradient)",
+    placeholder: "Ví dụ: JavaScript",
+    required: false,
+  },
+  {
+    key: "headingSuffix",
+    label: "Phần sau tiêu đề",
+    placeholder: "Ví dụ: dễ dàng",
+    required: false,
+  },
+  {
+    key: "subtitle",
+    label: "Mô tả",
+    placeholder: "Ví dụ: Hướng dẫn từ cơ bản đến nâng cao",
+    required: true,
+  },
+  {
+    key: "primaryText",
+    label: "Nút chính — chữ",
+    placeholder: "Ví dụ: Bắt đầu ngay",
+    required: true,
+  },
+  {
+    key: "primaryLink",
+    label: "Nút chính — liên kết",
+    placeholder: "Ví dụ: /posts",
+    required: true,
+    isLink: true,
+  },
+  {
+    key: "secondaryText",
+    label: "Nút phụ — chữ",
+    placeholder: "Ví dụ: Tìm hiểu thêm",
+    required: false,
+  },
+  {
+    key: "secondaryLink",
+    label: "Nút phụ — liên kết",
+    placeholder: "Ví dụ: /about",
+    required: false,
+    isLink: true,
+  },
+];
 
 const TEMPLATES: {
   key: HeroTemplate;
@@ -58,6 +113,7 @@ export default function BannerEditor({
   const isNew = mode === "new";
   const [presets, setPresets] = useState<HeroPreset[]>([]);
   const [draft, setDraft] = useState<HeroPreset | null>(null);
+  const [errors, setErrors] = useState<FieldErrors>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const router = useRouter();
@@ -97,8 +153,35 @@ export default function BannerEditor({
     updateDraft((d) => ({ ...d, config: updater(d.config) }));
   };
 
+  const isValidLink = (v: string) =>
+  /^\/(?!\/)/.test(v) || /^#/.test(v) || /^https?:\/\//i.test(v);
+
   const save = async () => {
     if (!draft) return;
+    const nextErrors: FieldErrors = {};
+    if (!draft.name.trim()) {
+      nextErrors.name = "Tên biến thể là bắt buộc";
+    }
+    for (const f of TEXT_FIELDS) {
+      const v = draft.config.heroText[f.key];
+      if (f.required && !v.trim()) {
+        nextErrors[f.key] = `${f.label} là bắt buộc`;
+      } else if (f.isLink && v.trim() && !isValidLink(v.trim())) {
+        nextErrors[f.key] = "Liên kết phải bắt đầu bằng /, # hoặc http(s)://";
+      }
+    }
+    if (
+      draft.config.template === "hero-text" &&
+      !draft.config.heroText.code.title.trim()
+    ) {
+      nextErrors["code.title"] = "Tên file là bắt buộc";
+    }
+    if (Object.keys(nextErrors).length > 0) {
+      setErrors(nextErrors);
+      toast.error(Object.values(nextErrors)[0]);
+      return;
+    }
+    setErrors({});
     setSaving(true);
     try {
       const draftId = isNew ? `p-${Date.now()}` : draft.id;
@@ -179,10 +262,15 @@ export default function BannerEditor({
         <div>
           <input
             type="text"
+            placeholder="Ví dụ: Biến thể 1"
             value={draft.name}
-            onChange={(e) => updateDraft((d) => ({ ...d, name: e.target.value }))}
-            className={`${inputClass} max-w-md font-semibold`}
+            onChange={(e) => {
+              updateDraft((d) => ({ ...d, name: e.target.value }));
+              setErrors((er) => ({ ...er, name: "" }));
+            }}
+            className={`${inputClass} max-w-md font-semibold ${errorInputClass(errors, "name")}`}
           />
+          <FieldError message={errors.name} />
           {!isNew && (
             <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
               {draft.active
@@ -233,29 +321,39 @@ export default function BannerEditor({
           Nội dung hero
         </p>
         <div className="grid gap-4 sm:grid-cols-2">
-          {TEXT_FIELDS.map(([key, label]) => (
+          {TEXT_FIELDS.map(({ key, label, placeholder }) => (
             <div key={key}>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                 {label}
+                {!TEXT_FIELDS.find((f) => f.key === key)?.required && (
+                  <span className="text-gray-400 dark:text-gray-500 font-normal">
+                    {" "}
+                    (không bắt buộc)
+                  </span>
+                )}
               </label>
               <input
                 type="text"
+                placeholder={placeholder}
                 value={
                   draft.config.heroText[
                     key as keyof typeof draft.config.heroText
                   ] as string
                 }
-                onChange={(e) =>
+                onChange={(e) => {
+                  const v = e.target.value;
                   updateConfig((c) => ({
                     ...c,
                     heroText: {
                       ...c.heroText,
-                      [key]: e.target.value,
+                      [key]: v,
                     },
-                  }))
-                }
-                className={inputClass}
+                  }));
+                  setErrors((er) => ({ ...er, [key]: "" }));
+                }}
+                className={`${inputClass} ${errorInputClass(errors, key)}`}
               />
+              <FieldError message={errors[key]} />
             </div>
           ))}
         </div>
@@ -274,21 +372,25 @@ export default function BannerEditor({
               </label>
               <input
                 type="text"
+                placeholder="Ví dụ: app.tsx"
                 value={draft.config.heroText.code.title}
-                onChange={(e) =>
+                onChange={(e) => {
+                  const v = e.target.value;
                   updateConfig((c) => ({
                     ...c,
                     heroText: {
                       ...c.heroText,
                       code: {
                         ...c.heroText.code,
-                        title: e.target.value,
+                        title: v,
                       },
                     },
-                  }))
-                }
-                className={inputClass}
+                  }));
+                  setErrors((er) => ({ ...er, "code.title": "" }));
+                }}
+                className={`${inputClass} ${errorInputClass(errors, "code.title")}`}
               />
+              <FieldError message={errors["code.title"]} />
             </div>
           </div>
           <div className="mt-4">
@@ -298,6 +400,7 @@ export default function BannerEditor({
             <textarea
               rows={10}
               spellCheck={false}
+              placeholder={'Mỗi dòng là một dòng code, ví dụ:\nimport { useState } from "react"'}
               value={draft.config.heroText.code.lines.join("\n")}
               onChange={(e) =>
                 updateConfig((c) => ({

@@ -26,10 +26,26 @@ export async function PUT(
       ? body.permissions.filter((p: unknown) => typeof p === "string")
       : [];
 
-    if (!slug || !name) {
+    if (!slug) {
       return NextResponse.json(
-        { error: "Tên và slug vai trò là bắt buộc" },
+        { field: "slug", error: "Slug vai trò là bắt buộc" },
         { status: 400 }
+      );
+    }
+    if (!name) {
+      return NextResponse.json(
+        { field: "name", error: "Tên vai trò là bắt buộc" },
+        { status: 400 }
+      );
+    }
+
+    const duplicate = getRolesWithCounts().find(
+      (r) => r.slug === slug && r.id !== roleId
+    );
+    if (duplicate) {
+      return NextResponse.json(
+        { field: "slug", error: "Slug vai trò đã tồn tại" },
+        { status: 409 }
       );
     }
 

@@ -31,9 +31,15 @@ export async function POST(request: NextRequest) {
       ? body.permissions.filter((p: unknown) => typeof p === "string")
       : [];
 
-    if (!slug || !name) {
+    if (!slug) {
       return NextResponse.json(
-        { error: "Tên và slug vai trò là bắt buộc" },
+        { field: "slug", error: "Slug vai trò là bắt buộc" },
+        { status: 400 }
+      );
+    }
+    if (!name) {
+      return NextResponse.json(
+        { field: "name", error: "Tên vai trò là bắt buộc" },
         { status: 400 }
       );
     }
@@ -41,7 +47,7 @@ export async function POST(request: NextRequest) {
     const existing = getRolesWithCounts().find((r) => r.slug === slug);
     if (existing) {
       return NextResponse.json(
-        { error: "Slug vai trò đã tồn tại" },
+        { field: "slug", error: "Slug vai trò đã tồn tại" },
         { status: 409 }
       );
     }

@@ -11,6 +11,11 @@ import { SearchBar } from "./SearchBar";
 import { SortableTh } from "./SortableTh";
 import { Pagination } from "./Pagination";
 import { useTableControls } from "./useTableControls";
+import FieldError, { errorInputClass } from "@/components/shared/FieldError";
+import {
+  fieldErrorsFrom,
+  type FieldErrors,
+} from "@/lib/validation";
 import {
   CATEGORY_ICON_GROUPS,
   CATEGORY_ICON_OPTIONS,
@@ -191,9 +196,11 @@ export default function CategoryManager({
   const router = useRouter();
   const [categories, setCategories] = useState(initialCategories);
   const [addForm, setAddForm] = useState(emptyForm);
+  const [addErrors, setAddErrors] = useState<FieldErrors>({});
   const [adding, setAdding] = useState(false);
   const [editingSlug, setEditingSlug] = useState<string | null>(null);
   const [editForm, setEditForm] = useState(emptyForm);
+  const [editErrors, setEditErrors] = useState<FieldErrors>({});
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<CategoryWithCount | null>(null);
@@ -231,6 +238,7 @@ export default function CategoryManager({
       slug:
         f.slug === "" || f.slug === slugify(f.name) ? slugify(name) : f.slug,
     }));
+    setAddErrors((er) => ({ ...er, name: "", slug: "" }));
   };
 
   const handleEditNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -241,13 +249,24 @@ export default function CategoryManager({
       slug:
         f.slug === "" || f.slug === slugify(f.name) ? slugify(name) : f.slug,
     }));
+    setEditErrors((er) => ({ ...er, name: "", slug: "" }));
   };
 
   const handleAdd = async () => {
-    if (!addForm.name.trim()) {
-      toast.error("Tên danh mục là bắt buộc");
+    const errors: FieldErrors = {};
+    if (!addForm.name.trim()) errors.name = "Tên danh mục là bắt buộc";
+    if (!addForm.slug.trim()) {
+      errors.slug = "Slug là bắt buộc";
+    } else if (!/^[a-z0-9-]+$/.test(addForm.slug.trim())) {
+      errors.slug = "Slug chỉ gồm chữ thường, số và dấu gạch ngang";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setAddErrors(errors);
+      toast.error(Object.values(errors)[0]);
       return;
     }
+    setAddErrors({});
     setAdding(true);
     try {
       const res = await fetch("/api/categories", {
@@ -257,10 +276,13 @@ export default function CategoryManager({
       });
       const data = await res.json();
       if (!res.ok) {
-        toast.error(data.error || "Không thể tạo danh mục");
+        const { errors: serverErrors, message } = fieldErrorsFrom(data);
+        setAddErrors(serverErrors);
+        toast.error(message);
         return;
       }
       setAddForm(emptyForm);
+      setAddErrors({});
       await refresh((prev) => [...prev, { ...data, count: 0 } as CategoryWithCount]);
       toast.success("Đã tạo danh mục");
     } finally {
@@ -270,6 +292,7 @@ export default function CategoryManager({
 
   const startEdit = (cat: CategoryWithCount) => {
     setEditingSlug(cat.slug);
+    setEditErrors({});
     setEditForm({
       name: cat.name,
       slug: cat.slug,
@@ -280,10 +303,21 @@ export default function CategoryManager({
   };
 
   const handleSaveEdit = async () => {
-    if (!editingSlug || !editForm.name.trim()) {
-      toast.error("Tên danh mục là bắt buộc");
+    const errors: FieldErrors = {};
+    if (!editForm.name.trim()) errors.name = "Tên danh mục là bắt buộc";
+    if (!editForm.slug.trim()) {
+      errors.slug = "Slug là bắt buộc";
+    } else if (!/^[a-z0-9-]+$/.test(editForm.slug.trim())) {
+      errors.slug = "Slug chỉ gồm chữ thường, số và dấu gạch ngang";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setEditErrors(errors);
+      toast.error(Object.values(errors)[0]);
       return;
     }
+    if (!editingSlug) return;
+    setEditErrors({});
     setSaving(true);
     try {
       const res = await fetch(`/api/categories/${encodeURIComponent(editingSlug)}`, {
@@ -293,7 +327,9 @@ export default function CategoryManager({
       });
       const data = await res.json();
       if (!res.ok) {
-        toast.error(data.error || "Không thể cập nhật danh mục");
+        const { errors: serverErrors, message } = fieldErrorsFrom(data);
+        setEditErrors(serverErrors);
+        toast.error(message);
         return;
       }
       setEditingSlug(null);
@@ -349,8 +385,9 @@ export default function CategoryManager({
               value={addForm.name}
               onChange={handleAddNameChange}
               placeholder="VD: Next.js"
-              className={inputClass}
+              className={`${inputClass} ${errorInputClass(addErrors, "name")}`}
             />
+            <FieldError message={addErrors.name} />
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
@@ -362,12 +399,14 @@ export default function CategoryManager({
             <input
               type="text"
               value={addForm.slug}
-              onChange={(e) =>
-                setAddForm((f) => ({ ...f, slug: e.target.value }))
-              }
+              onChange={(e) => {
+                setAddForm((f) => ({ ...f, slug: e.target.value }));
+                setAddErrors((er) => ({ ...er, slug: "" }));
+              }}
               placeholder="VD: nextjs"
-              className={inputClass}
+              className={`${inputClass} ${errorInputClass(addErrors, "slug")}`}
             />
+            <FieldError message={addErrors.slug} />
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
@@ -452,12 +491,15 @@ export default function CategoryManager({
                     <td className="p-4 align-top">
                       {isEditing ? (
                         <div className="space-y-3">
-                          <input
-                            type="text"
-                            value={editForm.name}
-                            onChange={handleEditNameChange}
-                            className={inputClass}
-                          />
+                          <div>
+                            <input
+                              type="text"
+                              value={editForm.name}
+                              onChange={handleEditNameChange}
+                              className={`${inputClass} ${errorInputClass(editErrors, "name")}`}
+                            />
+                            <FieldError message={editErrors.name} />
+                          </div>
                           <IconPicker
                             value={editForm.icon}
                             onChange={(icon) =>
@@ -488,14 +530,18 @@ export default function CategoryManager({
                     </td>
                     <td className="p-4 align-top">
                       {isEditing ? (
-                        <input
-                          type="text"
-                          value={editForm.slug}
-                          onChange={(e) =>
-                            setEditForm((f) => ({ ...f, slug: e.target.value }))
-                          }
-                          className={inputClass}
-                        />
+                        <div>
+                          <input
+                            type="text"
+                            value={editForm.slug}
+                            onChange={(e) => {
+                              setEditForm((f) => ({ ...f, slug: e.target.value }));
+                              setEditErrors((er) => ({ ...er, slug: "" }));
+                            }}
+                            className={`${inputClass} ${errorInputClass(editErrors, "slug")}`}
+                          />
+                          <FieldError message={editErrors.slug} />
+                        </div>
                       ) : (
                         <span className="text-sm text-gray-600 dark:text-gray-400 font-mono">
                           {cat.slug}

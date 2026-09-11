@@ -9,6 +9,11 @@ import { SearchBar } from "./SearchBar";
 import { Pagination } from "./Pagination";
 import { useTableControls } from "./useTableControls";
 import { roleMeta, PERMISSION_OPTIONS } from "@/lib/userRoles";
+import FieldError, { errorInputClass } from "@/components/shared/FieldError";
+import {
+  fieldErrorsFrom,
+  type FieldErrors,
+} from "@/lib/validation";
 
 export interface RoleListItem {
   id: number;
@@ -40,9 +45,11 @@ export default function RoleManager({ initialRoles }: RoleManagerProps) {
   const router = useRouter();
   const [roles, setRoles] = useState(initialRoles);
   const [addForm, setAddForm] = useState(emptyForm);
+  const [addErrors, setAddErrors] = useState<FieldErrors>({});
   const [adding, setAdding] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editForm, setEditForm] = useState(emptyForm);
+  const [editErrors, setEditErrors] = useState<FieldErrors>({});
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<RoleListItem | null>(null);
@@ -64,10 +71,20 @@ export default function RoleManager({ initialRoles }: RoleManagerProps) {
   };
 
   const handleAdd = async () => {
-    if (!addForm.name.trim() || !addForm.slug.trim()) {
-      toast.error("Tên và slug vai trò là bắt buộc");
+    const errors: FieldErrors = {};
+    if (!addForm.name.trim()) errors.name = "Tên vai trò là bắt buộc";
+    if (!addForm.slug.trim()) {
+      errors.slug = "Slug vai trò là bắt buộc";
+    } else if (!/^[a-z0-9-]+$/.test(addForm.slug.trim())) {
+      errors.slug = "Slug chỉ gồm chữ thường, số và dấu gạch ngang";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setAddErrors(errors);
+      toast.error(Object.values(errors)[0]);
       return;
     }
+    setAddErrors({});
     setAdding(true);
     try {
       const res = await fetch("/api/roles", {
@@ -77,10 +94,13 @@ export default function RoleManager({ initialRoles }: RoleManagerProps) {
       });
       const data = await res.json();
       if (!res.ok) {
-        toast.error(data.error || "Không thể tạo vai trò");
+        const { errors: serverErrors, message } = fieldErrorsFrom(data);
+        setAddErrors(serverErrors);
+        toast.error(message);
         return;
       }
       setAddForm(emptyForm);
+      setAddErrors({});
       setRoles((prev) => [...prev, data]);
       router.refresh();
       toast.success("Đã tạo vai trò");
@@ -91,6 +111,7 @@ export default function RoleManager({ initialRoles }: RoleManagerProps) {
 
   const startEdit = (role: RoleListItem) => {
     setEditingId(role.id);
+    setEditErrors({});
     setEditForm({
       slug: role.slug,
       name: role.name,
@@ -100,10 +121,21 @@ export default function RoleManager({ initialRoles }: RoleManagerProps) {
   };
 
   const handleSaveEdit = async () => {
-    if (!editingId || !editForm.name.trim() || !editForm.slug.trim()) {
-      toast.error("Tên và slug vai trò là bắt buộc");
+    const errors: FieldErrors = {};
+    if (!editForm.name.trim()) errors.name = "Tên vai trò là bắt buộc";
+    if (!editForm.slug.trim()) {
+      errors.slug = "Slug vai trò là bắt buộc";
+    } else if (!/^[a-z0-9-]+$/.test(editForm.slug.trim())) {
+      errors.slug = "Slug chỉ gồm chữ thường, số và dấu gạch ngang";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setEditErrors(errors);
+      toast.error(Object.values(errors)[0]);
       return;
     }
+    if (!editingId) return;
+    setEditErrors({});
     setSaving(true);
     try {
       const res = await fetch(`/api/roles/${editingId}`, {
@@ -113,7 +145,9 @@ export default function RoleManager({ initialRoles }: RoleManagerProps) {
       });
       const data = await res.json();
       if (!res.ok) {
-        toast.error(data.error || "Không thể cập nhật vai trò");
+        const { errors: serverErrors, message } = fieldErrorsFrom(data);
+        setEditErrors(serverErrors);
+        toast.error(message);
         return;
       }
       setEditingId(null);
@@ -186,10 +220,14 @@ export default function RoleManager({ initialRoles }: RoleManagerProps) {
             <input
               type="text"
               value={addForm.name}
-              onChange={(e) => setAddForm((f) => ({ ...f, name: e.target.value }))}
+              onChange={(e) => {
+                setAddForm((f) => ({ ...f, name: e.target.value }));
+                setAddErrors((er) => ({ ...er, name: "" }));
+              }}
               placeholder="VD: Người đăng bài"
-              className={inputClass}
+              className={`${inputClass} ${errorInputClass(addErrors, "name")}`}
             />
+            <FieldError message={addErrors.name} />
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
@@ -201,10 +239,14 @@ export default function RoleManager({ initialRoles }: RoleManagerProps) {
             <input
               type="text"
               value={addForm.slug}
-              onChange={(e) => setAddForm((f) => ({ ...f, slug: e.target.value }))}
+              onChange={(e) => {
+                setAddForm((f) => ({ ...f, slug: e.target.value }));
+                setAddErrors((er) => ({ ...er, slug: "" }));
+              }}
               placeholder="VD: author2"
-              className={inputClass}
+              className={`${inputClass} ${errorInputClass(addErrors, "slug")}`}
             />
+            <FieldError message={addErrors.slug} />
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
@@ -279,20 +321,32 @@ export default function RoleManager({ initialRoles }: RoleManagerProps) {
                         <td className="p-4 align-top">
                           {isEditing ? (
                             <div className="space-y-3 max-w-sm">
-                              <input
-                                type="text"
-                                value={editForm.name}
-                                onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))}
-                                placeholder="Tên vai trò"
-                                className={inputClass}
-                              />
-                              <input
-                                type="text"
-                                value={editForm.slug}
-                                onChange={(e) => setEditForm((f) => ({ ...f, slug: e.target.value }))}
-                                placeholder="Slug"
-                                className={inputClass}
-                              />
+                              <div>
+                                <input
+                                  type="text"
+                                  value={editForm.name}
+                                  onChange={(e) => {
+                                    setEditForm((f) => ({ ...f, name: e.target.value }));
+                                    setEditErrors((er) => ({ ...er, name: "" }));
+                                  }}
+                                  placeholder="Tên vai trò"
+                                  className={`${inputClass} ${errorInputClass(editErrors, "name")}`}
+                                />
+                                <FieldError message={editErrors.name} />
+                              </div>
+                              <div>
+                                <input
+                                  type="text"
+                                  value={editForm.slug}
+                                  onChange={(e) => {
+                                    setEditForm((f) => ({ ...f, slug: e.target.value }));
+                                    setEditErrors((er) => ({ ...er, slug: "" }));
+                                  }}
+                                  placeholder="Slug"
+                                  className={`${inputClass} ${errorInputClass(editErrors, "slug")}`}
+                                />
+                                <FieldError message={editErrors.slug} />
+                              </div>
                               <textarea
                                 value={editForm.description}
                                 onChange={(e) => setEditForm((f) => ({ ...f, description: e.target.value }))}
