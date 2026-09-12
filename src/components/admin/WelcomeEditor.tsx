@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
+  DEFAULT_ITEM,
   WELCOME_EMOJIS,
   emptyWelcomeItem,
   type WelcomeItem,
@@ -22,6 +23,7 @@ export default function WelcomeEditor({
 }) {
   const router = useRouter();
   const [form, setForm] = useState<WelcomeItem>(() => emptyWelcomeItem());
+  const [reappearInput, setReappearInput] = useState("");
   const [exists, setExists] = useState(mode === "new");
   const [loading, setLoading] = useState(mode === "edit");
   const [saving, setSaving] = useState(false);
@@ -38,6 +40,7 @@ export default function WelcomeEditor({
         const found = data?.items.find((i) => i.id === id);
         if (found) {
           setForm(found);
+          setReappearInput(String(found.reappearHours));
           setExists(true);
         } else {
           setExists(false);
@@ -64,16 +67,20 @@ export default function WelcomeEditor({
       toast.error("Popup đang bật cần có tiêu đề");
       return;
     }
+    const toSave: WelcomeItem =
+      reappearInput.trim() === "" && form.reappearHours === 0
+        ? { ...form, reappearHours: DEFAULT_ITEM.reappearHours }
+        : form;
     setSaving(true);
     try {
       const res = await fetch("/api/welcome/admin").catch(() => null);
       const current = res && res.ok
         ? ((await res.json()) as { items?: WelcomeItem[] }).items ?? []
         : [];
-      const exists = current.some((i) => i.id === form.id);
+      const exists = current.some((i) => i.id === toSave.id);
       const items = exists
-        ? current.map((i) => (i.id === form.id ? form : i))
-        : [...current, form];
+        ? current.map((i) => (i.id === toSave.id ? toSave : i))
+        : [...current, toSave];
       if (items.length === 0) {
         toast.error("Không thể lưu popup");
         return;
@@ -231,6 +238,7 @@ export default function WelcomeEditor({
               type="text"
               value={form.emoji}
               onChange={(e) => set("emoji", e.target.value)}
+              placeholder="VD: 🎉"
               className={inputClass}
             />
           </div>
@@ -270,10 +278,13 @@ export default function WelcomeEditor({
               type="number"
               min={0}
               max={8760}
-              value={form.reappearHours}
-              onChange={(e) =>
-                set("reappearHours", Math.max(0, Number(e.target.value) || 0))
-              }
+              value={reappearInput}
+              onChange={(e) => {
+                const v = e.target.value;
+                setReappearInput(v);
+                set("reappearHours", v === "" ? 0 : Math.max(0, Number(v) || 0));
+              }}
+              placeholder="VD: 24"
               className={inputClass}
             />
             <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">

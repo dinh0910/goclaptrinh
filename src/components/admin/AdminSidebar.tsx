@@ -66,7 +66,7 @@ const navItems: NavItem[] = [
   },
   { kind: "link", href: "/admin/users", label: "Người dùng", icon: "👥", permission: "users" },
   { kind: "link", href: "/admin/roles", label: "Vai trò", icon: "🛡️", permission: "users" },
-  { kind: "link", href: "/admin/welcome", label: "Giới thiệu", icon: "🎉", permission: "welcome" },
+  { kind: "link", href: "/admin/welcome", label: "Popup chào mừng", icon: "🎉", permission: "welcome" },
   { kind: "link", href: "/admin/settings", label: "Cài đặt", icon: "⚙️" },
   { kind: "link", href: "/", label: "Xem site", icon: "🌐" },
 ];

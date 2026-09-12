@@ -11,7 +11,7 @@ const SECTION_LABELS: Record<string, string> = {
   roles: "Vai trò",
   settings: "Cài đặt",
   banners: "Banner",
-  welcome: "Giới thiệu",
+  welcome: "Popup chào mừng",
 };
 
 function leafLabel(section: string, rest: string[]): string {

@@ -40,9 +40,15 @@ export const WELCOME_EMOJIS = [
 export function emptyWelcomeItem(): WelcomeItem {
   return {
     id: `wl-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
-    name: "Popup mới",
+    name: "",
     active: false,
-    ...DEFAULT_ITEM,
+    badge: "",
+    title: "",
+    content: "",
+    emoji: "",
+    buttonText: "",
+    buttonLink: "",
+    reappearHours: 0,
   };
 }
 
