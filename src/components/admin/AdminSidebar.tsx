@@ -66,7 +66,18 @@ const navItems: NavItem[] = [
   },
   { kind: "link", href: "/admin/users", label: "Người dùng", icon: "👥", permission: "users" },
   { kind: "link", href: "/admin/roles", label: "Vai trò", icon: "🛡️", permission: "users" },
-  { kind: "link", href: "/admin/welcome", label: "Popup chào mừng", icon: "🎉", permission: "welcome" },
+  {
+    kind: "section",
+    key: "welcome",
+    label: "Popup chào mừng",
+    icon: "🎉",
+    permission: "welcome",
+    children: [
+      { href: "/admin/welcome", label: "Danh sách" },
+      { href: "/admin/welcome/new", label: "Thêm mới" },
+      { href: "/admin/welcome/submissions", label: "Đăng ký nhận tin" },
+    ],
+  },
   { kind: "link", href: "/admin/settings", label: "Cài đặt", icon: "⚙️" },
   { kind: "link", href: "/", label: "Xem site", icon: "🌐" },
 ];
@@ -76,6 +87,14 @@ const sectionChildActive = (child: AdminLink, pathname: string): boolean => {
     return (
       pathname === child.href ||
       (pathname.startsWith(child.href + "/") && !pathname.startsWith(child.href + "/new"))
+    );
+  }
+  if (child.href === "/admin/welcome") {
+    return (
+      pathname === child.href ||
+      (pathname.startsWith(child.href + "/") &&
+        !pathname.startsWith(child.href + "/new") &&
+        !pathname.startsWith(child.href + "/submissions"))
     );
   }
   return pathname === child.href;

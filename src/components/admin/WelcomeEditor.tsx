@@ -4,10 +4,15 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import FieldSelect from "@/components/admin/FieldSelect";
+import { WelcomeVisual } from "@/components/client/WelcomeVisual";
 import {
   DEFAULT_ITEM,
+  FIELD_TYPES,
   WELCOME_EMOJIS,
+  WELCOME_TEMPLATES,
   emptyWelcomeItem,
+  type WelcomeField,
   type WelcomeItem,
 } from "@/lib/welcome-config";
 
@@ -24,6 +29,7 @@ export default function WelcomeEditor({
   const router = useRouter();
   const [form, setForm] = useState<WelcomeItem>(() => emptyWelcomeItem());
   const [reappearInput, setReappearInput] = useState("");
+  const [delayInput, setDelayInput] = useState("3");
   const [exists, setExists] = useState(mode === "new");
   const [loading, setLoading] = useState(mode === "edit");
   const [saving, setSaving] = useState(false);
@@ -41,6 +47,7 @@ export default function WelcomeEditor({
         if (found) {
           setForm(found);
           setReappearInput(String(found.reappearHours));
+          setDelayInput(String(found.appearDelay));
           setExists(true);
         } else {
           setExists(false);
@@ -58,6 +65,53 @@ export default function WelcomeEditor({
   const set = <K extends keyof WelcomeItem>(key: K, value: WelcomeItem[K]) =>
     setForm((f) => ({ ...f, [key]: value }));
 
+  const updateField = (id: string, patch: Partial<WelcomeField>) =>
+    set("fields", form.fields.map((f) => (f.id === id ? { ...f, ...patch } : f)));
+
+  const addField = () =>
+    set("fields", [
+      ...form.fields,
+      {
+        id: `field-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`,
+        label: "Trường mới",
+        type: "text",
+        placeholder: "",
+        required: false,
+      },
+    ]);
+
+  const removeField = (id: string) =>
+    set("fields", form.fields.filter((f) => f.id !== id));
+
+  const selectTemplate = (key: WelcomeItem["template"]) => {
+    setForm((f) => {
+      if (key === "form" && f.fields.length === 0) {
+        const ts = Date.now().toString(36);
+        return {
+          ...f,
+          template: key,
+          fields: [
+            {
+              id: `field-${ts}a`,
+              label: "Email",
+              type: "email",
+              placeholder: "you@example.com",
+              required: true,
+            },
+            {
+              id: `field-${ts}b`,
+              label: "Số điện thoại",
+              type: "phone",
+              placeholder: "VD: 0987654321",
+              required: false,
+            },
+          ],
+        };
+      }
+      return { ...f, template: key };
+    });
+  };
+
   const save = async () => {
     if (!form.name.trim()) {
       toast.error("Vui lòng nhập tên popup");
@@ -65,6 +119,10 @@ export default function WelcomeEditor({
     }
     if (form.active && !form.title.trim()) {
       toast.error("Popup đang bật cần có tiêu đề");
+      return;
+    }
+    if (form.template === "form" && form.fields.length === 0) {
+      toast.error("Popup đăng ký nhận tin cần ít nhất một trường nhập liệu");
       return;
     }
     const toSave: WelcomeItem =
@@ -177,6 +235,45 @@ export default function WelcomeEditor({
 
           <div>
             <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
+              Thiết kế popup
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {WELCOME_TEMPLATES.map((t) => {
+                const selected = form.template === t.key;
+                return (
+                  <button
+                    key={t.key}
+                    type="button"
+                    onClick={() => selectTemplate(t.key)}
+                    className={`relative rounded-xl p-4 text-left transition-colors border-2 ${
+                      selected
+                        ? "border-blue-500 bg-blue-50 dark:bg-blue-500/10"
+                        : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-2 mb-1.5">
+                      <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                        {t.label}
+                      </span>
+                      {selected && (
+                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-white">
+                          <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" strokeWidth={3} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+                      {t.desc}
+                    </p>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
               Nhãn nhỏ (badge)
             </label>
             <input
@@ -270,26 +367,158 @@ export default function WelcomeEditor({
             </div>
           </div>
 
-          <div>
-            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
-              Hiện lại sau khi đóng (giờ)
-            </label>
-            <input
-              type="number"
-              min={0}
-              max={8760}
-              value={reappearInput}
-              onChange={(e) => {
-                const v = e.target.value;
-                setReappearInput(v);
-                set("reappearHours", v === "" ? 0 : Math.max(0, Number(v) || 0));
-              }}
-              placeholder="VD: 24"
-              className={inputClass}
-            />
-            <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
-              Nhập 0 để chỉ hiện đúng một lần mỗi trình duyệt. Mặc định 24 giờ.
-            </p>
+          {form.template === "form" && (
+            <div className="rounded-xl border border-gray-200 dark:border-gray-700 p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                  Trường đăng ký ({form.fields.length})
+                </h3>
+                <button
+                  type="button"
+                  onClick={addField}
+                  className="px-2.5 py-1 text-xs font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  + Thêm trường
+                </button>
+              </div>
+
+              {form.fields.length === 0 && (
+                <p className="text-xs text-gray-400 dark:text-gray-500">
+                  Chưa có trường nào. Bấm “+ Thêm trường” để thêm email, số
+                  điện thoại, tên...
+                </p>
+              )}
+
+              {form.fields.map((f) => (
+                <div
+                  key={f.id}
+                  className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/60 p-3 space-y-2"
+                >
+                  <div className="flex items-start gap-2">
+                    <div className="flex-1 space-y-2">
+                      <input
+                        type="text"
+                        value={f.label}
+                        onChange={(e) => updateField(f.id, { label: e.target.value })}
+                        placeholder="Nhãn (VD: Email, Số điện thoại)"
+                        className={`${inputClass} text-sm`}
+                      />
+                      <div className="flex gap-2">
+                        <FieldSelect
+                          value={f.type}
+                          onChange={(v) =>
+                            updateField(f.id, {
+                              type: v as WelcomeField["type"],
+                            })
+                          }
+                          options={FIELD_TYPES.map((t) => ({
+                            value: t.key,
+                            label: t.label,
+                          }))}
+                          size="sm"
+                          className="w-36 shrink-0"
+                        />
+                        <input
+                          type="text"
+                          value={f.placeholder}
+                          onChange={(e) =>
+                            updateField(f.id, { placeholder: e.target.value })
+                          }
+                          placeholder="Gợi ý nhập liệu"
+                          className={inputClass}
+                        />
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeField(f.id)}
+                      title="Xóa trường"
+                      className="shrink-0 p-1.5 rounded-md text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                    >
+                      <svg
+                        className="w-4 h-4"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        strokeWidth={2}
+                        stroke="currentColor"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={f.required}
+                      onChange={(e) => updateField(f.id, { required: e.target.checked })}
+                      className="h-4 w-4 accent-blue-600"
+                    />
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                      Bắt buộc nhập
+                    </span>
+                  </label>
+                </div>
+              ))}
+
+              <div>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
+                  Thông báo sau khi đăng ký thành công
+                </label>
+                <textarea
+                  value={form.successMessage}
+                  onChange={(e) => set("successMessage", e.target.value)}
+                  rows={2}
+                  placeholder="VD: Đăng ký thành công! Chúng tôi sẽ liên hệ với bạn sớm."
+                  className={`${inputClass} resize-y`}
+                />
+              </div>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
+                Hiện lại sau khi đóng (giờ)
+              </label>
+              <input
+                type="number"
+                min={0}
+                max={8760}
+                value={reappearInput}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setReappearInput(v);
+                  set("reappearHours", v === "" ? 0 : Math.max(0, Number(v) || 0));
+                }}
+                placeholder="VD: 24"
+                className={inputClass}
+              />
+              <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
+                Nhập 0 để chỉ hiện đúng một lần mỗi trình duyệt. Mặc định 24 giờ.
+              </p>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
+                Hiện sau khi tải trang (giây)
+              </label>
+              <input
+                type="number"
+                min={0}
+                max={60}
+                step={1}
+                value={delayInput}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setDelayInput(v);
+                  set("appearDelay", v === "" ? 0 : Math.min(60, Math.max(0, Number(v) || 0)));
+                }}
+                placeholder="VD: 3"
+                className={inputClass}
+              />
+              <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
+                Nhịp chờ trước khi popup bật lên. VD: 3 giây để khách xem trang một chút.
+              </p>
+            </div>
           </div>
         </div>
 
@@ -316,31 +545,7 @@ export default function WelcomeEditor({
         <h2 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">
           Xem trước
         </h2>
-        <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-950 overflow-hidden shadow-lg">
-          <div className="relative px-6 pt-8 pb-6 text-center">
-            <div className="text-5xl mb-3">{form.emoji || "🎉"}</div>
-            {form.badge && (
-              <span className="inline-block px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-blue-700 bg-blue-100 dark:text-blue-300 dark:bg-blue-500/20 rounded-full mb-3">
-                {form.badge}
-              </span>
-            )}
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white">
-              {form.title || "Tiêu đề"}
-            </h3>
-            {form.content && (
-              <p className="mt-2 text-sm text-gray-500 dark:text-gray-400 whitespace-pre-line">
-                {form.content}
-              </p>
-            )}
-            {form.buttonText && (
-              <div className="mt-5">
-                <span className="inline-block px-5 py-2.5 text-sm font-semibold text-white bg-blue-600 rounded-lg">
-                  {form.buttonText}
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
+        <WelcomeVisual item={form} preview />
         <p className="mt-4 text-xs text-gray-400 dark:text-gray-500 text-center">
           {form.active
             ? "Popup này sẽ được hiển thị cho khách truy cập trang chủ."

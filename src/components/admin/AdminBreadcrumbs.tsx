@@ -26,6 +26,7 @@ function leafLabel(section: string, rest: string[]): string {
       return "Chỉnh sửa biến thể";
     case "welcome":
       if (rest[0] === "new") return "Popup mới";
+      if (rest[0] === "submissions") return "Đăng ký nhận tin";
       return "Chỉnh sửa popup";
     default:
       return rest[0] || "Chi tiết";

@@ -208,4 +208,22 @@ if (!settingsTable) {
   `);
 }
 
+// Boot-time migration: create table for welcome popup submissions.
+const welcomeSubmissionsTable = sqlite
+  .prepare(
+    "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'welcome_submissions'"
+  )
+  .get();
+
+if (!welcomeSubmissionsTable) {
+  sqlite.exec(`
+    CREATE TABLE welcome_submissions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      item_id TEXT NOT NULL,
+      data TEXT NOT NULL DEFAULT '{}',
+      created_at TEXT NOT NULL
+    );
+  `);
+}
+
 export const db = drizzle(sqlite, { schema });

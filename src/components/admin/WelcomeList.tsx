@@ -4,7 +4,10 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import type { WelcomeItem } from "@/lib/welcome-config";
+import { WELCOME_TEMPLATES, type WelcomeItem } from "@/lib/welcome-config";
+
+const templateLabel = (key: WelcomeItem["template"]) =>
+  WELCOME_TEMPLATES.find((t) => t.key === key)?.label || key;
 
 export default function WelcomeList() {
   const [items, setItems] = useState<WelcomeItem[]>([]);
@@ -151,10 +154,14 @@ export default function WelcomeList() {
                   {p.badge}
                 </span>
               )}
+              <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
+                {templateLabel(p.template)}
+              </span>
               <span className="shrink-0 text-xs text-gray-500 dark:text-gray-400">
                 {p.reappearHours === 0
                   ? "Chỉ hiện 1 lần"
                   : `Hiện lại sau ${p.reappearHours}h`}
+                {" · "}Sau {p.appearDelay}s
               </span>
 
               {confirm?.id === p.id ? (

@@ -69,6 +69,16 @@ export const settings = sqliteTable("settings", {
   value: text("value").notNull().default("{}"),
 });
 
+export const welcomeSubmissions = sqliteTable("welcome_submissions", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  itemId: text("item_id").notNull(),
+  data: text("data", { mode: "json" })
+    .notNull()
+    .$type<Record<string, string>>()
+    .default({}),
+  createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
+});
+
 export type UserRow = typeof users.$inferSelect;
 export type UserInsert = typeof users.$inferInsert;
 export type RoleRow = typeof roles.$inferSelect;
