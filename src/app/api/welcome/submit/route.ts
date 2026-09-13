@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getActiveWelcome } from "@/lib/welcome";
 import { addWelcomeSubmission } from "@/lib/welcome-submissions";
+import {
+  computeFingerprint,
+  getClientIp,
+  normalizeSignals,
+} from "@/lib/visitor";
 import type { WelcomeFieldType } from "@/lib/welcome-config";
+import { allowSubmit } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -25,9 +31,37 @@ export async function POST(request: NextRequest) {
   const body = (await request.json().catch(() => null)) as {
     itemId?: unknown;
     values?: unknown;
+    visitorId?: unknown;
+    signals?: unknown;
+    website?: unknown;
   } | null;
-  if (!body || typeof body.itemId !== "string") {
+  if (!body) {
     return NextResponse.json({ error: "Dữ liệu không hợp lệ" }, { status: 400 });
+  }
+
+  // Honeypot: bots fill hidden fields that humans never see.
+  if (typeof body.website === "string" && body.website.trim().length > 0) {
+    return NextResponse.json({ success: true });
+  }
+
+  if (typeof body.itemId !== "string") {
+    return NextResponse.json({ error: "Dữ liệu không hợp lệ" }, { status: 400 });
+  }
+
+  const signals = normalizeSignals(body.signals);
+  const visitorId =
+    typeof body.visitorId === "string" ? body.visitorId.trim().slice(0, 128) : "";
+  const ip = getClientIp(request.headers);
+  const fingerprint = computeFingerprint(signals);
+  const rateKey = ip || fingerprint || visitorId || "anon";
+  if (!allowSubmit(rateKey)) {
+    return NextResponse.json(
+      {
+        error:
+          "Bạn đã gửi quá nhiều lần trong thời gian ngắn. Vui lòng thử lại sau vài phút.",
+      },
+      { status: 429 }
+    );
   }
 
   const item = getActiveWelcome();
@@ -76,7 +110,13 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    addWelcomeSubmission(item.id, data);
+    const client = {
+      visitorId,
+      signals,
+      fingerprint,
+      ip,
+    };
+    addWelcomeSubmission(item.id, data, client);
   } catch {
     return NextResponse.json(
       { error: "Không thể gửi đăng ký" },

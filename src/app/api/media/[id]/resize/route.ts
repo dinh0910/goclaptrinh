@@ -8,6 +8,7 @@ import sharp from "sharp";
 import { requireAuth, unauthorizedJson, PERMISSIONS } from "@/lib/permissions";
 
 const MAX_RESIZE_BYTES = 1 * 1024 * 1024; // 1MB
+const MAX_DIM = 8192; // cap to prevent memory-exhaustion (sharp allocates per-pixel)
 
 export async function POST(
   request: NextRequest,
@@ -40,6 +41,13 @@ export async function POST(
   ) {
     return NextResponse.json(
       { error: "Width and height must be positive integers" },
+      { status: 400 }
+    );
+  }
+
+  if (width > MAX_DIM || height > MAX_DIM) {
+    return NextResponse.json(
+      { error: `Width/height must not exceed ${MAX_DIM}px` },
       { status: 400 }
     );
   }

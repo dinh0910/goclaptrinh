@@ -34,12 +34,14 @@ export async function PUT(request: NextRequest) {
 
   const items = (raw as unknown[])
     .filter((x): x is Record<string, unknown> => !!x && typeof x === "object")
-    .map(normalizeItem)
-    .filter((i) => i.title.trim().length > 0);
+    .map(normalizeItem);
 
-  if (items.length === 0) {
+  const untitled = items.find((i) => !i.title.trim());
+  if (untitled) {
     return NextResponse.json(
-      { error: "Cần ít nhất một popup có tiêu đề" },
+      {
+        error: `Popup "${untitled.name || "Chưa đặt tên"}" chưa có tiêu đề`,
+      },
       { status: 400 }
     );
   }

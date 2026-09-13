@@ -226,4 +226,56 @@ if (!welcomeSubmissionsTable) {
   `);
 }
 
+// Boot-time migration: add anonymous-client tracking columns.
+for (const [col, ddl] of [
+  ["visitor_id", "TEXT NOT NULL DEFAULT ''"],
+  ["signals", "TEXT NOT NULL DEFAULT '{}'"],
+  ["fingerprint", "TEXT NOT NULL DEFAULT ''"],
+  ["ip", "TEXT NOT NULL DEFAULT ''"],
+]) {
+  const hasCol = sqlite
+    .prepare(
+      `SELECT name FROM pragma_table_info('welcome_submissions') WHERE name = ?`
+    )
+    .get(col);
+  if (!hasCol) {
+    sqlite.exec(`ALTER TABLE welcome_submissions ADD COLUMN ${col} ${ddl};`);
+  }
+}
+
+// Boot-time migration: create rate-limit table for the public submit endpoint.
+const rateLimitTable = sqlite
+  .prepare(
+    "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'welcome_rate_limits'"
+  )
+  .get();
+
+if (!rateLimitTable) {
+  sqlite.exec(`
+    CREATE TABLE welcome_rate_limits (
+      key TEXT PRIMARY KEY,
+      window_start INTEGER NOT NULL,
+      count INTEGER NOT NULL
+    );
+  `);
+}
+
+// Boot-time migration: create rate-limit table for the login endpoint.
+const loginRateLimitTable = sqlite
+  .prepare(
+    "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'login_rate_limits'"
+  )
+  .get();
+
+if (!loginRateLimitTable) {
+  sqlite.exec(`
+    CREATE TABLE login_rate_limits (
+      key TEXT PRIMARY KEY,
+      window_start INTEGER NOT NULL,
+      count INTEGER NOT NULL
+    );
+  `);
+}
+
 export const db = drizzle(sqlite, { schema });
+export const sqliteClient = sqlite;

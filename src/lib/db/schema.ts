@@ -1,4 +1,5 @@
 import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
+import type { VisitorSignals } from "@/lib/visitor";
 
 export const users = sqliteTable("users", {
   id: integer("id").primaryKey({ autoIncrement: true }),
@@ -76,6 +77,13 @@ export const welcomeSubmissions = sqliteTable("welcome_submissions", {
     .notNull()
     .$type<Record<string, string>>()
     .default({}),
+  visitorId: text("visitor_id").notNull().default(""),
+  signals: text("signals", { mode: "json" })
+    .notNull()
+    .$type<Partial<VisitorSignals>>()
+    .default({}),
+  fingerprint: text("fingerprint").notNull().default(""),
+  ip: text("ip").notNull().default(""),
   createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
 });
 

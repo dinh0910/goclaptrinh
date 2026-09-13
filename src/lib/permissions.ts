@@ -16,6 +16,8 @@ export const PERMISSIONS = {
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
 
+export const VALID_PERMISSIONS = Object.values(PERMISSIONS);
+
 export const ADMIN_PERMISSIONS: Permission[] = [
   PERMISSIONS.posts,
   PERMISSIONS.categories,
@@ -25,18 +27,10 @@ export const ADMIN_PERMISSIONS: Permission[] = [
   PERMISSIONS.welcome,
 ];
 
-const cache = new Map<string, string[]>();
-
 export function getRolePermissions(role?: string | null): string[] {
   if (!role) return [];
-  const cached = cache.get(role);
-  if (cached) return cached;
   const row = db.select().from(roles).where(eq(roles.slug, role)).get();
-  const perms = Array.isArray(row?.permissions)
-    ? (row.permissions as string[])
-    : [];
-  cache.set(role, perms);
-  return perms;
+  return Array.isArray(row?.permissions) ? (row.permissions as string[]) : [];
 }
 
 export function hasPermission(

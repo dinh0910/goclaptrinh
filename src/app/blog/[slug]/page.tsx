@@ -5,6 +5,7 @@ import { getAllPostSlugs, getPostBySlug, getAllPosts } from "@/lib/posts";
 import { siteConfig, DEFAULT_CATEGORY_ICON } from "@/lib/constants";
 import { getCategoryBySlug } from "@/lib/categories";
 import { categoryColor } from "@/lib/categoryColors";
+import { sanitizePostHtml } from "@/lib/sanitize";
 import PostContent from "@/components/client/PostContent";
 import PostCard from "@/components/client/PostCard";
 
@@ -65,6 +66,8 @@ export default async function BlogPostPage({ params }: PageProps) {
   } catch {
     notFound();
   }
+
+  post.content = sanitizePostHtml(post.content);
 
   const allPosts = await getAllPosts();
   const currentIndex = allPosts.findIndex((p) => p.slug === slug);

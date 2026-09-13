@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { posts } from "@/lib/db/schema";
 import { requireAuth, unauthorizedJson, PERMISSIONS } from "@/lib/permissions";
+import { cleanPostFields } from "@/lib/post-input";
 
 export async function GET(
   _request: NextRequest,
@@ -32,17 +33,29 @@ export async function PUT(
     }
     const { slug } = await params;
     const body = await request.json();
+    const cleaned = cleanPostFields(body, true);
+    if (cleaned.error) {
+      return NextResponse.json({ error: cleaned.error }, { status: 400 });
+    }
+    const v = cleaned.value;
 
     const existing = db.select().from(posts).where(eq(posts.slug, slug)).get();
     if (!existing) {
       return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }
 
+    if (v.slug !== undefined && v.slug !== existing.slug) {
+      const dup = db.select().from(posts).where(eq(posts.slug, v.slug as string)).get();
+      if (dup) {
+        return NextResponse.json({ error: "Slug already exists" }, { status: 409 });
+      }
+    }
+
     const now = new Date().toISOString();
     const result = db
       .update(posts)
       .set({
-        ...body,
+        ...v,
         updatedAt: now,
       })
       .where(eq(posts.slug, slug))

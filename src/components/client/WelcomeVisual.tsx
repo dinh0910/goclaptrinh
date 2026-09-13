@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { getVisitorId, getVisitorSignals } from "@/lib/client-visitor";
 import type {
   WelcomeFieldType,
   WelcomeItem,
@@ -243,6 +244,7 @@ function FormDesign({
   const [serverError, setServerError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
+  const [honeypot, setHoneypot] = useState("");
 
   const validate = (): Record<string, string> => {
     const next: Record<string, string> = {};
@@ -278,7 +280,13 @@ function FormDesign({
       const res = await fetch("/api/welcome/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ itemId: item.id, values }),
+        body: JSON.stringify({
+          itemId: item.id,
+          values,
+          visitorId: getVisitorId(),
+          signals: getVisitorSignals(),
+          website: honeypot,
+        }),
       });
       const data = (await res.json().catch(() => null)) as {
         error?: string;
@@ -340,6 +348,16 @@ function FormDesign({
         </div>
 
         <div className="mt-6 space-y-4">
+          <input
+            type="text"
+            name="website"
+            value={honeypot}
+            onChange={(e) => setHoneypot(e.target.value)}
+            tabIndex={-1}
+            autoComplete="off"
+            aria-hidden="true"
+            className="absolute left-[-9999px] top-0 h-px w-px opacity-0 overflow-hidden"
+          />
           {item.fields.map((f) => {
             const inputType =
               f.type === "email"

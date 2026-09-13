@@ -4,6 +4,10 @@ import bcrypt from "bcrypt";
 import { eq } from "drizzle-orm";
 import { db } from "./db";
 import { users } from "./db/schema";
+import { loginLimiter } from "./rate-limit";
+
+const DUMMY_BCRYPT_HASH =
+  "$2b$12$.Vgu.OYIYkb9cWX9.K5A9.oPNTJji8OagOlqWVLox07Wij0cj5YT.";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
@@ -12,21 +16,42 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null;
+      async authorize(credentials, req) {
+        const email =
+          typeof credentials?.email === "string"
+            ? credentials.email.trim().toLowerCase()
+            : "";
+        const password = typeof credentials?.password === "string" ? credentials.password : "";
+
+        if (!email || !password) {
+          // Constant-time: always run bcrypt comparison on rejection so
+          // response times are uniform regardless of whether the email exists.
+          await bcrypt.compare("x", DUMMY_BCRYPT_HASH);
+          return null;
+        }
+
+        const ip =
+          req?.headers
+            ?.get("x-forwarded-for")
+            ?.split(",")[0]
+            ?.trim() || "";
+        if (!loginLimiter.allow(`${email}|${ip}`)) {
+          await bcrypt.compare("x", DUMMY_BCRYPT_HASH);
+          return null;
+        }
 
         const user = db
           .select()
           .from(users)
-          .where(eq(users.email, credentials.email as string))
+          .where(eq(users.email, email))
           .get();
 
-        if (!user) return null;
+        if (!user) {
+          await bcrypt.compare("x", DUMMY_BCRYPT_HASH);
+          return null;
+        }
 
-        const valid = await bcrypt.compare(
-          credentials.password as string,
-          user.password
-        );
+        const valid = await bcrypt.compare(password, user.password);
 
         if (!valid) return null;
 

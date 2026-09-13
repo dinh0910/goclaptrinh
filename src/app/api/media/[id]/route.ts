@@ -31,22 +31,34 @@ export async function PATCH(
     tags?: string[];
   };
 
+  if (
+    (body.title !== undefined && typeof body.title !== "string") ||
+    (body.altText !== undefined && typeof body.altText !== "string") ||
+    (body.description !== undefined && typeof body.description !== "string")
+  ) {
+    return NextResponse.json({ error: "Invalid field type" }, { status: 400 });
+  }
+
+  const trim = (s: string, max: number) => s.trim().slice(0, max);
   const tags = Array.isArray(body.tags)
-    ? body.tags.map((t) => String(t).trim().toLowerCase()).filter(Boolean)
+    ? body.tags
+        .map((t) => String(t).trim().toLowerCase())
+        .filter(Boolean)
+        .slice(0, 20)
+        .map((t) => t.slice(0, 50))
     : undefined;
 
   const updated = db
     .update(media)
     .set({
-      title:
-        body.title !== undefined ? String(body.title).trim() : existing.title,
+      title: body.title !== undefined ? trim(body.title, 200) : existing.title,
       altText:
         body.altText !== undefined
-          ? String(body.altText).trim()
+          ? trim(body.altText, 300)
           : existing.altText,
       description:
         body.description !== undefined
-          ? String(body.description).trim()
+          ? trim(body.description, 1000)
           : existing.description,
       tags: tags ?? existing.tags,
       updatedAt: new Date().toISOString(),

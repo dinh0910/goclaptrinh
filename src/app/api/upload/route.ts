@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { media } from "@/lib/db/schema";
-import { getImageDimensions, resolveUploadPath, UPLOAD_DIR } from "@/lib/media";
+import { resolveUploadPath, UPLOAD_DIR } from "@/lib/media";
 import sharp from "sharp";
 import fs from "fs";
 import { requireAuth, unauthorizedJson, PERMISSIONS } from "@/lib/permissions";
@@ -10,9 +10,6 @@ const MAX_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 const MAX_WIDTH = 1600; // max display width in px to keep pages fast
 const ESTIMATED_QUALITY = 80;
-
-// Raster types we can safely re-encode/compress. Skip GIF to keep animation.
-const COMPRESSIBLE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 export async function POST(request: NextRequest) {
   if (
@@ -43,50 +40,68 @@ export async function POST(request: NextRequest) {
 
     const bytes = Buffer.from(await file.arrayBuffer());
 
-    // Capture original dimensions BEFORE any compression so the
-    // "restore original size" feature can restore the true source size.
-    const { width: origWidth, height: origHeight } = await getImageDimensions(bytes);
+    // Sniff the REAL image format from content via sharp. file.type / file.name
+    // are client-controlled and MUST NOT be trusted for the on-disk extension.
+    let meta;
+    try {
+      meta = await sharp(bytes).metadata();
+    } catch {
+      return NextResponse.json({ error: "Invalid image file" }, { status: 400 });
+    }
+    if (!meta.format) {
+      return NextResponse.json({ error: "Invalid image file" }, { status: 400 });
+    }
 
-    // Compress/optimize raster images to keep pages fast (SEO/CWV).
+    const SAFE_MIME: Record<string, string> = {
+      jpeg: "image/jpeg",
+      png: "image/png",
+      webp: "image/webp",
+      gif: "image/gif",
+    };
+    const format = SAFE_MIME[meta.format] ? meta.format : null;
+    if (!format) {
+      return NextResponse.json({ error: "Invalid image format" }, { status: 400 });
+    }
+
+    const origWidth = meta.width ?? 0;
+    const origHeight = meta.height ?? 0;
+    if (!origWidth || !origHeight) {
+      return NextResponse.json({ error: "Invalid image dimensions" }, { status: 400 });
+    }
+
     let savedBytes = bytes;
     let savedWidth = origWidth;
     let savedHeight = origHeight;
     let savedSize = bytes.length;
-    const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
-    let savedExt = ext;
+    const savedExt = format;
 
-    if (COMPRESSIBLE_TYPES.includes(file.type)) {
+    if (format === "gif") {
+      // Keep GIF bytes as-is (animation). Extension is derived from format, so
+      // a spoofed ".html" filename can never become the stored extension.
+      savedBytes = bytes;
+      savedSize = bytes.length;
+    } else {
+      // Re-encode raster images so any trailing/appended payload in the
+      // original buffer is discarded by the encoder.
       try {
         let pipeline = sharp(bytes, { animated: false });
-        // Downscale very wide/tall images to cap resolution.
         if (origWidth > MAX_WIDTH) {
           pipeline = pipeline.resize({ width: MAX_WIDTH, withoutEnlargement: true });
         }
-        // Re-encode using a per-format quality target to cut file size.
-        if (file.type === "image/png") {
+        if (format === "png") {
           pipeline = pipeline.png({ quality: ESTIMATED_QUALITY, compressionLevel: 9 });
-        } else if (file.type === "image/webp") {
+        } else if (format === "webp") {
           pipeline = pipeline.webp({ quality: ESTIMATED_QUALITY });
         } else {
           pipeline = pipeline.jpeg({ quality: ESTIMATED_QUALITY, mozjpeg: true });
         }
-        const optimized = await pipeline.toBuffer();
-        // Only keep the optimized buffer if it is actually smaller.
-        if (optimized.length < bytes.length) {
-          savedBytes = optimized;
-          savedSize = optimized.length;
-          const meta = await sharp(optimized).metadata();
-          savedWidth = meta.width ?? origWidth;
-          savedHeight = meta.height ?? origHeight;
-          savedExt = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
-        }
+        savedBytes = await pipeline.toBuffer();
+        savedSize = savedBytes.length;
+        const encoded = await sharp(savedBytes).metadata();
+        savedWidth = encoded.width ?? origWidth;
+        savedHeight = encoded.height ?? origHeight;
       } catch {
-        // If compression fails for any reason, fall back to the raw bytes.
-        savedBytes = bytes;
-        savedSize = bytes.length;
-        savedWidth = origWidth;
-        savedHeight = origHeight;
-        savedExt = ext;
+        return NextResponse.json({ error: "Image processing failed" }, { status: 400 });
       }
     }
 
@@ -98,22 +113,23 @@ export async function POST(request: NextRequest) {
     const height = savedHeight;
     const now = new Date().toISOString();
 
-    const title = (formData.get("title") as string | null)?.trim() || "";
-    const altText = (formData.get("alt") as string | null)?.trim() || "";
-    const description = (formData.get("description") as string | null)?.trim() || "";
-    const rawTags = (formData.get("tags") as string | null)?.trim() || "";
+    const title = (formData.get("title") as string | null)?.trim().slice(0, 200) || "";
+    const altText = (formData.get("alt") as string | null)?.trim().slice(0, 300) || "";
+    const description = (formData.get("description") as string | null)?.trim().slice(0, 1000) || "";
+    const rawTags = (formData.get("tags") as string | null)?.trim().slice(0, 1000) || "";
     const tags = rawTags
       .split(",")
       .map((t) => t.trim().toLowerCase())
-      .filter(Boolean);
+      .filter(Boolean)
+      .slice(0, 20);
 
     const row = db
       .insert(media)
       .values({
         filename,
         url: `/uploads/${filename}`,
-        originalName: file.name,
-        mimeType: file.type,
+        originalName: file.name.slice(0, 255),
+        mimeType: SAFE_MIME[format],
         size: savedSize,
         width,
         height,

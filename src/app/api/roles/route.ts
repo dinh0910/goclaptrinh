@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getRolesWithCounts, createRole } from "@/lib/users";
 import { slugify } from "@/lib/utils";
-import { requireAuth, unauthorizedJson, PERMISSIONS } from "@/lib/permissions";
+import { requireAuth, unauthorizedJson, PERMISSIONS, VALID_PERMISSIONS } from "@/lib/permissions";
 
 export async function GET() {
   try {
@@ -27,8 +27,9 @@ export async function POST(request: NextRequest) {
     const name = typeof body.name === "string" ? body.name.trim() : "";
     const description =
       typeof body.description === "string" ? body.description.trim() : "";
+    const allowedPerms = new Set<string>(VALID_PERMISSIONS);
     const permissions = Array.isArray(body.permissions)
-      ? body.permissions.filter((p: unknown) => typeof p === "string")
+      ? body.permissions.filter((p: unknown) => typeof p === "string" && allowedPerms.has(p))
       : [];
 
     if (!slug) {

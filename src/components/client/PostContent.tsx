@@ -5,6 +5,15 @@ import { siteConfig } from "@/lib/constants";
 import { categoryColor } from "@/lib/categoryColors";
 import CodeBlockCopy from "./CodeBlockCopy";
 
+function safeJson(value: unknown): string {
+  return JSON.stringify(value)
+    .replace(/</g, "\\u003c")
+    .replace(/>/g, "\\u003e")
+    .replace(/&/g, "\\u0026")
+    .replace(/\u2028/g, "\\u2028")
+    .replace(/\u2029/g, "\\u2029");
+}
+
 interface PostContentProps {
   post: Post;
 }
@@ -70,11 +79,11 @@ export default function PostContent({ post }: PostContentProps) {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: safeJson(jsonLd) }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }}
+        dangerouslySetInnerHTML={{ __html: safeJson(breadcrumbLd) }}
       />
       <article>
         {/* Header */}

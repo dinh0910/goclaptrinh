@@ -1,4 +1,5 @@
 import { desc, eq } from "drizzle-orm";
+import type { VisitorSignals } from "./visitor";
 import { db } from "./db";
 import { welcomeSubmissions } from "./db/schema";
 
@@ -6,7 +7,18 @@ export interface WelcomeSubmission {
   id: number;
   itemId: string;
   data: Record<string, string>;
+  visitorId: string;
+  signals: Partial<VisitorSignals>;
+  fingerprint: string;
+  ip: string;
   createdAt: string;
+}
+
+export interface SubmissionClientInfo {
+  visitorId: string;
+  signals: Partial<VisitorSignals>;
+  fingerprint: string;
+  ip: string;
 }
 
 export function getWelcomeSubmissions(): WelcomeSubmission[] {
@@ -30,11 +42,24 @@ export function getWelcomeSubmissionsByItem(
 
 export function addWelcomeSubmission(
   itemId: string,
-  data: Record<string, string>
+  data: Record<string, string>,
+  client: SubmissionClientInfo = {
+    visitorId: "",
+    signals: {},
+    fingerprint: "",
+    ip: "",
+  }
 ): WelcomeSubmission {
   const row = db
     .insert(welcomeSubmissions)
-    .values({ itemId, data })
+    .values({
+      itemId,
+      data,
+      visitorId: client.visitorId,
+      signals: client.signals,
+      fingerprint: client.fingerprint,
+      ip: client.ip,
+    })
     .returning()
     .get();
   return row;

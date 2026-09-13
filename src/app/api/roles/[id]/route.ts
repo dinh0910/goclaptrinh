@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { slugify } from "@/lib/utils";
 import { updateRole, deleteRole, getRolesWithCounts, getUsers } from "@/lib/users";
-import { requireAuth, unauthorizedJson, PERMISSIONS } from "@/lib/permissions";
+import { requireAuth, unauthorizedJson, PERMISSIONS, VALID_PERMISSIONS } from "@/lib/permissions";
 
 export async function PUT(
   request: NextRequest,
@@ -22,8 +22,9 @@ export async function PUT(
     const name = typeof body.name === "string" ? body.name.trim() : "";
     const description =
       typeof body.description === "string" ? body.description.trim() : "";
+    const allowedPerms = new Set<string>(VALID_PERMISSIONS);
     const permissions = Array.isArray(body.permissions)
-      ? body.permissions.filter((p: unknown) => typeof p === "string")
+      ? body.permissions.filter((p: unknown) => typeof p === "string" && allowedPerms.has(p))
       : [];
 
     if (!slug) {

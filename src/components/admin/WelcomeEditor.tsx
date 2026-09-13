@@ -132,8 +132,8 @@ export default function WelcomeEditor({
     if (!form.name.trim()) {
       nextErrors.name = "Tên popup là bắt buộc";
     }
-    if (form.active && !form.title.trim()) {
-      nextErrors.title = "Popup đang bật cần có tiêu đề";
+    if (!form.title.trim()) {
+      nextErrors.title = "Popup cần có tiêu đề để hiển thị";
     }
     if (form.buttonText.trim() || form.buttonLink.trim()) {
       if (!form.buttonText.trim()) {
