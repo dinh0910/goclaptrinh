@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import FieldSelect from "@/components/admin/FieldSelect";
 import { WelcomeVisual } from "@/components/client/WelcomeVisual";
+import FieldError, { errorInputClass } from "@/components/shared/FieldError";
+import type { FieldErrors } from "@/lib/validation";
 import {
   DEFAULT_ITEM,
   FIELD_TYPES,
@@ -33,6 +35,7 @@ export default function WelcomeEditor({
   const [exists, setExists] = useState(mode === "new");
   const [loading, setLoading] = useState(mode === "edit");
   const [saving, setSaving] = useState(false);
+  const [errors, setErrors] = useState<FieldErrors>({});
 
   useEffect(() => {
     if (mode !== "edit") return;
@@ -62,13 +65,18 @@ export default function WelcomeEditor({
     };
   }, [id, mode]);
 
-  const set = <K extends keyof WelcomeItem>(key: K, value: WelcomeItem[K]) =>
+  const set = <K extends keyof WelcomeItem>(key: K, value: WelcomeItem[K]) => {
+    setErrors((er) => ({ ...er, [key]: "" }));
     setForm((f) => ({ ...f, [key]: value }));
+  };
 
-  const updateField = (id: string, patch: Partial<WelcomeField>) =>
+  const updateField = (id: string, patch: Partial<WelcomeField>) => {
+    setErrors((er) => ({ ...er, [id]: "", fields: "" }));
     set("fields", form.fields.map((f) => (f.id === id ? { ...f, ...patch } : f)));
+  };
 
-  const addField = () =>
+  const addField = () => {
+    setErrors((er) => ({ ...er, fields: "" }));
     set("fields", [
       ...form.fields,
       {
@@ -79,11 +87,15 @@ export default function WelcomeEditor({
         required: false,
       },
     ]);
+  };
 
-  const removeField = (id: string) =>
+  const removeField = (id: string) => {
+    setErrors((er) => ({ ...er, fields: "", [id]: "" }));
     set("fields", form.fields.filter((f) => f.id !== id));
+  };
 
   const selectTemplate = (key: WelcomeItem["template"]) => {
+    setErrors((er) => ({ ...er, fields: "", template: "" }));
     setForm((f) => {
       if (key === "form" && f.fields.length === 0) {
         const ts = Date.now().toString(36);
@@ -112,19 +124,50 @@ export default function WelcomeEditor({
     });
   };
 
+  const isValidLink = (v: string) =>
+    /^\/(?!\/)/.test(v) || /^#/.test(v) || /^https?:\/\//i.test(v);
+
   const save = async () => {
+    const nextErrors: FieldErrors = {};
     if (!form.name.trim()) {
-      toast.error("Vui lòng nhập tên popup");
-      return;
+      nextErrors.name = "Tên popup là bắt buộc";
     }
     if (form.active && !form.title.trim()) {
-      toast.error("Popup đang bật cần có tiêu đề");
+      nextErrors.title = "Popup đang bật cần có tiêu đề";
+    }
+    if (form.buttonText.trim() || form.buttonLink.trim()) {
+      if (!form.buttonText.trim()) {
+        nextErrors.buttonText = "Cần có chữ cho nút chính";
+      }
+      if (!form.buttonLink.trim()) {
+        nextErrors.buttonLink = "Cần có link cho nút chính";
+      } else if (!isValidLink(form.buttonLink.trim())) {
+        nextErrors.buttonLink = "Link phải bắt đầu bằng /, # hoặc http(s)://";
+      }
+    }
+    const rv = reappearInput.trim();
+    if (rv !== "" && (Number.isNaN(Number(rv)) || Number(rv) < 0 || Number(rv) > 8760)) {
+      nextErrors.reappearHours = "Giờ phải là số từ 0 đến 8760";
+    }
+    const dv = delayInput.trim();
+    if (dv !== "" && (Number.isNaN(Number(dv)) || Number(dv) < 0 || Number(dv) > 60)) {
+      nextErrors.appearDelay = "Giây phải là số từ 0 đến 60";
+    }
+    if (form.template === "form") {
+      if (form.fields.length === 0) {
+        nextErrors.fields = "Popup đăng ký nhận tin cần ít nhất một trường nhập liệu";
+      } else {
+        for (const f of form.fields) {
+          if (!f.label.trim()) nextErrors[f.id] = "Nhãn trường là bắt buộc";
+        }
+      }
+    }
+    if (Object.keys(nextErrors).length > 0) {
+      setErrors(nextErrors);
+      toast.error(Object.values(nextErrors)[0]);
       return;
     }
-    if (form.template === "form" && form.fields.length === 0) {
-      toast.error("Popup đăng ký nhận tin cần ít nhất một trường nhập liệu");
-      return;
-    }
+    setErrors({});
     const toSave: WelcomeItem =
       reappearInput.trim() === "" && form.reappearHours === 0
         ? { ...form, reappearHours: DEFAULT_ITEM.reappearHours }
@@ -229,8 +272,9 @@ export default function WelcomeEditor({
               value={form.name}
               onChange={(e) => set("name", e.target.value)}
               placeholder="VD: Khuyến mãi Tết"
-              className={inputClass}
+              className={`${inputClass} ${errorInputClass(errors, "name")}`}
             />
+            <FieldError message={errors.name} />
           </div>
 
           <div>
@@ -294,8 +338,9 @@ export default function WelcomeEditor({
               value={form.title}
               onChange={(e) => set("title", e.target.value)}
               placeholder="Tiêu đề hiển thị trong popup"
-              className={inputClass}
+              className={`${inputClass} ${errorInputClass(errors, "title")}`}
             />
+            <FieldError message={errors.title} />
           </div>
 
           <div>
@@ -350,8 +395,9 @@ export default function WelcomeEditor({
                 value={form.buttonText}
                 onChange={(e) => set("buttonText", e.target.value)}
                 placeholder="VD: Khám phá ngay"
-                className={inputClass}
+                className={`${inputClass} ${errorInputClass(errors, "buttonText")}`}
               />
+              <FieldError message={errors.buttonText} />
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
@@ -362,8 +408,9 @@ export default function WelcomeEditor({
                 value={form.buttonLink}
                 onChange={(e) => set("buttonLink", e.target.value)}
                 placeholder="/blog hoặc https://..."
-                className={inputClass}
+                className={`${inputClass} ${errorInputClass(errors, "buttonLink")}`}
               />
+              <FieldError message={errors.buttonLink} />
             </div>
           </div>
 
@@ -388,6 +435,7 @@ export default function WelcomeEditor({
                   điện thoại, tên...
                 </p>
               )}
+              <FieldError message={errors.fields} />
 
               {form.fields.map((f) => (
                 <div
@@ -401,8 +449,9 @@ export default function WelcomeEditor({
                         value={f.label}
                         onChange={(e) => updateField(f.id, { label: e.target.value })}
                         placeholder="Nhãn (VD: Email, Số điện thoại)"
-                        className={`${inputClass} text-sm`}
+                        className={`${inputClass} text-sm ${errorInputClass(errors, f.id)}`}
                       />
+                      <FieldError message={errors[f.id]} />
                       <div className="flex gap-2">
                         <FieldSelect
                           value={f.type}
@@ -491,8 +540,9 @@ export default function WelcomeEditor({
                   set("reappearHours", v === "" ? 0 : Math.max(0, Number(v) || 0));
                 }}
                 placeholder="VD: 24"
-                className={inputClass}
+                className={`${inputClass} ${errorInputClass(errors, "reappearHours")}`}
               />
+              <FieldError message={errors.reappearHours} />
               <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
                 Nhập 0 để chỉ hiện đúng một lần mỗi trình duyệt. Mặc định 24 giờ.
               </p>
@@ -513,8 +563,9 @@ export default function WelcomeEditor({
                   set("appearDelay", v === "" ? 0 : Math.min(60, Math.max(0, Number(v) || 0)));
                 }}
                 placeholder="VD: 3"
-                className={inputClass}
+                className={`${inputClass} ${errorInputClass(errors, "appearDelay")}`}
               />
+              <FieldError message={errors.appearDelay} />
               <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
                 Nhịp chờ trước khi popup bật lên. VD: 3 giây để khách xem trang một chút.
               </p>

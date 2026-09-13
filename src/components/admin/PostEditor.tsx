@@ -6,6 +6,8 @@ import { toast } from "sonner";
 import RichEditor from "./RichEditor";
 import MediaPicker from "./MediaPicker";
 import FieldSelect from "./FieldSelect";
+import FieldError from "@/components/shared/FieldError";
+import type { FieldErrors } from "@/lib/validation";
 
 const SEO_LIMITS = {
   title: 60,
@@ -123,8 +125,10 @@ export default function PostEditor({ mode, initialData, slug, categories }: Post
   const [uploading, setUploading] = useState(false);
   const [uploadDragOver, setUploadDragOver] = useState(false);
   const [showMediaPicker, setShowMediaPicker] = useState(false);
+  const [errors, setErrors] = useState<FieldErrors>({});
 
   const updateField = <K extends keyof PostFormData>(key: K, value: PostFormData[K]) => {
+    setErrors((er) => ({ ...er, [key]: "" }));
     setForm((prev) => {
       const next = { ...prev, [key]: value };
       if (key === "title" && mode === "create") {
@@ -184,10 +188,30 @@ export default function PostEditor({ mode, initialData, slug, categories }: Post
   );
 
   const handleSave = async () => {
-    if (!form.slug || !form.title || !form.description || !form.category || !contentRef.current) {
-      toast.error("Vui lòng điền đầy đủ các trường bắt buộc");
+    const nextErrors: FieldErrors = {};
+    if (!form.title.trim()) nextErrors.title = "Tiêu đề là bắt buộc";
+    if (!form.slug.trim()) {
+      nextErrors.slug = "Slug là bắt buộc";
+    } else if (!/^[a-z0-9-]+$/.test(form.slug.trim())) {
+      nextErrors.slug = "Slug chỉ gồm chữ thường, số và dấu gạch ngang";
+    }
+    if (!form.description.trim()) nextErrors.description = "Mô tả là bắt buộc";
+    if (!form.category) nextErrors.category = "Vui lòng chọn danh mục";
+    const bodyText = (contentRef.current || "")
+      .replace(/<[^>]*>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+    if (!bodyText) nextErrors.content = "Nội dung là bắt buộc";
+    if (!form.date || Number.isNaN(new Date(normalizeUtc(form.date)).getTime())) {
+      nextErrors.date = "Ngày đăng không hợp lệ";
+    }
+
+    if (Object.keys(nextErrors).length > 0) {
+      setErrors(nextErrors);
+      toast.error(Object.values(nextErrors)[0]);
       return;
     }
+    setErrors({});
 
     setSaving(true);
     try {
@@ -257,6 +281,7 @@ export default function PostEditor({ mode, initialData, slug, categories }: Post
               content={form.content}
               onChange={onContentChange}
             />
+            <FieldError message={errors.content} />
           </div>
 
           {/* Title */}
@@ -271,9 +296,10 @@ export default function PostEditor({ mode, initialData, slug, categories }: Post
               type="text"
               value={form.title}
               onChange={(e) => updateField("title", e.target.value)}
-              className={`${fieldClass(countChars(form.title) > SEO_LIMITS.title)} text-lg`}
+              className={`${fieldClass(countChars(form.title) > SEO_LIMITS.title || !!errors.title)} text-lg`}
               placeholder="Nhập tiêu đề bài viết..."
             />
+            <FieldError message={errors.title} />
           </div>
 
           {/* Slug */}
@@ -288,9 +314,10 @@ export default function PostEditor({ mode, initialData, slug, categories }: Post
               type="text"
               value={form.slug}
               onChange={(e) => updateField("slug", e.target.value)}
-              className={`${fieldClass(countChars(form.slug) > SEO_LIMITS.slug)} font-mono text-sm`}
+              className={`${fieldClass(countChars(form.slug) > SEO_LIMITS.slug || !!errors.slug)} font-mono text-sm`}
               placeholder="bai-viet-seo-friendly"
             />
+            <FieldError message={errors.slug} />
           </div>
 
           {/* Description */}
@@ -305,9 +332,10 @@ export default function PostEditor({ mode, initialData, slug, categories }: Post
               value={form.description}
               onChange={(e) => updateField("description", e.target.value)}
               rows={2}
-              className={`${fieldClass(countChars(form.description) > SEO_LIMITS.description)} resize-none`}
+              className={`${fieldClass(countChars(form.description) > SEO_LIMITS.description || !!errors.description)} resize-none`}
               placeholder="Mô tả ngắn gọn nội dung bài viết..."
             />
+            <FieldError message={errors.description} />
           </div>
         </div>
 
@@ -397,6 +425,7 @@ export default function PostEditor({ mode, initialData, slug, categories }: Post
               placeholder="Chọn danh mục..."
               searchable
             />
+            <FieldError message={errors.category} />
           </div>
 
           {/* Tags */}
@@ -449,8 +478,13 @@ export default function PostEditor({ mode, initialData, slug, categories }: Post
               type="datetime-local"
               value={form.date}
               onChange={(e) => updateField("date", e.target.value)}
-              className="w-full px-4 py-3 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+              className={`w-full px-4 py-3 bg-white dark:bg-gray-900 border rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
+                errors.date
+                  ? "border-red-500"
+                  : "border-gray-300 dark:border-gray-700"
+              }`}
             />
+            <FieldError message={errors.date} />
             <p className="mt-1.5 text-xs text-gray-400 dark:text-gray-500">Giờ hiển thị theo UTC, lưu DB dạng ISO UTC</p>
           </div>
 
