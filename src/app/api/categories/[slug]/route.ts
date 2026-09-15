@@ -4,13 +4,16 @@ import { db } from "@/lib/db";
 import { categories, posts } from "@/lib/db/schema";
 import { slugify } from "@/lib/utils";
 import { requireAuth, unauthorizedJson, PERMISSIONS } from "@/lib/permissions";
+import { logAudit, AUDIT_ACTIONS } from "@/lib/audit";
+import { getClientIp } from "@/lib/visitor";
 
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
-    if (!(await requireAuth([PERMISSIONS.categories]))) {
+    const session = await requireAuth([PERMISSIONS.categories]);
+    if (!session) {
       return unauthorizedJson();
     }
     const { slug } = await params;
@@ -80,6 +83,16 @@ export async function PUT(
       .returning()
       .get();
 
+    logAudit({
+      action: AUDIT_ACTIONS.categoryUpdate,
+      userId: Number(session.user?.id) || null,
+      userEmail: session.user?.email ?? "",
+      entity: "category",
+      entityId: result.slug,
+      detail: { name: result.name },
+      ip: getClientIp(request.headers),
+    });
+
     return NextResponse.json(result);
   } catch {
     return NextResponse.json(
@@ -90,11 +103,12 @@ export async function PUT(
 }
 
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
-    if (!(await requireAuth([PERMISSIONS.categories]))) {
+    const session = await requireAuth([PERMISSIONS.categories]);
+    if (!session) {
       return unauthorizedJson();
     }
     const { slug } = await params;
@@ -124,6 +138,17 @@ export async function DELETE(
     }
 
     db.delete(categories).where(eq(categories.slug, slug)).run();
+
+    logAudit({
+      action: AUDIT_ACTIONS.categoryDelete,
+      userId: Number(session.user?.id) || null,
+      userEmail: session.user?.email ?? "",
+      entity: "category",
+      entityId: slug,
+      detail: { name: existing.name },
+      ip: getClientIp(request.headers),
+    });
+
     return NextResponse.json({ ok: true });
   } catch {
     return NextResponse.json(

@@ -2,7 +2,7 @@ import { getAllPosts } from "@/lib/posts";
 import Link from "next/link";
 import PostTable from "@/components/admin/PostTable";
 import { db } from "@/lib/db";
-import { categories } from "@/lib/db/schema";
+import { categories, series as seriesTable } from "@/lib/db/schema";
 import { requireAuth, PERMISSIONS } from "@/lib/permissions";
 import { notFound } from "next/navigation";
 
@@ -14,10 +14,14 @@ export default async function AdminPostsPage() {
   if (!(await requireAuth([PERMISSIONS.posts]))) {
     notFound();
   }
-  const posts = await getAllPosts();
+  const posts = await getAllPosts({ includeUnpublished: true });
   const categoryList = db.select().from(categories).all();
   const categoryName = Object.fromEntries(
     categoryList.map((c) => [c.slug, c.name])
+  );
+  const seriesList = db.select().from(seriesTable).all();
+  const seriesName = Object.fromEntries(
+    seriesList.map((s) => [s.id, s.name])
   );
 
   return (
@@ -34,7 +38,7 @@ export default async function AdminPostsPage() {
         </Link>
       </div>
 
-      <PostTable posts={posts} categoryName={categoryName} />
+      <PostTable posts={posts} categoryName={categoryName} seriesName={seriesName} />
     </div>
   );
 }

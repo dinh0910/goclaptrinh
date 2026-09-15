@@ -14,20 +14,37 @@ export interface AdminPost {
   date: string;
   tags: string[];
   featured?: boolean;
+  published?: boolean;
+  publishedAt?: string;
+  seriesId?: number;
+  seriesOrder?: number;
+}
+
+function publishStatus(post: AdminPost): { label: string; cls: string } {
+  if (!post.published) {
+    return { label: "Nháp", cls: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400" };
+  }
+  if (post.publishedAt && new Date(post.publishedAt).getTime() > Date.now()) {
+    return { label: "Hẹn giờ", cls: "bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400" };
+  }
+  return { label: "Đã đăng", cls: "bg-green-100 text-green-700 dark:bg-green-500/10 dark:text-green-400" };
 }
 
 export default function PostTable({
   posts,
   categoryName,
+  seriesName,
 }: {
   posts: AdminPost[];
   categoryName: Record<string, string>;
+  seriesName?: Record<string, string>;
 }) {
   const ctrl = useTableControls<AdminPost>({
     searchKeys: [
       (p) => p.title,
       (p) => p.category,
       (p) => p.tags.join(" "),
+      (p) => (p.seriesId && seriesName?.[p.seriesId]) || "",
     ],
   });
 
@@ -43,6 +60,8 @@ export default function PostTable({
         return p.tags.length;
       case "featured":
         return p.featured ? 1 : 0;
+      case "published":
+        return publishStatus(p).label;
       default:
         return "";
     }
@@ -66,6 +85,7 @@ export default function PostTable({
                 <SortableTh label="Danh mục" sortKey="category" currentKey={ctrl.sortKey} dir={ctrl.sortDir} onSort={ctrl.setColumnSort} />
                 <SortableTh label="Ngày" sortKey="date" currentKey={ctrl.sortKey} dir={ctrl.sortDir} onSort={ctrl.setColumnSort} />
                 <SortableTh label="Tags" sortKey="tags" currentKey={ctrl.sortKey} dir={ctrl.sortDir} onSort={ctrl.setColumnSort} />
+                <SortableTh label="Trạng thái" sortKey="published" currentKey={ctrl.sortKey} dir={ctrl.sortDir} onSort={ctrl.setColumnSort} />
                 <SortableTh label="Featured" sortKey="featured" currentKey={ctrl.sortKey} dir={ctrl.sortDir} onSort={ctrl.setColumnSort} />
                 <th className="px-4 py-3.5 text-right" aria-label="Thao tác" />
               </tr>
@@ -78,6 +98,11 @@ export default function PostTable({
                   </td>
                   <td className="p-4">
                     <span className="text-sm text-gray-600 dark:text-gray-400">{categoryName[post.category] || post.category}</span>
+                    {post.seriesId && seriesName?.[post.seriesId] && (
+                      <span className="block mt-0.5 text-[11px] text-violet-500 dark:text-violet-400">
+                        {seriesName[post.seriesId]}
+                      </span>
+                    )}
                   </td>
                   <td className="p-4">
                     <span className="text-sm text-gray-500 dark:text-gray-400">
@@ -99,6 +124,19 @@ export default function PostTable({
                     </div>
                   </td>
                   <td className="p-4">
+                    {(() => {
+                      const s = publishStatus(post);
+                      return (
+                        <span
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium rounded-full ${s.cls}`}
+                          title={post.publishedAt ? `Từ ${formatDateTime(post.publishedAt)}` : undefined}
+                        >
+                          {s.label}
+                        </span>
+                      );
+                    })()}
+                  </td>
+                  <td className="p-4">
                     {post.featured ? (
                       <span className="inline-flex items-center justify-center w-6 h-6 text-amber-600 dark:text-amber-400" title="Featured">
                         <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5" aria-hidden>
@@ -116,7 +154,7 @@ export default function PostTable({
               ))}
               {pageItems.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="p-8 text-center">
+                  <td colSpan={7} className="p-8 text-center">
                     <div className="flex flex-col items-center gap-2">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-10 h-10 text-gray-300 dark:text-gray-600" aria-hidden>
                         <rect x="3" y="4" width="18" height="16" rx="2" />

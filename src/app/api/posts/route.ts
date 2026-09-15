@@ -4,6 +4,9 @@ import { db } from "@/lib/db";
 import { posts } from "@/lib/db/schema";
 import { requireAuth, unauthorizedJson, PERMISSIONS } from "@/lib/permissions";
 import { cleanPostFields } from "@/lib/post-input";
+import { indexPost } from "@/lib/db";
+import { logAudit, AUDIT_ACTIONS } from "@/lib/audit";
+import { getClientIp } from "@/lib/visitor";
 
 export async function GET() {
   try {
@@ -16,7 +19,8 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    if (!(await requireAuth([PERMISSIONS.posts]))) {
+    const session = await requireAuth([PERMISSIONS.posts]);
+    if (!session) {
       return unauthorizedJson();
     }
     const body = await request.json();
@@ -36,6 +40,13 @@ export async function POST(request: NextRequest) {
     }
 
     const now = new Date().toISOString();
+    const published = (v.published as boolean) ?? false;
+    const publishedAt = (() => {
+      const pv = (v.publishedAt as string) || "";
+      if (published && !pv) return now;
+      return pv;
+    })();
+
     const result = db.insert(posts).values({
       slug: v.slug as string,
       title: v.title as string,
@@ -49,12 +60,29 @@ export async function POST(request: NextRequest) {
       content: v.content as string,
       rawContent: (v.rawContent as string) || "",
       readingTime: (v.readingTime as string) || "5 phút đọc",
+      published,
+      publishedAt,
+      seriesId: (v.seriesId as number | null) ?? null,
+      seriesOrder: (v.seriesOrder as number) ?? 0,
       createdAt: now,
       updatedAt: now,
     }).returning().get();
 
+    indexPost(result.id);
+
+    logAudit({
+      action: AUDIT_ACTIONS.postCreate,
+      userId: Number(session.user?.id) || null,
+      userEmail: session.user?.email ?? "",
+      entity: "post",
+      entityId: result.slug,
+      detail: { title: result.title },
+      ip: getClientIp(request.headers),
+    });
+
     return NextResponse.json(result, { status: 201 });
-  } catch {
+  } catch (error) {
+    console.error("POST /api/posts failed", error);
     return NextResponse.json({ error: "Failed to create post" }, { status: 500 });
   }
 }

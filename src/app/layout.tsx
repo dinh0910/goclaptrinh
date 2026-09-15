@@ -4,6 +4,7 @@ import { siteConfig } from "@/lib/constants";
 import { ThemeProvider } from "@/components/shared/ThemeProvider";
 import ToasterProvider from "@/components/shared/ToasterProvider";
 import WelcomeDialog from "@/components/client/WelcomeDialog";
+import PageViewTracker from "@/components/client/PageViewTracker";
 import Header from "@/components/shared/Header";
 import Footer from "@/components/shared/Footer";
 import TopProgressBar from "@/components/client/TopProgressBar";
@@ -79,6 +80,9 @@ export const metadata: Metadata = {
     languages: {
       "vi": siteConfig.url,
     },
+    types: {
+      "application/rss+xml": "/rss.xml",
+    },
   },
 };
 
@@ -100,6 +104,7 @@ export default function RootLayout({
         <ThemeProvider>
           <ToasterProvider />
           <TopProgressBar />
+          <PageViewTracker />
           <WelcomeDialog />
           <Header />
           <main className="flex-1">{children}</main>

@@ -5,6 +5,7 @@ import { getCategoriesWithCounts } from "@/lib/categories";
 import PostCard from "@/components/client/PostCard";
 import CategoryList from "@/components/client/CategoryList";
 import HeroBanner from "@/components/client/HeroBanner";
+import NewsletterForm from "@/components/client/NewsletterForm";
 import { getHeroConfig } from "@/lib/hero";
 
 export default async function Home() {
@@ -150,20 +151,7 @@ export default async function Home() {
               Nhận thông báo khi có bài viết mới về lập trình và CNTT.
               Không spam, chỉ nội dung chất lượng.
             </p>
-            <div className="mt-8 flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
-              <label htmlFor="newsletter-email" className="sr-only">
-                Email address
-              </label>
-              <input
-                id="newsletter-email"
-                type="email"
-                placeholder="email@example.com"
-                className="flex-1 px-4 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-              <button type="button" className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap">
-                Đăng ký
-              </button>
-            </div>
+            <NewsletterForm />
           </div>
         </div>
       </section>

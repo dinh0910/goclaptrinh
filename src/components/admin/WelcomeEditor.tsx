@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import FieldSelect from "@/components/admin/FieldSelect";
 import { WelcomeVisual } from "@/components/client/WelcomeVisual";
 import FieldError, { errorInputClass } from "@/components/shared/FieldError";
+import FieldNumber from "@/components/admin/FieldNumber";
 import type { FieldErrors } from "@/lib/validation";
 import {
   DEFAULT_ITEM,
@@ -30,8 +31,6 @@ export default function WelcomeEditor({
 }) {
   const router = useRouter();
   const [form, setForm] = useState<WelcomeItem>(() => emptyWelcomeItem());
-  const [reappearInput, setReappearInput] = useState("");
-  const [delayInput, setDelayInput] = useState("3");
   const [exists, setExists] = useState(mode === "new");
   const [loading, setLoading] = useState(mode === "edit");
   const [saving, setSaving] = useState(false);
@@ -49,8 +48,6 @@ export default function WelcomeEditor({
         const found = data?.items.find((i) => i.id === id);
         if (found) {
           setForm(found);
-          setReappearInput(String(found.reappearHours));
-          setDelayInput(String(found.appearDelay));
           setExists(true);
         } else {
           setExists(false);
@@ -145,12 +142,10 @@ export default function WelcomeEditor({
         nextErrors.buttonLink = "Link phải bắt đầu bằng /, # hoặc http(s)://";
       }
     }
-    const rv = reappearInput.trim();
-    if (rv !== "" && (Number.isNaN(Number(rv)) || Number(rv) < 0 || Number(rv) > 8760)) {
+    if (form.reappearHours < 0 || form.reappearHours > 8760) {
       nextErrors.reappearHours = "Giờ phải là số từ 0 đến 8760";
     }
-    const dv = delayInput.trim();
-    if (dv !== "" && (Number.isNaN(Number(dv)) || Number(dv) < 0 || Number(dv) > 60)) {
+    if (form.appearDelay < 0 || form.appearDelay > 60) {
       nextErrors.appearDelay = "Giây phải là số từ 0 đến 60";
     }
     if (form.template === "form") {
@@ -169,7 +164,7 @@ export default function WelcomeEditor({
     }
     setErrors({});
     const toSave: WelcomeItem =
-      reappearInput.trim() === "" && form.reappearHours === 0
+      form.reappearHours === 0
         ? { ...form, reappearHours: DEFAULT_ITEM.reappearHours }
         : form;
     setSaving(true);
@@ -529,18 +524,12 @@ export default function WelcomeEditor({
               <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
                 Hiện lại sau khi đóng (giờ)
               </label>
-              <input
-                type="number"
+              <FieldNumber
+                value={form.reappearHours}
+                onChange={(v) => set("reappearHours", v)}
                 min={0}
                 max={8760}
-                value={reappearInput}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  setReappearInput(v);
-                  set("reappearHours", v === "" ? 0 : Math.max(0, Number(v) || 0));
-                }}
-                placeholder="VD: 24"
-                className={`${inputClass} ${errorInputClass(errors, "reappearHours")}`}
+                className={errorInputClass(errors, "reappearHours")}
               />
               <FieldError message={errors.reappearHours} />
               <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
@@ -551,19 +540,12 @@ export default function WelcomeEditor({
               <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
                 Hiện sau khi tải trang (giây)
               </label>
-              <input
-                type="number"
+              <FieldNumber
+                value={form.appearDelay}
+                onChange={(v) => set("appearDelay", v)}
                 min={0}
                 max={60}
-                step={1}
-                value={delayInput}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  setDelayInput(v);
-                  set("appearDelay", v === "" ? 0 : Math.min(60, Math.max(0, Number(v) || 0)));
-                }}
-                placeholder="VD: 3"
-                className={`${inputClass} ${errorInputClass(errors, "appearDelay")}`}
+                className={errorInputClass(errors, "appearDelay")}
               />
               <FieldError message={errors.appearDelay} />
               <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">

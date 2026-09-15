@@ -49,6 +49,15 @@ const MAX_PER_WINDOW = 10;
 
 export const welcomeLimiter = makeLimiter("welcome_rate_limits", WINDOW_MS, MAX_PER_WINDOW);
 
+// Newsletter subscription: 5 signups per 15 minutes per IP.
+export const newsletterLimiter = makeLimiter("newsletter_rate_limits", 15 * 60_000, 5);
+
+// Comments: 3 per 2 minutes per IP (keeps spam under control without blocking real readers).
+export const commentLimiter = makeLimiter("comment_rate_limits", 2 * 60_000, 3);
+
+// Reactions: 12 per 5 minutes per visitor/IP.
+export const reactionLimiter = makeLimiter("reaction_rate_limits", 5 * 60_000, 12);
+
 // Backwards-compatible wrapper for the welcome submit endpoint.
 export function allowSubmit(key: string): boolean {
   return welcomeLimiter.allow(key);

@@ -10,6 +10,22 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/admin";
   const [loading, setLoading] = useState(false);
+  const [mfaRequired, setMfaRequired] = useState(false);
+
+  async function checkCredentials(email: string, password: string): Promise<boolean> {
+    const res = await fetch("/api/auth/status", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+    if (!res.ok) {
+      toast.error("Email hoặc mật khẩu không đúng");
+      return false;
+    }
+    const data = (await res.json()) as { ok: boolean; mfaRequired?: boolean };
+    if (data.mfaRequired) setMfaRequired(true);
+    return true;
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -18,17 +34,36 @@ function LoginForm() {
     const formData = new FormData(e.currentTarget);
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
+    const totp = (formData.get("totp") as string) || "";
+
+    // Step 1: verify email + password, discover whether TOTP is needed.
+    if (!mfaRequired) {
+      const ok = await checkCredentials(email, password);
+      if (!ok) {
+        setLoading(false);
+        return;
+      }
+      if (!totp) {
+        setLoading(false);
+        return;
+      }
+    }
 
     const result = await signIn("credentials", {
       email,
       password,
+      totp,
       redirect: false,
     });
 
     setLoading(false);
 
     if (result?.error) {
-      toast.error("Email hoặc mật khẩu không đúng");
+      if (mfaRequired) {
+        toast.error("Mã xác thực không đúng hoặc đã hết hạn");
+      } else {
+        toast.error("Email hoặc mật khẩu không đúng");
+      }
     } else {
       router.push(callbackUrl);
       router.refresh();
@@ -52,8 +87,9 @@ function LoginForm() {
           name="email"
           type="email"
           required
+          disabled={mfaRequired}
           autoComplete="email"
-          className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+          className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors disabled:opacity-60"
           placeholder="admin@goclaptrinh.io.vn"
         />
       </div>
@@ -70,19 +106,61 @@ function LoginForm() {
           name="password"
           type="password"
           required
+          disabled={mfaRequired}
           autoComplete="current-password"
-          className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+          className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors disabled:opacity-60"
           placeholder="••••••••"
         />
       </div>
+
+      {mfaRequired && (
+        <div className="mb-6">
+          <label
+            htmlFor="totp"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5"
+          >
+            Mã xác thực (TOTP)
+          </label>
+          <input
+            id="totp"
+            name="totp"
+            type="text"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            maxLength={6}
+            pattern="[0-9]{6}"
+            required
+            autoFocus
+            placeholder="6 số từ app xác thực"
+            className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors tracking-[0.3em] text-center"
+          />
+          <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+            Nhập mã 6 số từ ứng dụng xác thực (Google Authenticator, Authy...)
+          </p>
+        </div>
+      )}
 
       <button
         type="submit"
         disabled={loading}
         className="w-full py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
       >
-        {loading ? "Đang đăng nhập..." : "Đăng nhập"}
+        {loading
+          ? "Đang kiểm tra..."
+          : mfaRequired
+            ? "Xác thực"
+            : "Đăng nhập"}
       </button>
+
+      {mfaRequired && (
+        <button
+          type="button"
+          onClick={() => setMfaRequired(false)}
+          className="mt-3 w-full text-center text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+        >
+          ← Quay lại
+        </button>
+      )}
     </form>
   );
 }

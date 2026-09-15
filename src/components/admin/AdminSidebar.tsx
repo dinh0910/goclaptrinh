@@ -40,6 +40,7 @@ type NavItem = AdminTopLink | AdminSection;
 
 const navItems: NavItem[] = [
   { kind: "link", href: "/admin", label: "Dashboard", icon: "📊" },
+  { kind: "link", href: "/admin/analytics", label: "Thống kê", icon: "📈", permission: "analytics" },
   {
     kind: "section",
     key: "posts",
@@ -49,9 +50,11 @@ const navItems: NavItem[] = [
     children: [
       { href: "/admin/posts", label: "Danh sách" },
       { href: "/admin/posts/new", label: "Thêm mới" },
+      { href: "/admin/series", label: "Series" },
     ],
   },
   { kind: "link", href: "/admin/categories", label: "Danh mục", icon: "🗂️", permission: "categories" },
+  { kind: "link", href: "/admin/comments", label: "Bình luận", icon: "💬", permission: "comments" },
   { kind: "link", href: "/admin/media", label: "Hình ảnh", icon: "🖼️", permission: "media" },
   {
     kind: "section",
@@ -78,6 +81,10 @@ const navItems: NavItem[] = [
       { href: "/admin/welcome/submissions", label: "Đăng ký nhận tin" },
     ],
   },
+  { kind: "link", href: "/admin/newsletter", label: "Newsletter", icon: "📧", permission: "newsletter" },
+  { kind: "link", href: "/admin/security", label: "Bảo mật", icon: "🔐" },
+  { kind: "link", href: "/admin/audit", label: "Nhật ký", icon: "📋" },
+  { kind: "link", href: "/admin/backups", label: "Sao lưu", icon: "💾" },
   { kind: "link", href: "/admin/settings", label: "Cài đặt", icon: "⚙️" },
   { kind: "link", href: "/", label: "Xem site", icon: "🌐" },
 ];

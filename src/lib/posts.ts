@@ -1,11 +1,39 @@
 import { remark } from "remark";
 import html from "remark-html";
 import { eq, sql } from "drizzle-orm";
-import { db } from "./db";
+import { db, sqliteClient } from "./db";
 import { posts, type PostRow } from "./db/schema";
 import { Post } from "./types";
 import { getCategoryBySlug } from "./categories";
 import { embedUrlsToIframes } from "./embeds";
+
+export interface PostQueryOptions {
+  /** Include drafts and posts scheduled for a future date. Admin-only. */
+  includeUnpublished?: boolean;
+}
+
+function isPubliclyVisible(row: Pick<PostRow, "published" | "publishedAt">): boolean {
+  if (!row.published) return false;
+  if (!row.publishedAt) return true;
+  return new Date(row.publishedAt).getTime() <= Date.now();
+}
+
+function applyPublishFilter(rows: PostRow[], opts?: PostQueryOptions): PostRow[] {
+  if (opts?.includeUnpublished) return rows;
+  return rows.filter(isPubliclyVisible);
+}
+
+export function isPostPubliclyVisible(row: Pick<PostRow, "published" | "publishedAt">): boolean {
+  return isPubliclyVisible(row);
+}
+
+/** Server-only helper: returns the integer primary key for a slug, or null. */
+export function getPostIdBySlug(slug: string): number | null {
+  const row = sqliteClient
+    .prepare("SELECT id FROM posts WHERE slug = ?")
+    .get(slug) as { id: number } | undefined;
+  return row?.id ?? null;
+}
 
 function categoryDisplayName(slug: string): { name: string; color: string } {
   const cat = getCategoryBySlug(slug);
@@ -28,6 +56,10 @@ function rowToPost(row: PostRow, contentHtml: string): Post {
     content: contentHtml,
     readingTime: row.readingTime,
     featured: row.featured,
+    published: row.published,
+    publishedAt: row.publishedAt || "",
+    seriesId: row.seriesId ?? undefined,
+    seriesOrder: row.seriesOrder,
   };
 }
 
@@ -41,15 +73,21 @@ function renderContent(rawContent: string, contentHtml: string): string {
   return embedUrlsToIframes(rendered);
 }
 
-export async function getPostBySlug(slug: string): Promise<Post> {
+export async function getPostBySlug(
+  slug: string,
+  opts?: PostQueryOptions
+): Promise<Post> {
   const row = db.select().from(posts).where(eq(posts.slug, slug)).get();
   if (!row) throw new Error(`Post not found: ${slug}`);
+  if (!isPostPubliclyVisible(row) && !opts?.includeUnpublished) {
+    throw new Error(`Post not found: ${slug}`);
+  }
   const contentHtml = renderContent(row.rawContent || "", row.content);
   return rowToPost(row, contentHtml);
 }
 
-export async function getAllPosts(): Promise<Post[]> {
-  const rows = db.select().from(posts).all();
+export async function getAllPosts(opts?: PostQueryOptions): Promise<Post[]> {
+  const rows = applyPublishFilter(db.select().from(posts).all(), opts);
   const rendered = rows.map((row) => {
     const contentHtml = renderContent(row.rawContent || "", row.content);
     return rowToPost(row, contentHtml);
@@ -73,20 +111,29 @@ export async function getPostsByTag(tag: string): Promise<Post[]> {
   );
 }
 
-export function getAllPostSlugs(): string[] {
-  const rows = db.select({ slug: posts.slug }).from(posts).all();
+export function getAllPostSlugs(opts?: PostQueryOptions): string[] {
+  const rows = applyPublishFilter(db.select().from(posts).all(), opts);
   return rows.map((r) => r.slug);
 }
 
-export function getAllCategories(): Record<string, number> {
-  const rows = db
+export function getAllCategories(opts?: PostQueryOptions): Record<string, number> {
+  const query = db
     .select({
       category: sql<string>`lower(${posts.category})`,
       count: sql<number>`count(*)`,
     })
-    .from(posts)
-    .groupBy(posts.category)
-    .all();
+    .from(posts);
+
+  if (!opts?.includeUnpublished) {
+    // Only count posts that are currently visible to the public.
+    query.where(
+      sql`${posts.published} = 1 AND (
+        ${posts.publishedAt} = '' OR datetime(${posts.publishedAt}) <= datetime('now')
+      )`
+    );
+  }
+
+  const rows = query.groupBy(posts.category).all();
 
   const result: Record<string, number> = {};
   for (const row of rows) {
@@ -95,11 +142,21 @@ export function getAllCategories(): Record<string, number> {
   return result;
 }
 
-export function getAllTags(): Record<string, number> {
-  const rows = db.select({ tags: posts.tags }).from(posts).all();
+export function getAllTags(opts?: PostQueryOptions): Record<string, number> {
+  const source = opts?.includeUnpublished
+    ? db.select({ tags: posts.tags }).from(posts).all()
+    : db
+        .select({ tags: posts.tags })
+        .from(posts)
+        .where(
+          sql`${posts.published} = 1 AND (
+            ${posts.publishedAt} = '' OR datetime(${posts.publishedAt}) <= datetime('now')
+          )`
+        )
+        .all();
   const tagCount: Record<string, number> = {};
 
-  for (const row of rows) {
+  for (const row of source) {
     const tags = (row.tags as string[]) || [];
     for (const tag of tags) {
       const t = tag.toLowerCase();

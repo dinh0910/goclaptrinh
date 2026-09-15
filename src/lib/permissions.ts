@@ -12,6 +12,9 @@ export const PERMISSIONS = {
   users: "users",
   banners: "banners",
   welcome: "welcome",
+  newsletter: "newsletter",
+  analytics: "analytics",
+  comments: "comments",
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
@@ -25,6 +28,9 @@ export const ADMIN_PERMISSIONS: Permission[] = [
   PERMISSIONS.users,
   PERMISSIONS.banners,
   PERMISSIONS.welcome,
+  PERMISSIONS.newsletter,
+  PERMISSIONS.analytics,
+  PERMISSIONS.comments,
 ];
 
 export function getRolePermissions(role?: string | null): string[] {

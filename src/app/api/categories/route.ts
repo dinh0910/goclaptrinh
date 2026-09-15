@@ -5,6 +5,8 @@ import { getCategoriesWithCounts } from "@/lib/categories";
 import { slugify } from "@/lib/utils";
 import { eq } from "drizzle-orm";
 import { requireAuth, unauthorizedJson, PERMISSIONS } from "@/lib/permissions";
+import { logAudit, AUDIT_ACTIONS } from "@/lib/audit";
+import { getClientIp } from "@/lib/visitor";
 
 export async function GET() {
   try {
@@ -19,7 +21,8 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    if (!(await requireAuth([PERMISSIONS.categories]))) {
+    const session = await requireAuth([PERMISSIONS.categories]);
+    if (!session) {
       return unauthorizedJson();
     }
     const body = await request.json();
@@ -64,6 +67,16 @@ export async function POST(request: NextRequest) {
       .values({ slug, name, description, icon, color })
       .returning()
       .get();
+
+    logAudit({
+      action: AUDIT_ACTIONS.categoryCreate,
+      userId: Number(session.user?.id) || null,
+      userEmail: session.user?.email ?? "",
+      entity: "category",
+      entityId: result.slug,
+      detail: { name: result.name },
+      ip: getClientIp(request.headers),
+    });
 
     return NextResponse.json(result, { status: 201 });
   } catch {

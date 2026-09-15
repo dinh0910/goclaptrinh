@@ -15,7 +15,20 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  const sessionOnly = ["/api/media", "/api/upload", "/api/users", "/api/roles"];
+  const sessionOnly = [
+    "/api/media",
+    "/api/upload",
+    "/api/users",
+    "/api/roles",
+    "/api/admin/audit",
+    "/api/admin/mfa",
+    "/api/admin/backups",
+    "/api/admin/series",
+    "/api/admin/ai",
+    "/api/admin/newsletter",
+    "/api/admin/analytics",
+    "/api/admin/comments",
+  ];
   if (sessionOnly.some((prefix) => pathname.startsWith(prefix))) {
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -46,5 +59,6 @@ export const config = {
     "/api/upload/:path*",
     "/api/users/:path*",
     "/api/roles/:path*",
+    "/api/admin/:path*",
   ],
 };

@@ -7,6 +7,7 @@ import RichEditor from "./RichEditor";
 import MediaPicker from "./MediaPicker";
 import FieldSelect from "./FieldSelect";
 import FieldError from "@/components/shared/FieldError";
+import FieldNumber from "./FieldNumber";
 import type { FieldErrors } from "@/lib/validation";
 
 const SEO_LIMITS = {
@@ -27,6 +28,17 @@ interface PostFormData {
   featured: boolean;
   content: string;
   readingTime: string;
+  published: boolean;
+  publishedAt: string;
+  seriesId: number | null;
+  seriesOrder: number;
+}
+
+export interface PostSeriesOption {
+  id: number;
+  slug: string;
+  name: string;
+  icon?: string;
 }
 
 interface PostEditorProps {
@@ -34,7 +46,10 @@ interface PostEditorProps {
   initialData?: Partial<PostFormData>;
   slug?: string;
   categories?: { slug: string; name: string; icon?: string }[];
+  seriesList?: PostSeriesOption[];
 }
+
+type PublishMode = "draft" | "now" | "scheduled";
 
 function estimateReadingTime(html: string): string {
   const text = html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
@@ -100,7 +115,7 @@ function WordCount({ count, limit }: { count: number; limit: number }) {
   );
 }
 
-export default function PostEditor({ mode, initialData, slug, categories }: PostEditorProps) {
+export default function PostEditor({ mode, initialData, slug, categories, seriesList }: PostEditorProps) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -116,9 +131,14 @@ export default function PostEditor({ mode, initialData, slug, categories }: Post
     featured: initialData?.featured || false,
     content: initialData?.content || "",
     readingTime: initialData?.readingTime || "5 phút đọc",
+    published: initialData?.published ?? false,
+    publishedAt: initialData?.publishedAt || "",
+    seriesId: initialData?.seriesId ?? null,
+    seriesOrder: initialData?.seriesOrder ?? 0,
   });
 
   const contentRef = useRef(form.content);
+  const [contentVersion, setContentVersion] = useState(0);
 
   const [tagInput, setTagInput] = useState("");
   const [saving, setSaving] = useState(false);
@@ -126,6 +146,20 @@ export default function PostEditor({ mode, initialData, slug, categories }: Post
   const [uploadDragOver, setUploadDragOver] = useState(false);
   const [showMediaPicker, setShowMediaPicker] = useState(false);
   const [errors, setErrors] = useState<FieldErrors>({});
+
+  const derivePublishMode = (): PublishMode => {
+    if (!initialData?.published) return "draft";
+    if (initialData.publishedAt && new Date(initialData.publishedAt).getTime() > Date.now()) return "scheduled";
+    return "now";
+  };
+
+  const [publishMode, setPublishMode] = useState<PublishMode>(derivePublishMode);
+  const [scheduleAt, setScheduleAt] = useState<string>(() => {
+    const raw = initialData?.publishedAt || "";
+    if (raw && new Date(raw).getTime() > Date.now()) return toUtcInput(raw);
+    return toUtcInput(new Date().toISOString());
+  });
+  const [aiBusy, setAiBusy] = useState<"proofread" | "summarize" | "generate" | null>(null);
 
   const updateField = <K extends keyof PostFormData>(key: K, value: PostFormData[K]) => {
     setErrors((er) => ({ ...er, [key]: "" }));
@@ -205,6 +239,13 @@ export default function PostEditor({ mode, initialData, slug, categories }: Post
     if (!form.date || Number.isNaN(new Date(normalizeUtc(form.date)).getTime())) {
       nextErrors.date = "Ngày đăng không hợp lệ";
     }
+    if (
+      publishMode === "scheduled" &&
+      (Number.isNaN(new Date(normalizeUtc(scheduleAt)).getTime()) ||
+        new Date(normalizeUtc(scheduleAt)).getTime() <= Date.now())
+    ) {
+      nextErrors.date = "Thời gian hẹn giờ phải trong tương lai";
+    }
 
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors);
@@ -215,11 +256,22 @@ export default function PostEditor({ mode, initialData, slug, categories }: Post
 
     setSaving(true);
     try {
+      const published = publishMode === "now" || publishMode === "scheduled";
+      const publishedAt = (() => {
+        if (publishMode === "now") return "";
+        if (publishMode === "scheduled") return toUtcIso(scheduleAt);
+        return "";
+      })();
+
       const body = {
         ...form,
         date: toUtcIso(form.date),
         content: contentRef.current,
         rawContent: contentRef.current,
+        published,
+        publishedAt,
+        seriesId: form.seriesId,
+        seriesOrder: form.seriesOrder,
       };
 
       const url = mode === "edit" ? `/api/posts/${slug}` : "/api/posts";
@@ -253,6 +305,88 @@ export default function PostEditor({ mode, initialData, slug, categories }: Post
     }
   };
 
+  const runAi = async (action: "summarize" | "proofread") => {
+    if (aiBusy) return;
+    const bodyText = (contentRef.current || "")
+      .replace(/<[^>]*>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+    if (!bodyText) {
+      toast.error("Nội dung trống");
+      return;
+    }
+    setAiBusy(action);
+    try {
+      const res = await fetch("/api/admin/ai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action,
+          title: form.title,
+          content: contentRef.current,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "AI request failed");
+      if (action === "summarize") {
+        updateField("description", data.result as string);
+        toast.success("Đã tóm tắt vào phần mô tả");
+      } else {
+        onContentChange(data.result as string);
+        setContentVersion((n) => n + 1);
+        toast.success("Đã sửa chính tả nội dung");
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Lỗi AI");
+    } finally {
+      setAiBusy(null);
+    }
+  };
+
+  const generateDraft = async () => {
+    if (aiBusy) return;
+    const title = form.title.trim();
+    if (!title) {
+      setErrors((er) => ({ ...er, title: "Nhập tiêu đề bài viết trước khi viết nháp" }));
+      toast.error("Vui lòng nhập tiêu đề bài viết trước khi viết nháp");
+      return;
+    }
+    const existing = (contentRef.current || "")
+      .replace(/<[^>]*>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+    if (
+      existing &&
+      !window.confirm(
+        "Bài viết đang có nội dung. Viết nháp sẽ thay thế nội dung hiện tại. Tiếp tục?"
+      )
+    ) {
+      return;
+    }
+    setAiBusy("generate");
+    try {
+      const res = await fetch("/api/admin/ai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "generate",
+          title: form.title,
+          category: form.category,
+          tags: form.tags,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "AI request failed");
+      onContentChange(data.result as string);
+      setContentVersion((n) => n + 1);
+      toast.success("Đã tạo nháp bài viết! Kiểm tra lại nội dung rồi lưu.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Lỗi AI");
+    } finally {
+      setAiBusy(null);
+    }
+  };
+
   return (
     <div>
       {/* Title + Save button */}
@@ -272,12 +406,63 @@ export default function PostEditor({ mode, initialData, slug, categories }: Post
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6">
         {/* Main content */}
         <div className="space-y-6">
+          {/* AI draft generator */}
+          <div className="rounded-xl border border-blue-200 dark:border-blue-500/30 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-500/10 dark:to-purple-500/10 p-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                  ✍️ Viết nháp bằng AI
+                </p>
+                <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
+                  Nhập tiêu đề (kèm danh mục/tags nếu muốn) rồi bấm để AI viết toàn bộ bài viết. Nội dung hiện tại sẽ bị thay thế.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={generateDraft}
+                disabled={!!aiBusy}
+                className="inline-flex items-center justify-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors shrink-0"
+              >
+                {aiBusy === "generate" ? (
+                  <>
+                    <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <circle cx="12" cy="12" r="10" opacity="0.25" />
+                      <path d="M12 2a10 10 0 0 1 10 10" />
+                    </svg>
+                    Đang viết...
+                  </>
+                ) : (
+                  <>✨ Viết nháp</>
+                )}
+              </button>
+            </div>
+          </div>
+
           {/* Content Editor (TipTap) */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-              Nội dung *
-            </label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Nội dung *
+              </label>
+              <button
+                type="button"
+                disabled={!!aiBusy}
+                onClick={() => runAi("proofread")}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-500/20 disabled:opacity-50 transition-colors"
+              >
+                {aiBusy === "proofread" ? (
+                  <svg className="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="12" cy="12" r="10" opacity="0.25" />
+                    <path d="M12 2a10 10 0 0 1 10 10" />
+                  </svg>
+                ) : (
+                  <span>✨</span>
+                )}
+                Sửa chính tả
+              </button>
+            </div>
             <RichEditor
+              key={contentVersion}
               content={form.content}
               onChange={onContentChange}
             />
@@ -323,9 +508,19 @@ export default function PostEditor({ mode, initialData, slug, categories }: Post
           {/* Description */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Mô tả *
-              </label>
+              <div className="flex items-center gap-3">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Mô tả *
+                </label>
+                <button
+                  type="button"
+                  disabled={!!aiBusy}
+                  onClick={() => runAi("summarize")}
+                  className="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-medium text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-500/10 border border-purple-200 dark:border-purple-500/20 rounded-md hover:bg-purple-100 dark:hover:bg-purple-500/20 disabled:opacity-50 transition-colors"
+                >
+                  ✨ Tóm tắt
+                </button>
+              </div>
               <WordCount count={countChars(form.description)} limit={SEO_LIMITS.description} />
             </div>
             <textarea
@@ -488,6 +683,51 @@ export default function PostEditor({ mode, initialData, slug, categories }: Post
             <p className="mt-1.5 text-xs text-gray-400 dark:text-gray-500">Giờ hiển thị theo UTC, lưu DB dạng ISO UTC</p>
           </div>
 
+          {/* Publishing status */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+              Trạng thái xuất bản
+            </label>
+            <div className="grid grid-cols-3 gap-2">
+              {([
+                { key: "draft", label: "Nháp" },
+                { key: "now", label: "Xuất bản" },
+                { key: "scheduled", label: "Hẹn giờ" },
+              ] as { key: PublishMode; label: string }[]).map((opt) => (
+                <button
+                  key={opt.key}
+                  type="button"
+                  onClick={() => setPublishMode(opt.key)}
+                  className={`px-3 py-2.5 text-xs font-semibold rounded-xl border transition-colors ${
+                    publishMode === opt.key
+                      ? "border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400"
+                      : "border-gray-300 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-400 dark:hover:border-gray-600"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+            {publishMode === "scheduled" && (
+              <>
+                <input
+                  type="datetime-local"
+                  value={scheduleAt}
+                  onChange={(e) => setScheduleAt(e.target.value)}
+                  className="mt-2 w-full px-4 py-3 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                />
+                <p className="mt-1.5 text-xs text-gray-400 dark:text-gray-500">
+                  Bài sẽ tự hiển thị công khai từ thời điểm này (theo UTC)
+                </p>
+              </>
+            )}
+            {publishMode === "draft" && (
+              <p className="mt-1.5 text-xs text-gray-400 dark:text-gray-500">
+                Bản nháp chưa hiển thị ở trang công khai
+              </p>
+            )}
+          </div>
+
           {/* Author */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
@@ -512,6 +752,41 @@ export default function PostEditor({ mode, initialData, slug, categories }: Post
               onChange={(e) => updateField("readingTime", e.target.value)}
               className="w-full px-4 py-3 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
             />
+          </div>
+
+          {/* Series */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+              Series / Chuỗi bài
+            </label>
+            <FieldSelect
+              value={form.seriesId ? String(form.seriesId) : ""}
+              onChange={(v) =>
+                updateField("seriesId", v ? Number(v) : null)
+              }
+              options={[
+                ...(seriesList ?? []).map((s) => ({
+                  value: String(s.id),
+                  label: s.name,
+                  icon: s.icon,
+                })),
+              ]}
+              placeholder={seriesList?.length ? "Chọn series..." : "Chưa có series nào"}
+              searchable
+            />
+            {form.seriesId !== null && (
+              <>
+                <FieldNumber
+                  value={form.seriesOrder}
+                  onChange={(v) => updateField("seriesOrder", v)}
+                  min={0}
+                  className="mt-2 w-full"
+                />
+                <p className="mt-1.5 text-xs text-gray-400 dark:text-gray-500">
+                  Số nhỏ = hiển thị trước trong series
+                </p>
+              </>
+            )}
           </div>
 
           {/* Featured */}

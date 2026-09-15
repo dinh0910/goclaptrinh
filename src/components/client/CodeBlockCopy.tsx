@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import hljs from "highlight.js/lib/common";
 
 const COPY_SVG = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
 const CHECK_SVG = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
@@ -26,6 +27,30 @@ const STYLES = `
   }
 `;
 
+function highlightBlock(pre: HTMLElement) {
+  if (pre.dataset.hlDone) return;
+  pre.dataset.hlDone = "true";
+
+  let code = pre.querySelector<HTMLElement>("code");
+  if (!code) {
+    code = document.createElement("code");
+    code.textContent = pre.textContent;
+    pre.textContent = "";
+    pre.appendChild(code);
+  }
+
+  const text = code.textContent || "";
+  if (!text.trim()) return;
+
+  const result = hljs.highlightAuto(text, [
+    "javascript", "typescript", "jsx", "tsx", "python", "java",
+    "bash", "json", "css", "html", "sql", "go", "rust",
+    "c", "cpp", "csharp", "php", "ruby", "markdown", "yaml", "toml", "dockerfile",
+  ]);
+  code.innerHTML = result.value;
+  code.className = `hljs language-${result.language || "plaintext"}`;
+}
+
 export default function CodeBlockCopy({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!document.getElementById("code-copy-styles")) {
@@ -39,6 +64,7 @@ export default function CodeBlockCopy({ children }: { children: React.ReactNode 
     if (!prose) return;
 
     prose.querySelectorAll("pre").forEach((pre) => {
+      highlightBlock(pre);
       if (pre.dataset.copyInit) return;
       pre.dataset.copyInit = "true";
       pre.style.position = "relative";

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { updateUser, deleteUser, getUsers } from "@/lib/users";
 import { getRoles } from "@/lib/users";
 import { requireAuth, unauthorizedJson, PERMISSIONS } from "@/lib/permissions";
+import { logAudit, AUDIT_ACTIONS } from "@/lib/audit";
+import { getClientIp } from "@/lib/visitor";
 
 export async function PUT(
   request: NextRequest,
@@ -80,6 +82,17 @@ export async function PUT(
     }
 
     const result = await updateUser(userId, { email, name, role, password });
+
+    logAudit({
+      action: AUDIT_ACTIONS.userUpdate,
+      userId: Number(session.user?.id) || null,
+      userEmail: session.user?.email ?? "",
+      entity: "user",
+      entityId: String(userId),
+      detail: { email: result.email, role },
+      ip: getClientIp(request.headers),
+    });
+
     return NextResponse.json({
       id: result.id,
       email: result.email,
@@ -96,7 +109,7 @@ export async function PUT(
 }
 
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -117,10 +130,23 @@ export async function DELETE(
       );
     }
 
+    const target = getUsers().find((u) => u.id === userId);
+
     const ok = deleteUser(userId);
     if (!ok) {
       return NextResponse.json({ error: "Người dùng không tồn tại" }, { status: 404 });
     }
+
+    logAudit({
+      action: AUDIT_ACTIONS.userDelete,
+      userId: Number(session.user?.id) || null,
+      userEmail: session.user?.email ?? "",
+      entity: "user",
+      entityId: String(userId),
+      detail: target ? { email: target.email, role: target.role } : undefined,
+      ip: getClientIp(request.headers),
+    });
+
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json(

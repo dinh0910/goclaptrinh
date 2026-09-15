@@ -2,10 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { getRolesWithCounts, createRole } from "@/lib/users";
 import { slugify } from "@/lib/utils";
 import { requireAuth, unauthorizedJson, PERMISSIONS, VALID_PERMISSIONS } from "@/lib/permissions";
+import { logAudit, AUDIT_ACTIONS } from "@/lib/audit";
+import { getClientIp } from "@/lib/visitor";
 
 export async function GET() {
   try {
-    if (!(await requireAuth([PERMISSIONS.users]))) {
+    const session = await requireAuth([PERMISSIONS.users]);
+    if (!session) {
       return unauthorizedJson();
     }
     return NextResponse.json(getRolesWithCounts());
@@ -19,7 +22,8 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    if (!(await requireAuth([PERMISSIONS.users]))) {
+    const session = await requireAuth([PERMISSIONS.users]);
+    if (!session) {
       return unauthorizedJson();
     }
     const body = await request.json();
@@ -54,6 +58,17 @@ export async function POST(request: NextRequest) {
     }
 
     const result = createRole({ slug, name, description, permissions });
+
+    logAudit({
+      action: AUDIT_ACTIONS.roleCreate,
+      userId: Number(session.user?.id) || null,
+      userEmail: session.user?.email ?? "",
+      entity: "role",
+      entityId: slug,
+      detail: { name, permissions },
+      ip: getClientIp(request.headers),
+    });
+
     return NextResponse.json(
       { ...result, count: 0 },
       { status: 201 }

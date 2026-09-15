@@ -54,6 +54,29 @@ export default function Header() {
           </nav>
 
           <div className="flex items-center gap-2">
+            <form
+              action="/search"
+              method="get"
+              className="hidden lg:block relative"
+              role="search"
+            >
+              <input
+                type="search"
+                name="q"
+                placeholder="Tìm kiếm..."
+                aria-label="Tìm kiếm bài viết"
+                className="w-40 xl:w-52 py-2 pl-9 pr-3 text-sm bg-gray-100 border border-transparent rounded-lg outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 text-gray-900 placeholder:text-gray-400 transition-all dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500 dark:focus:bg-gray-900"
+              />
+              <svg
+                className="absolute left-2.5 top-2.5 w-4 h-4 text-gray-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+              </svg>
+            </form>
             <ThemeToggle />
             <button
               onClick={() => setIsOpen(!isOpen)}
@@ -89,6 +112,29 @@ export default function Header() {
 
         {isOpen && (
           <nav className="md:hidden pb-4" aria-label="Mobile navigation">
+            <form
+              action="/search"
+              method="get"
+              className="relative mb-2"
+              role="search"
+            >
+              <input
+                type="search"
+                name="q"
+                placeholder="Tìm kiếm bài viết..."
+                aria-label="Tìm kiếm bài viết"
+                className="w-full py-2 pl-9 pr-3 text-sm bg-gray-100 border border-transparent rounded-lg outline-none focus:bg-white focus:border-blue-500 text-gray-900 placeholder:text-gray-400 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500 dark:focus:bg-gray-900"
+              />
+              <svg
+                className="absolute left-2.5 top-2.5 w-4 h-4 text-gray-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+              </svg>
+            </form>
             {navLinks.map((link) => (
               <Link
                 key={link.href}

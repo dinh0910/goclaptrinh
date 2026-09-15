@@ -1,0 +1,27 @@
+import CommentsManager from "@/components/admin/CommentsManager";
+import { requireAuth, PERMISSIONS } from "@/lib/permissions";
+import { notFound } from "next/navigation";
+
+export const metadata = {
+  title: "Bình luận",
+};
+
+export default async function AdminCommentsPage() {
+  if (!(await requireAuth([PERMISSIONS.comments]))) notFound();
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            Bình luận
+          </h1>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            Quản lý bình luận từ người đọc. Bình luận mới cần được duyệt trước khi hiển thị.
+          </p>
+        </div>
+      </div>
+      <CommentsManager />
+    </div>
+  );
+}

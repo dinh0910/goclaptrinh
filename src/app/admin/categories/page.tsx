@@ -11,7 +11,7 @@ export default async function AdminCategoriesPage() {
   if (!(await requireAuth([PERMISSIONS.categories]))) {
     notFound();
   }
-  const categories = getCategoriesWithCounts();
+  const categories = getCategoriesWithCounts({ includeUnpublished: true });
 
   return (
     <div>

@@ -12,6 +12,10 @@ export interface Post {
   content: string;
   readingTime: string;
   featured?: boolean;
+  published?: boolean;
+  publishedAt?: string;
+  seriesId?: number;
+  seriesOrder?: number;
 }
 
 export interface Category {

@@ -13,7 +13,7 @@ export default async function AdminDashboard() {
   if (!(await requireAuth([]))) {
     notFound();
   }
-  const posts = await getAllPosts();
+  const posts = await getAllPosts({ includeUnpublished: true });
   const categoryList = db.select().from(categoriesTable).all();
   const categoryName = Object.fromEntries(categoryList.map((c) => [c.slug, c.name]));
   const categories = [...new Set(posts.map((p) => p.category))];

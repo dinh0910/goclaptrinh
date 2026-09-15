@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import { SearchBar } from "./SearchBar";
 import { Pagination } from "./Pagination";
+import FieldNumber from "./FieldNumber";
 import { useTableControls } from "./useTableControls";
 
 export interface MediaItem {
@@ -723,34 +724,26 @@ export default function MediaManager({
                     <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
                       Chiều rộng (px)
                     </label>
-                    <input
-                      type="number"
-                      min={1}
-                      value={resizeForm.width || ""}
-                      onChange={(e) =>
-                        setResizeForm((f) => ({
-                          ...f,
-                          width: Number(e.target.value),
-                        }))
+                    <FieldNumber
+                      value={resizeForm.width || 0}
+                      onChange={(v) =>
+                        setResizeForm((f) => ({ ...f, width: v }))
                       }
-                      className={`${inputClass} w-32`}
+                      min={1}
+                      className="w-32"
                     />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
                       Chiều cao (px)
                     </label>
-                    <input
-                      type="number"
-                      min={1}
-                      value={resizeForm.height || ""}
-                      onChange={(e) =>
-                        setResizeForm((f) => ({
-                          ...f,
-                          height: Number(e.target.value),
-                        }))
+                    <FieldNumber
+                      value={resizeForm.height || 0}
+                      onChange={(v) =>
+                        setResizeForm((f) => ({ ...f, height: v }))
                       }
-                      className={`${inputClass} w-32`}
+                      min={1}
+                      className="w-32"
                     />
                   </div>
                   <button
@@ -906,34 +899,26 @@ export default function MediaManager({
                     <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
                       Chiều rộng (px)
                     </label>
-                    <input
-                      type="number"
-                      min={1}
-                      value={resizeForm.width || ""}
-                      onChange={(e) =>
-                        setResizeForm((f) => ({
-                          ...f,
-                          width: Number(e.target.value),
-                        }))
+                    <FieldNumber
+                      value={resizeForm.width || 0}
+                      onChange={(v) =>
+                        setResizeForm((f) => ({ ...f, width: v }))
                       }
-                      className={`${inputClass} w-32`}
+                      min={1}
+                      className="w-32"
                     />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
                       Chiều cao (px)
                     </label>
-                    <input
-                      type="number"
-                      min={1}
-                      value={resizeForm.height || ""}
-                      onChange={(e) =>
-                        setResizeForm((f) => ({
-                          ...f,
-                          height: Number(e.target.value),
-                        }))
+                    <FieldNumber
+                      value={resizeForm.height || 0}
+                      onChange={(v) =>
+                        setResizeForm((f) => ({ ...f, height: v }))
                       }
-                      className={`${inputClass} w-32`}
+                      min={1}
+                      className="w-32"
                     />
                   </div>
                   <button

@@ -11,6 +11,7 @@ const LIMITS: Record<string, number> = {
   image: 500,
   rawContent: 300_000,
   readingTime: 50,
+  publishedAt: 40,
 };
 
 const REQUIRED = ["slug", "title", "description", "date", "category", "content"];
@@ -96,6 +97,51 @@ export function cleanPostFields(
     out.featured = body.featured;
   } else if (!partial) {
     out.featured = false;
+  }
+
+  if (has("published")) {
+    if (typeof body.published !== "boolean") return err("published không hợp lệ");
+    out.published = body.published;
+  } else if (!partial) {
+    out.published = false;
+  }
+
+  if (has("publishedAt")) {
+    if (body.publishedAt !== null && typeof body.publishedAt !== "string") {
+      return err("publishedAt không hợp lệ");
+    }
+    const s = body.publishedAt as string | null;
+    if (s && Number.isNaN(new Date(s).getTime())) {
+      return err("publishedAt không hợp lệ");
+    }
+    out.publishedAt = s || "";
+  }
+
+  if (has("seriesId")) {
+    if (body.seriesId !== null && body.seriesId !== undefined) {
+      if (
+        typeof body.seriesId !== "number" ||
+        !Number.isInteger(body.seriesId) ||
+        body.seriesId <= 0
+      ) {
+        return err("seriesId không hợp lệ");
+      }
+      out.seriesId = body.seriesId;
+    } else {
+      out.seriesId = null;
+    }
+  }
+
+  if (has("seriesOrder")) {
+    if (
+      typeof body.seriesOrder !== "number" ||
+      !Number.isInteger(body.seriesOrder) ||
+      body.seriesOrder < 0 ||
+      body.seriesOrder > 10_000
+    ) {
+      return err("seriesOrder không hợp lệ");
+    }
+    out.seriesOrder = body.seriesOrder;
   }
 
   return { value: out };

@@ -1,4 +1,4 @@
-import { asc, count, eq } from "drizzle-orm";
+import { asc, count, eq, sql } from "drizzle-orm";
 import { db } from "./db";
 import { categories, posts } from "./db/schema";
 
@@ -15,7 +15,13 @@ export interface CategoryWithCount {
   count: number;
 }
 
-export function getCategoriesWithCounts(): CategoryWithCount[] {
+export function getCategoriesWithCounts(opts?: {
+  includeUnpublished?: boolean;
+}): CategoryWithCount[] {
+  const countedPosts = opts?.includeUnpublished
+    ? count(posts.id)
+    : sql<number>`count(CASE WHEN ${posts.published} = 1 AND (${posts.publishedAt} = '' OR datetime(${posts.publishedAt}) <= datetime('now')) THEN ${posts.id} END)`;
+
   return db
     .select({
       id: categories.id,
@@ -24,7 +30,7 @@ export function getCategoriesWithCounts(): CategoryWithCount[] {
       description: categories.description,
       icon: categories.icon,
       color: categories.color,
-      count: count(posts.id),
+      count: countedPosts,
     })
     .from(categories)
     .leftJoin(posts, eq(posts.category, categories.slug))

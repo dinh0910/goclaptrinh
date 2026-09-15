@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { Editor } from "@tiptap/react";
 import MediaPicker from "./MediaPicker";
+import FieldNumber from "./FieldNumber";
 
 interface ImageToolbarProps {
   editor: Editor;
@@ -50,25 +51,23 @@ export default function ImageToolbar({ editor }: ImageToolbarProps) {
       <label className="text-[11px] text-amber-600 dark:text-amber-300 shrink-0">
         W:
       </label>
-      <input
-        type="number"
+      <FieldNumber
+        size="sm"
+        value={Number(attrs.width) || 0}
+        onChange={(v) => update({ width: String(v) })}
         min={1}
-        value={Number(attrs.width) || ""}
-        onChange={(e) => update({ width: e.target.value })}
-        className="w-18 px-2 py-1 text-xs bg-white dark:bg-gray-900 border border-amber-300 dark:border-amber-500/30 rounded text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-amber-500"
-        placeholder="px"
+        className="w-28"
       />
 
       <label className="text-[11px] text-amber-600 dark:text-amber-300 shrink-0">
         H:
       </label>
-      <input
-        type="number"
+      <FieldNumber
+        size="sm"
+        value={Number(attrs.height) || 0}
+        onChange={(v) => update({ height: String(v) })}
         min={1}
-        value={Number(attrs.height) || ""}
-        onChange={(e) => update({ height: e.target.value })}
-        className="w-18 px-2 py-1 text-xs bg-white dark:bg-gray-900 border border-amber-300 dark:border-amber-500/30 rounded text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-amber-500"
-        placeholder="px"
+        className="w-28"
       />
 
       <div className="ml-auto flex items-center gap-1.5 shrink-0">

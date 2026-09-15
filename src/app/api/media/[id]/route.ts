@@ -4,12 +4,15 @@ import { media } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { deleteUploadedFile } from "@/lib/media";
 import { requireAuth, unauthorizedJson, PERMISSIONS } from "@/lib/permissions";
+import { logAudit, AUDIT_ACTIONS } from "@/lib/audit";
+import { getClientIp } from "@/lib/visitor";
 
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  if (!(await requireAuth([PERMISSIONS.media]))) {
+  const session = await requireAuth([PERMISSIONS.media]);
+  if (!session) {
     return unauthorizedJson();
   }
 
@@ -67,14 +70,25 @@ export async function PATCH(
     .returning()
     .get();
 
+  logAudit({
+    action: AUDIT_ACTIONS.mediaUpdate,
+    userId: Number(session.user?.id) || null,
+    userEmail: session.user?.email ?? "",
+    entity: "media",
+    entityId: String(numericId),
+    detail: { filename: updated.filename, title: updated.title },
+    ip: getClientIp(request.headers),
+  });
+
   return NextResponse.json(updated);
 }
 
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  if (!(await requireAuth([PERMISSIONS.media]))) {
+  const session = await requireAuth([PERMISSIONS.media]);
+  if (!session) {
     return unauthorizedJson();
   }
 
@@ -91,6 +105,16 @@ export async function DELETE(
 
   deleteUploadedFile(existing.filename);
   db.delete(media).where(eq(media.id, numericId)).run();
+
+  logAudit({
+    action: AUDIT_ACTIONS.mediaDelete,
+    userId: Number(session.user?.id) || null,
+    userEmail: session.user?.email ?? "",
+    entity: "media",
+    entityId: String(numericId),
+    detail: { filename: existing.filename },
+    ip: getClientIp(request.headers),
+  });
 
   return NextResponse.json({ success: true });
 }

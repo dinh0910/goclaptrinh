@@ -8,6 +8,8 @@ export const users = sqliteTable("users", {
   name: text("name").notNull().default("Admin"),
   role: text("role").notNull().default("admin"),
   createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
+  totpSecret: text("totp_secret").notNull().default(""),
+  totpEnabled: integer("totp_enabled", { mode: "boolean" }).notNull().default(false),
 });
 
 export const roles = sqliteTable("roles", {
@@ -33,8 +35,21 @@ export const posts = sqliteTable("posts", {
   content: text("content").notNull(),
   rawContent: text("raw_content").notNull().default(""),
   readingTime: text("reading_time").notNull().default("5 phút đọc"),
+  published: integer("published", { mode: "boolean" }).notNull().default(false),
+  publishedAt: text("published_at").notNull().default(""),
+  seriesId: integer("series_id"),
+  seriesOrder: integer("series_order").notNull().default(0),
   createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
   updatedAt: text("updated_at").notNull().$defaultFn(() => new Date().toISOString()),
+});
+
+export const series = sqliteTable("series", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  slug: text("slug").notNull().unique(),
+  name: text("name").notNull(),
+  description: text("description").notNull().default(""),
+  icon: text("icon").notNull().default("📚"),
+  createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
 });
 
 export const categories = sqliteTable("categories", {
@@ -70,6 +85,28 @@ export const settings = sqliteTable("settings", {
   value: text("value").notNull().default("{}"),
 });
 
+export const aiProviders = sqliteTable("ai_providers", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  name: text("name").notNull(),
+  baseUrl: text("base_url").notNull(),
+  apiKey: text("api_key").notNull().default(""),
+  model: text("model").notNull().default(""),
+  enabled: integer("enabled", { mode: "boolean" }).notNull().default(false),
+  createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
+  updatedAt: text("updated_at").notNull().$defaultFn(() => new Date().toISOString()),
+});
+
+export const aiProfiles = sqliteTable("ai_profiles", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  action: text("action").notNull().unique(),
+  label: text("label").notNull(),
+  systemPrompt: text("system_prompt").notNull().default(""),
+  temperature: integer("temperature", { mode: "number" }).notNull().default(0.4),
+  maxTokens: integer("max_tokens").notNull().default(1500),
+  enabled: integer("enabled", { mode: "boolean" }).notNull().default(true),
+  updatedAt: text("updated_at").notNull().$defaultFn(() => new Date().toISOString()),
+});
+
 export const welcomeSubmissions = sqliteTable("welcome_submissions", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   itemId: text("item_id").notNull(),
@@ -87,6 +124,70 @@ export const welcomeSubmissions = sqliteTable("welcome_submissions", {
   createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
 });
 
+export const auditLogs = sqliteTable("audit_logs", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  userId: integer("user_id"),
+  userEmail: text("user_email").notNull().default(""),
+  action: text("action").notNull(),
+  entity: text("entity").notNull().default(""),
+  entityId: text("entity_id").notNull().default(""),
+  detail: text("detail", { mode: "json" })
+    .notNull()
+    .$type<Record<string, unknown>>()
+    .default({}),
+  ip: text("ip").notNull().default(""),
+  createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
+});
+
+export const newsletterSubscribers = sqliteTable("newsletter_subscribers", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  email: text("email").notNull().unique(),
+  name: text("name").notNull().default(""),
+  source: text("source").notNull().default("form"),
+  token: text("token").notNull().default(""),
+  unsubscribed: integer("unsubscribed", { mode: "boolean" }).notNull().default(false),
+  createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
+});
+
+export const pageViews = sqliteTable("page_views", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  visitorId: text("visitor_id").notNull().default(""),
+  path: text("path").notNull().default(""),
+  referrer: text("referrer").notNull().default(""),
+  ip: text("ip").notNull().default(""),
+  signals: text("signals", { mode: "json" })
+    .notNull()
+    .$type<Partial<VisitorSignals>>()
+    .default({}),
+  createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
+});
+
+export const comments = sqliteTable("comments", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  postId: integer("post_id").notNull(),
+  parentId: integer("parent_id"),
+  name: text("name").notNull().default(""),
+  email: text("email").notNull().default(""),
+  website: text("website").notNull().default(""),
+  content: text("content").notNull(),
+  status: text("status").notNull().default("pending"),
+  visitorId: text("visitor_id").notNull().default(""),
+  ip: text("ip").notNull().default(""),
+  signals: text("signals", { mode: "json" })
+    .notNull()
+    .$type<Partial<VisitorSignals>>()
+    .default({}),
+  createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
+});
+
+export const postReactions = sqliteTable("post_reactions", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  postId: integer("post_id").notNull(),
+  visitorId: text("visitor_id").notNull().default(""),
+  reaction: text("reaction").notNull().default("like"),
+  createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
+});
+
 export type UserRow = typeof users.$inferSelect;
 export type UserInsert = typeof users.$inferInsert;
 export type RoleRow = typeof roles.$inferSelect;
@@ -95,5 +196,21 @@ export type PostRow = typeof posts.$inferSelect;
 export type PostInsert = typeof posts.$inferInsert;
 export type CategoryRow = typeof categories.$inferSelect;
 export type CategoryInsert = typeof categories.$inferInsert;
+export type SeriesRow = typeof series.$inferSelect;
+export type SeriesInsert = typeof series.$inferInsert;
 export type MediaRow = typeof media.$inferSelect;
 export type MediaInsert = typeof media.$inferInsert;
+export type AuditLogRow = typeof auditLogs.$inferSelect;
+export type AuditLogInsert = typeof auditLogs.$inferInsert;
+export type NewsletterSubscriberRow = typeof newsletterSubscribers.$inferSelect;
+export type NewsletterSubscriberInsert = typeof newsletterSubscribers.$inferInsert;
+export type PageViewRow = typeof pageViews.$inferSelect;
+export type PageViewInsert = typeof pageViews.$inferInsert;
+export type CommentRow = typeof comments.$inferSelect;
+export type CommentInsert = typeof comments.$inferInsert;
+export type PostReactionRow = typeof postReactions.$inferSelect;
+export type PostReactionInsert = typeof postReactions.$inferInsert;
+export type AiProviderRow = typeof aiProviders.$inferSelect;
+export type AiProviderInsert = typeof aiProviders.$inferInsert;
+export type AiProfileRow = typeof aiProfiles.$inferSelect;
+export type AiProfileInsert = typeof aiProfiles.$inferInsert;

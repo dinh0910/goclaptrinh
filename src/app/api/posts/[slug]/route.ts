@@ -4,6 +4,9 @@ import { db } from "@/lib/db";
 import { posts } from "@/lib/db/schema";
 import { requireAuth, unauthorizedJson, PERMISSIONS } from "@/lib/permissions";
 import { cleanPostFields } from "@/lib/post-input";
+import { indexPost, unindexPost } from "@/lib/db";
+import { logAudit, AUDIT_ACTIONS } from "@/lib/audit";
+import { getClientIp } from "@/lib/visitor";
 
 export async function GET(
   _request: NextRequest,
@@ -14,6 +17,13 @@ export async function GET(
     const post = db.select().from(posts).where(eq(posts.slug, slug)).get();
 
     if (!post) {
+      return NextResponse.json({ error: "Post not found" }, { status: 404 });
+    }
+
+    const visible =
+      post.published &&
+      (!post.publishedAt || new Date(post.publishedAt).getTime() <= Date.now());
+    if (!visible) {
       return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }
 
@@ -28,7 +38,8 @@ export async function PUT(
   { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
-    if (!(await requireAuth([PERMISSIONS.posts]))) {
+    const session = await requireAuth([PERMISSIONS.posts]);
+    if (!session) {
       return unauthorizedJson();
     }
     const { slug } = await params;
@@ -52,15 +63,33 @@ export async function PUT(
     }
 
     const now = new Date().toISOString();
+    const published = (v.published as boolean | undefined) ?? existing.published;
+    let publishedAt = (v.publishedAt as string | undefined) ?? (existing.publishedAt || "");
+    if (published && !publishedAt) publishedAt = now;
+
     const result = db
       .update(posts)
       .set({
         ...v,
+        published,
+        publishedAt,
         updatedAt: now,
       })
       .where(eq(posts.slug, slug))
       .returning()
       .get();
+
+    indexPost(result.id);
+
+    logAudit({
+      action: AUDIT_ACTIONS.postUpdate,
+      userId: Number(session.user?.id) || null,
+      userEmail: session.user?.email ?? "",
+      entity: "post",
+      entityId: result.slug,
+      detail: { title: result.title },
+      ip: getClientIp(request.headers),
+    });
 
     return NextResponse.json(result);
   } catch {
@@ -69,11 +98,12 @@ export async function PUT(
 }
 
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
-    if (!(await requireAuth([PERMISSIONS.posts]))) {
+    const session = await requireAuth([PERMISSIONS.posts]);
+    if (!session) {
       return unauthorizedJson();
     }
     const { slug } = await params;
@@ -84,6 +114,17 @@ export async function DELETE(
     }
 
     db.delete(posts).where(eq(posts.slug, slug)).run();
+    unindexPost(existing.id);
+
+    logAudit({
+      action: AUDIT_ACTIONS.postDelete,
+      userId: Number(session.user?.id) || null,
+      userEmail: session.user?.email ?? "",
+      entity: "post",
+      entityId: existing.slug,
+      detail: { title: existing.title },
+      ip: getClientIp(request.headers),
+    });
 
     return NextResponse.json({ message: "Post deleted" });
   } catch {

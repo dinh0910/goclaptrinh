@@ -5,6 +5,8 @@ import { resolveUploadPath, UPLOAD_DIR } from "@/lib/media";
 import sharp from "sharp";
 import fs from "fs";
 import { requireAuth, unauthorizedJson, PERMISSIONS } from "@/lib/permissions";
+import { logAudit, AUDIT_ACTIONS } from "@/lib/audit";
+import { getClientIp } from "@/lib/visitor";
 
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
@@ -12,9 +14,8 @@ const MAX_WIDTH = 1600; // max display width in px to keep pages fast
 const ESTIMATED_QUALITY = 80;
 
 export async function POST(request: NextRequest) {
-  if (
-    !(await requireAuth([PERMISSIONS.media, PERMISSIONS.posts]))
-  ) {
+  const session = await requireAuth([PERMISSIONS.media, PERMISSIONS.posts]);
+  if (!session) {
     return unauthorizedJson();
   }
 
@@ -144,6 +145,16 @@ export async function POST(request: NextRequest) {
       })
       .returning({ id: media.id })
       .get();
+
+  logAudit({
+    action: AUDIT_ACTIONS.mediaCreate,
+    userId: Number(session.user?.id) || null,
+    userEmail: session.user?.email ?? "",
+    entity: "media",
+    entityId: String(row.id),
+    detail: { filename, size: savedSize, width, height },
+    ip: getClientIp(request.headers),
+  });
 
     return NextResponse.json(
       { url: `/uploads/${filename}`, id: row.id },

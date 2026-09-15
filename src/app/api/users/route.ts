@@ -2,10 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { getUsers, getUserByEmail, createUser } from "@/lib/users";
 import { getRoles } from "@/lib/users";
 import { requireAuth, unauthorizedJson, PERMISSIONS } from "@/lib/permissions";
+import { logAudit, AUDIT_ACTIONS } from "@/lib/audit";
+import { getClientIp } from "@/lib/visitor";
 
 export async function GET() {
   try {
-    if (!(await requireAuth([PERMISSIONS.users]))) {
+    const session = await requireAuth([PERMISSIONS.users]);
+    if (!session) {
       return unauthorizedJson();
     }
     const roles = getRoles().map((r) => r.slug);
@@ -28,7 +31,8 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    if (!(await requireAuth([PERMISSIONS.users]))) {
+    const session = await requireAuth([PERMISSIONS.users]);
+    if (!session) {
       return unauthorizedJson();
     }
     const body = await request.json();
@@ -91,6 +95,17 @@ export async function POST(request: NextRequest) {
     }
 
     const result = await createUser({ email, password, name, role });
+
+    logAudit({
+      action: AUDIT_ACTIONS.userCreate,
+      userId: Number(session.user?.id) || null,
+      userEmail: session.user?.email ?? "",
+      entity: "user",
+      entityId: String(result.id),
+      detail: { email: result.email, role },
+      ip: getClientIp(request.headers),
+    });
+
     return NextResponse.json(
       {
         id: result.id,
