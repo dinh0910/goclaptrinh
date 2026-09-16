@@ -1,4 +1,5 @@
 import { sqliteClient } from "./db";
+import { DEFAULT_AI_PROFILES } from "@/lib/ai-defaults";
 
 export interface ProviderInput {
   baseUrl: string;
@@ -28,6 +29,7 @@ export interface PublicProvider {
 }
 
 export interface AiProfile {
+  providerId: number | null;
   action: string;
   label: string;
   systemPrompt: string;
@@ -135,6 +137,7 @@ export function createProvider(input: {
   if (input.active || existingCount === 0) {
     setActiveProvider(id);
   }
+  ensureProviderProfiles(id);
   return id;
 }
 
@@ -176,10 +179,14 @@ export function updateProvider(
 }
 
 export function deleteProvider(id: number): void {
+  sqliteClient
+    .prepare("DELETE FROM ai_profiles WHERE provider_id = ?")
+    .run(id);
   sqliteClient.prepare("DELETE FROM ai_providers WHERE id = ?").run(id);
 }
 
 function mapProfile(row: {
+  provider_id: number | null;
   action: string;
   label: string;
   system_prompt: string;
@@ -189,6 +196,7 @@ function mapProfile(row: {
   updated_at: string;
 }): AiProfile {
   return {
+    providerId: row.provider_id,
     action: row.action,
     label: row.label,
     systemPrompt: row.system_prompt,
@@ -199,10 +207,38 @@ function mapProfile(row: {
   };
 }
 
-export function listProfiles(): AiProfile[] {
+export function ensureProviderProfiles(providerId: number): void {
+  const now = new Date().toISOString();
+  const existing = sqliteClient
+    .prepare("SELECT action FROM ai_profiles WHERE provider_id = ?")
+    .all(providerId) as Array<{ action: string }>;
+  const has = new Set(existing.map((r) => r.action));
+  const stmt = sqliteClient.prepare(
+    `INSERT OR IGNORE INTO ai_profiles (provider_id, action, label, system_prompt, temperature, max_tokens, enabled, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, 1, ?)`
+  );
+  sqliteClient.transaction(() => {
+    for (const p of DEFAULT_AI_PROFILES) {
+      if (has.has(p.action)) continue;
+      stmt.run(
+        providerId,
+        p.action,
+        p.label,
+        p.systemPrompt,
+        p.temperature,
+        p.maxTokens,
+        now
+      );
+    }
+  })();
+}
+
+export function listProfiles(providerId: number): AiProfile[] {
+  ensureProviderProfiles(providerId);
   const rows = sqliteClient
-    .prepare("SELECT * FROM ai_profiles ORDER BY id ASC")
-    .all() as Array<{
+    .prepare("SELECT * FROM ai_profiles WHERE provider_id = ? ORDER BY id ASC")
+    .all(providerId) as Array<{
+    provider_id: number | null;
     action: string;
     label: string;
     system_prompt: string;
@@ -214,11 +250,12 @@ export function listProfiles(): AiProfile[] {
   return rows.map(mapProfile);
 }
 
-export function getProfile(action: string): AiProfile | null {
+export function getProfile(providerId: number, action: string): AiProfile | null {
   const row = sqliteClient
-    .prepare("SELECT * FROM ai_profiles WHERE action = ?")
-    .get(action) as
+    .prepare("SELECT * FROM ai_profiles WHERE provider_id = ? AND action = ?")
+    .get(providerId, action) as
     | {
+        provider_id: number | null;
         action: string;
         label: string;
         system_prompt: string;
@@ -232,6 +269,7 @@ export function getProfile(action: string): AiProfile | null {
 }
 
 export function saveProfiles(
+  providerId: number,
   items: Array<{
     action: string;
     systemPrompt?: string;
@@ -244,11 +282,11 @@ export function saveProfiles(
   const stmt = sqliteClient.prepare(
     `UPDATE ai_profiles
      SET system_prompt = ?, temperature = ?, max_tokens = ?, enabled = ?, updated_at = ?
-     WHERE action = ?`
+     WHERE provider_id = ? AND action = ?`
   );
   sqliteClient.transaction(() => {
     for (const item of items) {
-      const existing = getProfile(item.action);
+      const existing = getProfile(providerId, item.action);
       if (!existing) continue;
       stmt.run(
         item.systemPrompt ?? existing.systemPrompt,
@@ -256,6 +294,7 @@ export function saveProfiles(
         item.maxTokens ?? existing.maxTokens,
         item.enabled === undefined ? (existing.enabled ? 1 : 0) : item.enabled ? 1 : 0,
         now,
+        providerId,
         item.action
       );
     }

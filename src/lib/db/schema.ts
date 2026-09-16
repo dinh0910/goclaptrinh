@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, uniqueIndex } from "drizzle-orm/sqlite-core";
 import type { VisitorSignals } from "@/lib/visitor";
 
 export const users = sqliteTable("users", {
@@ -96,16 +96,21 @@ export const aiProviders = sqliteTable("ai_providers", {
   updatedAt: text("updated_at").notNull().$defaultFn(() => new Date().toISOString()),
 });
 
-export const aiProfiles = sqliteTable("ai_profiles", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  action: text("action").notNull().unique(),
-  label: text("label").notNull(),
-  systemPrompt: text("system_prompt").notNull().default(""),
-  temperature: integer("temperature", { mode: "number" }).notNull().default(0.4),
-  maxTokens: integer("max_tokens").notNull().default(1500),
-  enabled: integer("enabled", { mode: "boolean" }).notNull().default(true),
-  updatedAt: text("updated_at").notNull().$defaultFn(() => new Date().toISOString()),
-});
+export const aiProfiles = sqliteTable(
+  "ai_profiles",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    providerId: integer("provider_id").references(() => aiProviders.id),
+    action: text("action").notNull(),
+    label: text("label").notNull(),
+    systemPrompt: text("system_prompt").notNull().default(""),
+    temperature: integer("temperature", { mode: "number" }).notNull().default(0.4),
+    maxTokens: integer("max_tokens").notNull().default(1500),
+    enabled: integer("enabled", { mode: "boolean" }).notNull().default(true),
+    updatedAt: text("updated_at").notNull().$defaultFn(() => new Date().toISOString()),
+  },
+  (table) => [uniqueIndex("ai_profiles_provider_action").on(table.providerId, table.action)]
+);
 
 export const welcomeSubmissions = sqliteTable("welcome_submissions", {
   id: integer("id").primaryKey({ autoIncrement: true }),

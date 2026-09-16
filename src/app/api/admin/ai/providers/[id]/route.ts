@@ -128,7 +128,7 @@ export async function POST(
     };
 
     if (action === "test") {
-      const profile = getProfile("test");
+      const profile = getProfile(id, "test");
       const result = await callLlm(
         {
           system: profile?.systemPrompt || "Bạn chỉ trả lời bằng hai chữ: OK CHAT.",

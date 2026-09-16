@@ -5,6 +5,7 @@ import { randomBytes } from "crypto";
 import { CATEGORIES } from "@/lib/constants";
 import * as schema from "./schema";
 import { maybeAutoBackup } from "../backup";
+import { DEFAULT_AI_PROFILES } from "@/lib/ai-defaults";
 
 const dbPath = path.join(process.cwd(), "data", "blog.db");
 const sqlite = new Database(dbPath);
@@ -602,6 +603,8 @@ if (!aiProvidersTable) {
 }
 
 // Boot-time migration: create the AI action profiles table + seed defaults.
+// Profiles belong to a specific provider (provider_id); each provider gets its
+// own copy of the default action profiles so configs are never shared.
 const aiProfilesTable = sqlite
   .prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'ai_profiles'")
   .get();
@@ -610,33 +613,84 @@ if (!aiProfilesTable) {
   sqlite.exec(`
     CREATE TABLE ai_profiles (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      action TEXT NOT NULL UNIQUE,
+      provider_id INTEGER REFERENCES ai_providers(id),
+      action TEXT NOT NULL,
       label TEXT NOT NULL,
       system_prompt TEXT NOT NULL DEFAULT '',
       temperature REAL NOT NULL DEFAULT 0.4,
       max_tokens INTEGER NOT NULL DEFAULT 1500,
       enabled INTEGER NOT NULL DEFAULT 1,
-      updated_at TEXT NOT NULL
+      updated_at TEXT NOT NULL,
+      UNIQUE(provider_id, action)
     );
   `);
+} else {
+  // Legacy tables used a single global action UNIQUE on `action` with no
+  // provider link — rebuild the table so profiles can be per-provider.
+  const profileCols = sqlite
+    .prepare("PRAGMA table_info(ai_profiles)")
+    .all() as Array<{ name: string }>;
+  if (!profileCols.some((c) => c.name === "provider_id")) {
+    sqlite.exec(`
+      CREATE TABLE ai_profiles_new (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        provider_id INTEGER REFERENCES ai_providers(id),
+        action TEXT NOT NULL,
+        label TEXT NOT NULL,
+        system_prompt TEXT NOT NULL DEFAULT '',
+        temperature REAL NOT NULL DEFAULT 0.4,
+        max_tokens INTEGER NOT NULL DEFAULT 1500,
+        enabled INTEGER NOT NULL DEFAULT 1,
+        updated_at TEXT NOT NULL,
+        UNIQUE(provider_id, action)
+      );
+      INSERT INTO ai_profiles_new (id, provider_id, action, label, system_prompt, temperature, max_tokens, enabled, updated_at)
+        SELECT id, NULL, action, label, system_prompt, temperature, max_tokens, enabled, updated_at FROM ai_profiles;
+      DROP TABLE ai_profiles;
+      ALTER TABLE ai_profiles_new RENAME TO ai_profiles;
+    `);
+  }
 }
 
+// Reassign legacy global profiles (provider_id NULL) to the oldest provider.
 {
-  const seedProfiles = sqlite.prepare(
-    `INSERT OR IGNORE INTO ai_profiles (action, label, system_prompt, temperature, max_tokens, enabled, updated_at)
-     VALUES (?, ?, ?, ?, ?, 1, ?)`
-  );
+  const firstProvider = sqlite
+    .prepare("SELECT id FROM ai_providers ORDER BY id ASC LIMIT 1")
+    .get() as { id: number } | undefined;
+  if (firstProvider) {
+    sqlite
+      .prepare(
+        "UPDATE ai_profiles SET provider_id = ? WHERE provider_id IS NULL OR provider_id NOT IN (SELECT id FROM ai_providers)"
+      )
+      .run(firstProvider.id);
+  }
+}
+
+// Seed a full default set of action profiles for each provider that lacks one.
+{
+  const providers = sqlite
+    .prepare("SELECT id FROM ai_providers ORDER BY id ASC")
+    .all() as Array<{ id: number }>;
   const now = new Date().toISOString();
-  const GENERATE_PROMPT =
-    'Bạn là biên tập viên chuyên nghiệp viết blog lập trình tiếng Việt cho website "Góc Lập Trình". Viết một bài viết hoàn chỉnh dựa theo yêu cầu của người dùng.\nYêu cầu:\n- Viết tiếng Việt tự nhiên, chính xác, chuẩn SEO.\n- Trả về HTML hợp lệ: <h2> cho mục chính, <h3> cho mục con, <p> cho đoạn văn, <pre><code class="language-..."> cho khối code, <ul>/<ol> khi liệt kê, <strong>/<em> để nhấn mạnh, <blockquote> cho trích dẫn.\n- Có đoạn giới thiệu ngắn ở đầu, nội dung chi tiết đầy đủ và phần kết luận.\n- KHÔNG bao gồm <html>, <head>, <body>. KHÔNG thêm nhận xét hay giải thích gì ngoài phần nội dung HTML.';
-  const SUMMARIZE_PROMPT =
-    "Bạn là trợ lý viết blog tiếng Việt. Viết một đoạn mô tả ngắn (mô tả SEO) cho bài viết dựa trên nội dung. Chỉ trả về phần mô tả, không thêm nhận xét hay định dạng markdown. Tối đa 160 ký tự.";
-  const PROOFREAD_PROMPT =
-    "Bạn là biên tập viên tiếng Việt. Sửa lỗi chính tả, lỗi ngữ pháp và lỗi dùng từ trong nội dung bài viết. QUAN TRỌNG: giữ nguyên toàn bộ thẻ HTML, class, thuộc tính (src, href, style...) 100% không đổi; chỉ thay đổi văn bản hiển thị. Chỉ trả về mã HTML đã sửa, không thêm nhận xét.";
-  seedProfiles.run("generate", "Viết nháp bài viết", GENERATE_PROMPT, 0.4, 4096, now);
-  seedProfiles.run("summarize", "Tóm tắt mô tả SEO", SUMMARIZE_PROMPT, 0.4, 300, now);
-  seedProfiles.run("proofread", "Sửa chính tả", PROOFREAD_PROMPT, 0.2, 4096, now);
-  seedProfiles.run("test", "Kiểm tra kết nối", "Bạn chỉ trả lời bằng hai chữ: OK CHAT.", 0, 16, now);
+  const seed = sqlite.prepare(
+    `INSERT OR IGNORE INTO ai_profiles (provider_id, action, label, system_prompt, temperature, max_tokens, enabled, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, 1, ?)`
+  );
+  sqlite.transaction(() => {
+    for (const p of providers) {
+      for (const prof of DEFAULT_AI_PROFILES) {
+        seed.run(
+          p.id,
+          prof.action,
+          prof.label,
+          prof.systemPrompt,
+          prof.temperature,
+          prof.maxTokens,
+          now
+        );
+      }
+    }
+  })();
 }
 
 // Keep existing DBs in sync if the index was created empty.

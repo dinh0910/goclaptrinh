@@ -10,6 +10,7 @@ import {
   toPublicProvider,
   type ProviderInput,
 } from "@/lib/llm";
+import { DEFAULT_AI_PROFILES } from "@/lib/ai-defaults";
 import { sanitizePostHtml } from "@/lib/sanitize";
 
 function extractText(html: string): string {
@@ -58,8 +59,10 @@ export async function GET() {
     const session = await requireAuth([PERMISSIONS.posts]);
     if (!session) return unauthorizedJson();
     return NextResponse.json({
-      providers: listProviders().map(toPublicProvider),
-      profiles: listProfiles(),
+      providers: listProviders().map((p) => ({
+        ...toPublicProvider(p),
+        profiles: listProfiles(p.id),
+      })),
     });
   } catch {
     return NextResponse.json({ error: "Không thể tải cấu hình AI" }, { status: 500 });
@@ -75,7 +78,10 @@ export async function POST(request: NextRequest) {
     const action = typeof body.action === "string" ? body.action : "";
 
     if (action === "test") {
-      const profile = getProfile("test");
+      const active = getActiveProvider();
+      const profile =
+        (active ? getProfile(active.id, "test") : null) ??
+        DEFAULT_AI_PROFILES.find((p) => p.action === "test");
       const provider = providerFromBody(body, providerFromActive());
       if (!provider) {
         return NextResponse.json(
@@ -124,7 +130,7 @@ export async function POST(request: NextRequest) {
     };
 
     if (action === "generate") {
-      const profile = getProfile("generate");
+      const profile = getProfile(active.id, "generate");
       if (!profile) {
         return NextResponse.json({ error: "Không tìm thấy cấu hình hành động tạo nháp" }, { status: 500 });
       }
@@ -170,7 +176,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (action === "summarize") {
-      const profile = getProfile("summarize");
+      const profile = getProfile(active.id, "summarize");
       if (!profile) {
         return NextResponse.json({ error: "Không tìm thấy cấu hình hành động tóm tắt" }, { status: 500 });
       }
@@ -194,7 +200,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (action === "proofread") {
-      const profile = getProfile("proofread");
+      const profile = getProfile(active.id, "proofread");
       if (!profile) {
         return NextResponse.json({ error: "Không tìm thấy cấu hình hành động sửa chính tả" }, { status: 500 });
       }
