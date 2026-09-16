@@ -7,7 +7,7 @@ import RichEditor from "./RichEditor";
 import MediaPicker from "./MediaPicker";
 import FieldSelect from "./FieldSelect";
 import FieldError from "@/components/shared/FieldError";
-import FieldNumber from "./FieldNumber";
+import Breadcrumb from "@/components/shared/Breadcrumb";
 import type { FieldErrors } from "@/lib/validation";
 
 const SEO_LIMITS = {
@@ -30,15 +30,6 @@ interface PostFormData {
   readingTime: string;
   published: boolean;
   publishedAt: string;
-  seriesId: number | null;
-  seriesOrder: number;
-}
-
-export interface PostSeriesOption {
-  id: number;
-  slug: string;
-  name: string;
-  icon?: string;
 }
 
 interface PostEditorProps {
@@ -46,7 +37,6 @@ interface PostEditorProps {
   initialData?: Partial<PostFormData>;
   slug?: string;
   categories?: { slug: string; name: string; icon?: string }[];
-  seriesList?: PostSeriesOption[];
 }
 
 type PublishMode = "draft" | "now" | "scheduled";
@@ -115,7 +105,7 @@ function WordCount({ count, limit }: { count: number; limit: number }) {
   );
 }
 
-export default function PostEditor({ mode, initialData, slug, categories, seriesList }: PostEditorProps) {
+export default function PostEditor({ mode, initialData, slug, categories }: PostEditorProps) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -133,8 +123,6 @@ export default function PostEditor({ mode, initialData, slug, categories, series
     readingTime: initialData?.readingTime || "5 phút đọc",
     published: initialData?.published ?? false,
     publishedAt: initialData?.publishedAt || "",
-    seriesId: initialData?.seriesId ?? null,
-    seriesOrder: initialData?.seriesOrder ?? 0,
   });
 
   const contentRef = useRef(form.content);
@@ -270,8 +258,6 @@ export default function PostEditor({ mode, initialData, slug, categories, series
         rawContent: contentRef.current,
         published,
         publishedAt,
-        seriesId: form.seriesId,
-        seriesOrder: form.seriesOrder,
       };
 
       const url = mode === "edit" ? `/api/posts/${slug}` : "/api/posts";
@@ -389,6 +375,13 @@ export default function PostEditor({ mode, initialData, slug, categories, series
 
   return (
     <div>
+      <Breadcrumb
+        items={[
+          { label: "Dashboard", href: "/admin" },
+          { label: "Bài viết", href: "/admin/posts" },
+          { label: mode === "edit" ? "Chỉnh sửa bài viết" : "Viết bài mới" },
+        ]}
+      />
       {/* Title + Save button */}
       <div className="flex items-center justify-between gap-4 mb-8">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white truncate">
@@ -752,41 +745,6 @@ export default function PostEditor({ mode, initialData, slug, categories, series
               onChange={(e) => updateField("readingTime", e.target.value)}
               className="w-full px-4 py-3 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
             />
-          </div>
-
-          {/* Series */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-              Series / Chuỗi bài
-            </label>
-            <FieldSelect
-              value={form.seriesId ? String(form.seriesId) : ""}
-              onChange={(v) =>
-                updateField("seriesId", v ? Number(v) : null)
-              }
-              options={[
-                ...(seriesList ?? []).map((s) => ({
-                  value: String(s.id),
-                  label: s.name,
-                  icon: s.icon,
-                })),
-              ]}
-              placeholder={seriesList?.length ? "Chọn series..." : "Chưa có series nào"}
-              searchable
-            />
-            {form.seriesId !== null && (
-              <>
-                <FieldNumber
-                  value={form.seriesOrder}
-                  onChange={(v) => updateField("seriesOrder", v)}
-                  min={0}
-                  className="mt-2 w-full"
-                />
-                <p className="mt-1.5 text-xs text-gray-400 dark:text-gray-500">
-                  Số nhỏ = hiển thị trước trong series
-                </p>
-              </>
-            )}
           </div>
 
           {/* Featured */}

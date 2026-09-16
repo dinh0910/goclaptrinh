@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { getUsers, getRoles } from "@/lib/users";
 import UserManager from "@/components/admin/UserManager";
 import { requireAuth, PERMISSIONS } from "@/lib/permissions";
+import Breadcrumb from "@/components/shared/Breadcrumb";
 
 export const metadata = {
   title: "Quản lý người dùng",
@@ -28,6 +29,12 @@ export default async function AdminUsersPage() {
 
   return (
     <div>
+      <Breadcrumb
+        items={[
+          { label: "Dashboard", href: "/admin" },
+          { label: "Người dùng" },
+        ]}
+      />
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
           Người dùng

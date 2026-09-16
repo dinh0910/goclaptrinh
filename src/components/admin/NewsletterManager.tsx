@@ -368,7 +368,7 @@ export default function NewsletterManager({ adminEmail }: { adminEmail: string }
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-left text-xs uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                <tr className="text-left text-sm font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
                   <th className="py-2 pr-4">Email</th>
                   <th className="py-2 pr-4">Nguồn</th>
                   <th className="py-2 pr-4">Đăng ký lúc</th>

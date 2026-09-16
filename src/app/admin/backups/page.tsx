@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import Breadcrumb from "@/components/shared/Breadcrumb";
 
 interface BackupMeta {
   filename: string;
@@ -146,6 +147,12 @@ export default function AdminBackupsPage() {
 
   return (
     <div className="space-y-6">
+      <Breadcrumb
+        items={[
+          { label: "Dashboard", href: "/admin" },
+          { label: "Sao lưu dữ liệu" },
+        ]}
+      />
       <div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
           Sao lưu dữ liệu

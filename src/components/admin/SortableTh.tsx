@@ -21,7 +21,7 @@ export function SortableTh({
   const isRight = align === "right";
   return (
     <th
-      className={`px-4 py-3.5 text-[11px] font-bold uppercase tracking-wider whitespace-nowrap ${
+      className={`px-4 py-3.5 text-sm font-bold uppercase tracking-wider whitespace-nowrap ${
         isRight ? "text-right" : "text-left"
       } text-gray-400 dark:text-gray-500`}
     >

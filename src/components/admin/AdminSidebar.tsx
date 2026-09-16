@@ -50,10 +50,21 @@ const navItems: NavItem[] = [
     children: [
       { href: "/admin/posts", label: "Danh sách" },
       { href: "/admin/posts/new", label: "Thêm mới" },
-      { href: "/admin/series", label: "Series" },
     ],
   },
   { kind: "link", href: "/admin/categories", label: "Danh mục", icon: "🗂️", permission: "categories" },
+  {
+    kind: "section",
+    key: "courses",
+    label: "Khóa học",
+    icon: "🎓",
+    permission: "courses",
+    children: [
+      { href: "/admin/courses", label: "Danh sách" },
+      { href: "/admin/courses/new", label: "Thêm mới" },
+      { href: "/admin/courses/levels", label: "Cấp độ" },
+    ],
+  },
   { kind: "link", href: "/admin/comments", label: "Bình luận", icon: "💬", permission: "comments" },
   { kind: "link", href: "/admin/media", label: "Hình ảnh", icon: "🖼️", permission: "media" },
   {
@@ -90,11 +101,16 @@ const navItems: NavItem[] = [
 ];
 
 const sectionChildActive = (child: AdminLink, pathname: string): boolean => {
-  if (child.href === "/admin/posts" || child.href === "/admin/banners") {
-    return (
-      pathname === child.href ||
-      (pathname.startsWith(child.href + "/") && !pathname.startsWith(child.href + "/new"))
-    );
+  if (
+    child.href === "/admin/posts" ||
+    child.href === "/admin/banners" ||
+    child.href === "/admin/courses"
+  ) {
+    const isExact = pathname === child.href;
+    const isChild = pathname.startsWith(child.href + "/");
+    const isNew = pathname.startsWith(child.href + "/new");
+    const isLevels = child.href === "/admin/courses" && pathname.startsWith("/admin/courses/levels");
+    return isExact || (isChild && !isNew && !isLevels);
   }
   if (child.href === "/admin/welcome") {
     return (

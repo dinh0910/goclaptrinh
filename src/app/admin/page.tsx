@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { categories as categoriesTable } from "@/lib/db/schema";
 import { requireAuth } from "@/lib/permissions";
 import { notFound } from "next/navigation";
+import Breadcrumb from "@/components/shared/Breadcrumb";
 
 export const metadata = {
   title: "Admin Dashboard",
@@ -21,6 +22,7 @@ export default async function AdminDashboard() {
 
   return (
     <div>
+      <Breadcrumb items={[{ label: "Dashboard" }]} />
       <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-8">Dashboard</h1>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">

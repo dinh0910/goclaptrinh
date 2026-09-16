@@ -5,10 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import RowActionsMenu from "./RowActionsMenu";
-import { SearchBar } from "./SearchBar";
-import { SortableTh } from "./SortableTh";
-import { Pagination } from "./Pagination";
-import { useTableControls } from "./useTableControls";
+import DataTable from "./DataTable";
 import { roleMeta } from "@/lib/userRoles";
 import FieldSelect, { type FieldSelectOption } from "./FieldSelect";
 import FieldError, { errorInputClass } from "@/components/shared/FieldError";
@@ -92,25 +89,6 @@ export default function UserManager({
   const [resetDone, setResetDone] = useState(false);
   const [resetCopy, setResetCopy] = useState(false);
   const [resetting, setResetting] = useState(false);
-
-  const ctrl = useTableControls<UserListItem>({
-    searchKeys: [(u) => u.name, (u) => u.email, (u) => u.roleName],
-  });
-  const { total, totalPages, page, pageItems } = ctrl.process(
-    users,
-    (key, u) => {
-      switch (key) {
-        case "name":
-          return u.name;
-        case "email":
-          return u.email;
-        case "role":
-          return u.roleName;
-        default:
-          return "";
-      }
-    }
-  );
 
   const handleAdd = async () => {
     const errors: FieldErrors = {};
@@ -434,237 +412,210 @@ export default function UserManager({
       </div>
 
       {/* List */}
-      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 min-w-0">
-        <div className="p-4 border-b border-gray-200 dark:border-gray-800">
-          <SearchBar
-            value={ctrl.search}
-            onChange={ctrl.setSearchAndReset}
-            placeholder="Tìm theo tên, email, vai trò..."
-          />
-        </div>
-        {users.length === 0 ? (
-          <div className="p-8 text-center">
-            <div className="flex flex-col items-center gap-2">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-10 h-10 text-gray-300 dark:text-gray-600" aria-hidden>
-                <circle cx="12" cy="8" r="4" />
-                <path d="M4 21c0-4 4-6 8-6s8 2 8 6" />
-              </svg>
-              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                Chưa có người dùng nào.
-              </p>
-              <p className="text-xs text-gray-400 dark:text-gray-500">
-                Hãy thêm người dùng đầu tiên ở bên trái.
-              </p>
-            </div>
-          </div>
-        ) : (
-          <>
-            <div className="max-h-[calc(100dvh-23rem)] overflow-y-auto">
-              <table className="w-full">
-                <thead className="sticky top-0 z-10 bg-gray-50 dark:bg-gray-900">
-                  <tr className="border-b border-gray-200 dark:border-gray-700">
-                    <SortableTh label="Người dùng" sortKey="name" currentKey={ctrl.sortKey} dir={ctrl.sortDir} onSort={ctrl.setColumnSort} />
-                    <SortableTh label="Email" sortKey="email" currentKey={ctrl.sortKey} dir={ctrl.sortDir} onSort={ctrl.setColumnSort} />
-                    <SortableTh label="Vai trò" sortKey="role" currentKey={ctrl.sortKey} dir={ctrl.sortDir} onSort={ctrl.setColumnSort} />
-                    <th className="text-left p-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Ngày tạo</th>
-                    <th className="px-4 py-3.5 text-right" aria-label="Thao tác" />
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
-                  {pageItems.map((user) => {
-                    const isEditing = editingId === user.id;
-                    const meta = roleMeta(user.role);
-                    const isSelf = user.id === currentUserId;
-                    return (
-                      <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                        <td className="p-4 align-top">
-                          {isEditing ? (
-                            <div className="space-y-3 max-w-md">
-                              <div>
-                                <input
-                                  type="text"
-                                  value={editForm.name}
-                                  onChange={(e) => {
-                                    setEditForm((f) => ({ ...f, name: e.target.value }));
-                                    setEditErrors((er) => ({ ...er, name: "" }));
-                                  }}
-                                  placeholder="Tên hiển thị"
-                                  className={`${inputClass} ${errorInputClass(editErrors, "name")}`}
-                                />
-                                <FieldError message={editErrors.name} />
-                              </div>
-                              <div>
-                                <input
-                                  type="password"
-                                  value={editForm.password}
-                                  onChange={(e) => {
-                                    setEditForm((f) => ({ ...f, password: e.target.value }));
-                                    setEditErrors((er) => ({ ...er, password: "" }));
-                                  }}
-                                  placeholder="Để trống nếu không đổi mật khẩu"
-                                  autoComplete="new-password"
-                                  readOnly
-                                  onFocus={unlockReadonly}
-                                  className={`${inputClass} ${errorInputClass(editErrors, "password")}`}
-                                />
-                                <FieldError message={editErrors.password} />
-                              </div>
-                            </div>
-                          ) : (
-                            <span className="flex items-center gap-3">
-                              <div className="w-9 h-9 shrink-0 rounded-full bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center">
-                                <span className="text-sm font-bold text-white">
-                                  {user.name.charAt(0).toUpperCase()}
-                                </span>
-                              </div>
-                              <span className="flex flex-col gap-0.5">
-                                <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                                  {user.name}
-                                  {isSelf && (
-                                    <span className="ml-1.5 text-xs font-normal text-gray-400 dark:text-gray-500 align-middle">(bạn)</span>
-                                  )}
-                                </span>
-                                <span className="text-xs text-gray-500 dark:text-gray-400">
-                                  {formatDate(user.createdAt)}
-                                </span>
-                              </span>
-                            </span>
-                          )}
-                        </td>
-                        <td className="p-4 align-top">
-                          {isEditing ? (
-                            <div className="max-w-md">
-                              <input
-                                type="text"
-                                value={editForm.email}
-                                onChange={(e) => {
-                                  setEditForm((f) => ({ ...f, email: e.target.value }));
-                                  setEditErrors((er) => ({ ...er, email: "" }));
-                                }}
-                                autoComplete="off"
-                                readOnly
-                                onFocus={unlockReadonly}
-                                className={`${inputClass} max-w-md ${errorInputClass(editErrors, "email")}`}
-                              />
-                              <FieldError message={editErrors.email} />
-                            </div>
-                          ) : (
-                            <span className="text-sm text-gray-600 dark:text-gray-400 break-all">
-                              {user.email}
-                            </span>
-                          )}
-                        </td>
-                        <td className="p-4 align-top">
-                          {isEditing ? (
-                            <div>
-                              <FieldSelect
-                                value={editForm.role}
-                                onChange={(v) => {
-                                  setEditForm((f) => ({ ...f, role: v }));
-                                  setEditErrors((er) => ({ ...er, role: "" }));
-                                }}
-                                options={roleOptions(roles)}
-                                className="min-w-40 max-w-56"
-                              />
-                              <FieldError message={editErrors.role} />
-                            </div>
-                          ) : (
-                            <span className={`inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-md ${meta.bg} ${meta.text} ${meta.darkBg} ${meta.darkText}`}>
-                              <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${meta.swatch}`} aria-hidden />
-                              {meta.label}
-                            </span>
-                          )}
-                        </td>
-                        <td className="p-4 align-top">
-                          {!isEditing && (
-                            <span className="text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
-                              {formatDate(user.createdAt)}
-                            </span>
-                          )}
-                        </td>
-                        <td className="p-4 align-top">
-                          {isEditing ? (
-                            <div className="flex items-center justify-end gap-3">
-                              <button
-                                onClick={handleSaveEdit}
-                                disabled={saving}
-                                className="text-sm text-green-600 dark:text-green-400 hover:underline disabled:opacity-50"
-                              >
-                                {saving ? "..." : "Lưu"}
-                              </button>
-                              <button
-                                onClick={() => { setEditingId(null); }}
-                                className="text-sm text-gray-500 dark:text-gray-400 hover:underline"
-                              >
-                                Hủy
-                              </button>
-                            </div>
-                          ) : (
-                            <div className="flex items-center justify-end">
-                              <RowActionsMenu
-                                actions={[
-                                  {
-                                    label: "Sửa",
-                                    disabled: isSelf,
-                                    icon: (
-                                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4" aria-hidden>
-                                        <path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
-                                      </svg>
-                                    ),
-                                    onClick: () => startEdit(user),
-                                  },
-                                  {
-                                    label: "Đặt lại mật khẩu",
-                                    icon: (
-                                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4" aria-hidden>
-                                        <rect x="3" y="11" width="18" height="11" rx="2" />
-                                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                                      </svg>
-                                    ),
-                                    onClick: () => openReset(user),
-                                  },
-                                  {
-                                    label: "Xóa",
-                                    variant: "danger",
-                                    disabled: isSelf,
-                                    icon: (
-                                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4" aria-hidden>
-                                        <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
-                                      </svg>
-                                    ),
-                                    onClick: () => setDeleteTarget(user),
-                                  },
-                                ]}
-                              />
-                            </div>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                  {pageItems.length === 0 && (
-                    <tr>
-                      <td colSpan={5} className="p-8 text-center">
-                        <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                          Không tìm thấy người dùng nào phù hợp.
-                        </p>
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-            <Pagination
-              page={page}
-              totalPages={totalPages}
-              totalItems={total}
-              pageSize={ctrl.pageSize}
-              onPageChange={ctrl.setPage}
-              onPageSizeChange={ctrl.setPageSize}
-            />
-          </>
-        )}
-      </div>
+      <DataTable<UserListItem>
+        columns={[
+          { label: "Người dùng", sortKey: "name" },
+          { label: "Email", sortKey: "email" },
+          { label: "Vai trò", sortKey: "role" },
+          { label: "Ngày tạo" },
+          { label: "", align: "right" },
+        ]}
+        rows={users}
+        rowKey={(u) => u.id}
+        getSortValue={(key, u) => {
+          switch (key) {
+            case "name":
+              return u.name;
+            case "email":
+              return u.email;
+            case "role":
+              return u.roleName;
+            default:
+              return "";
+          }
+        }}
+        searchKeys={[(u) => u.name, (u) => u.email, (u) => u.roleName]}
+        searchPlaceholder="Tìm theo tên, email, vai trò..."
+        emptyIcon={
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-10 h-10 text-gray-300 dark:text-gray-600" aria-hidden>
+            <circle cx="12" cy="8" r="4" />
+            <path d="M4 21c0-4 4-6 8-6s8 2 8 6" />
+          </svg>
+        }
+        emptyText="Chưa có người dùng nào."
+        emptyHint="Hãy thêm người dùng đầu tiên ở bên trái."
+        renderRow={(user) => {
+          const isEditing = editingId === user.id;
+          const meta = roleMeta(user.role);
+          const isSelf = user.id === currentUserId;
+          return (
+            <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+              <td className="p-4 align-top">
+                {isEditing ? (
+                  <div className="space-y-3 max-w-md">
+                    <div>
+                      <input
+                        type="text"
+                        value={editForm.name}
+                        onChange={(e) => {
+                          setEditForm((f) => ({ ...f, name: e.target.value }));
+                          setEditErrors((er) => ({ ...er, name: "" }));
+                        }}
+                        placeholder="Tên hiển thị"
+                        className={`${inputClass} ${errorInputClass(editErrors, "name")}`}
+                      />
+                      <FieldError message={editErrors.name} />
+                    </div>
+                    <div>
+                      <input
+                        type="password"
+                        value={editForm.password}
+                        onChange={(e) => {
+                          setEditForm((f) => ({ ...f, password: e.target.value }));
+                          setEditErrors((er) => ({ ...er, password: "" }));
+                        }}
+                        placeholder="Để trống nếu không đổi mật khẩu"
+                        autoComplete="new-password"
+                        readOnly
+                        onFocus={unlockReadonly}
+                        className={`${inputClass} ${errorInputClass(editErrors, "password")}`}
+                      />
+                      <FieldError message={editErrors.password} />
+                    </div>
+                  </div>
+                ) : (
+                  <span className="flex items-center gap-3">
+                    <div className="w-9 h-9 shrink-0 rounded-full bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center">
+                      <span className="text-sm font-bold text-white">
+                        {user.name.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                    <span className="flex flex-col gap-0.5">
+                      <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                        {user.name}
+                        {isSelf && (
+                          <span className="ml-1.5 text-xs font-normal text-gray-400 dark:text-gray-500 align-middle">(bạn)</span>
+                        )}
+                      </span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        {formatDate(user.createdAt)}
+                      </span>
+                    </span>
+                  </span>
+                )}
+              </td>
+              <td className="p-4 align-top">
+                {isEditing ? (
+                  <div className="max-w-md">
+                    <input
+                      type="text"
+                      value={editForm.email}
+                      onChange={(e) => {
+                        setEditForm((f) => ({ ...f, email: e.target.value }));
+                        setEditErrors((er) => ({ ...er, email: "" }));
+                      }}
+                      autoComplete="off"
+                      readOnly
+                      onFocus={unlockReadonly}
+                      className={`${inputClass} max-w-md ${errorInputClass(editErrors, "email")}`}
+                    />
+                    <FieldError message={editErrors.email} />
+                  </div>
+                ) : (
+                  <span className="text-sm text-gray-600 dark:text-gray-400 break-all">
+                    {user.email}
+                  </span>
+                )}
+              </td>
+              <td className="p-4 align-top">
+                {isEditing ? (
+                  <div>
+                    <FieldSelect
+                      value={editForm.role}
+                      onChange={(v) => {
+                        setEditForm((f) => ({ ...f, role: v }));
+                        setEditErrors((er) => ({ ...er, role: "" }));
+                      }}
+                      options={roleOptions(roles)}
+                      className="min-w-40 max-w-56"
+                    />
+                    <FieldError message={editErrors.role} />
+                  </div>
+                ) : (
+                  <span className={`inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-md ${meta.bg} ${meta.text} ${meta.darkBg} ${meta.darkText}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${meta.swatch}`} aria-hidden />
+                    {meta.label}
+                  </span>
+                )}
+              </td>
+              <td className="p-4 align-top">
+                {!isEditing && (
+                  <span className="text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                    {formatDate(user.createdAt)}
+                  </span>
+                )}
+              </td>
+              <td className="p-4 align-top">
+                {isEditing ? (
+                  <div className="flex items-center justify-end gap-3">
+                    <button
+                      onClick={handleSaveEdit}
+                      disabled={saving}
+                      className="text-sm text-green-600 dark:text-green-400 hover:underline disabled:opacity-50"
+                    >
+                      {saving ? "..." : "Lưu"}
+                    </button>
+                    <button
+                      onClick={() => { setEditingId(null); }}
+                      className="text-sm text-gray-500 dark:text-gray-400 hover:underline"
+                    >
+                      Hủy
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-end">
+                    <RowActionsMenu
+                      actions={[
+                        {
+                          label: "Sửa",
+                          disabled: isSelf,
+                          icon: (
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4" aria-hidden>
+                              <path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+                            </svg>
+                          ),
+                          onClick: () => startEdit(user),
+                        },
+                        {
+                          label: "Đặt lại mật khẩu",
+                          icon: (
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4" aria-hidden>
+                              <rect x="3" y="11" width="18" height="11" rx="2" />
+                              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                            </svg>
+                          ),
+                          onClick: () => openReset(user),
+                        },
+                        {
+                          label: "Xóa",
+                          variant: "danger",
+                          disabled: isSelf,
+                          icon: (
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4" aria-hidden>
+                              <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                            </svg>
+                          ),
+                          onClick: () => setDeleteTarget(user),
+                        },
+                      ]}
+                    />
+                  </div>
+                )}
+              </td>
+            </tr>
+          );
+        }}
+      />
 
       {deleteTarget && (
         <ConfirmDialog

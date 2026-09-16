@@ -38,6 +38,14 @@ export default function Footer() {
                 </li>
                 <li>
                   <Link
+                    href="/courses"
+                    className="text-sm text-gray-600 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400"
+                  >
+                    Khóa học
+                  </Link>
+                </li>
+                <li>
+                  <Link
                     href="/categories"
                     className="text-sm text-gray-600 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400"
                   >

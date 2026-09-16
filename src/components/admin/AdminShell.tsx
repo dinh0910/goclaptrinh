@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import AdminSidebar from "./AdminSidebar";
-import AdminBreadcrumbs from "./AdminBreadcrumbs";
 import { AdminSettingsProvider, useAdminSettings } from "./AdminSettings";
 import { LoadingScreen } from "@/components/shared/LoadingSpinner";
 import type { AdminTheme } from "@/lib/admin-prefs";
@@ -184,7 +183,6 @@ function Shell({ user, permissions, children }: AdminShellProps) {
         {/* Page content */}
         <main className="flex-1 overflow-y-auto">
           <div className="max-w-[1600px] mx-auto p-6 lg:p-8">
-            <AdminBreadcrumbs />
             {navigating ? (
               <LoadingScreen label="Đang tải trang..." />
             ) : (

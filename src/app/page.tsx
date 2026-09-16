@@ -2,7 +2,10 @@ import Link from "next/link";
 import { getAllPosts } from "@/lib/posts";
 import { siteConfig } from "@/lib/constants";
 import { getCategoriesWithCounts } from "@/lib/categories";
+import { getAllCourses, countCourseLessons } from "@/lib/courses";
+import { getCourseLevelsMap } from "@/lib/courseLevels";
 import PostCard from "@/components/client/PostCard";
+import CourseCard from "@/components/client/CourseCard";
 import CategoryList from "@/components/client/CategoryList";
 import HeroBanner from "@/components/client/HeroBanner";
 import NewsletterForm from "@/components/client/NewsletterForm";
@@ -12,6 +15,14 @@ export default async function Home() {
   const posts = await getAllPosts();
   const featuredPosts = posts.filter((post) => post.featured);
   const latestPosts = posts.slice(0, 6);
+
+  const levelsMap = getCourseLevelsMap();
+  const allCourses = getAllCourses().map((c) => ({
+    ...c,
+    lessonCount: countCourseLessons(c.id),
+  }));
+  const featuredCourses = allCourses.filter((course) => course.featured);
+  const latestCourses = allCourses.slice(0, 3);
 
   const categories = getCategoriesWithCounts().filter((cat) => cat.count > 0);
 
@@ -83,6 +94,28 @@ export default async function Home() {
           </div>
         </div>
       </section>
+
+      {/* Courses */}
+      {(featuredCourses.length > 0 || latestCourses.length > 0) && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+              Khóa học
+            </h2>
+            <Link
+              href="/courses"
+              className="text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+            >
+              Xem tất cả &rarr;
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {(featuredCourses.length > 0 ? featuredCourses : latestCourses).map((course) => (
+              <CourseCard key={course.id} course={course} featured={course.featured} levels={levelsMap} />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Categories */}
       {categories.length > 0 && (

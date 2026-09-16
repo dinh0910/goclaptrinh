@@ -62,8 +62,6 @@ export async function POST(request: NextRequest) {
       readingTime: (v.readingTime as string) || "5 phút đọc",
       published,
       publishedAt,
-      seriesId: (v.seriesId as number | null) ?? null,
-      seriesOrder: (v.seriesOrder as number) ?? 0,
       createdAt: now,
       updatedAt: now,
     }).returning().get();

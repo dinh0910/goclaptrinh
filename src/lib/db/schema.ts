@@ -37,19 +37,8 @@ export const posts = sqliteTable("posts", {
   readingTime: text("reading_time").notNull().default("5 phút đọc"),
   published: integer("published", { mode: "boolean" }).notNull().default(false),
   publishedAt: text("published_at").notNull().default(""),
-  seriesId: integer("series_id"),
-  seriesOrder: integer("series_order").notNull().default(0),
   createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
   updatedAt: text("updated_at").notNull().$defaultFn(() => new Date().toISOString()),
-});
-
-export const series = sqliteTable("series", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  slug: text("slug").notNull().unique(),
-  name: text("name").notNull(),
-  description: text("description").notNull().default(""),
-  icon: text("icon").notNull().default("📚"),
-  createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
 });
 
 export const categories = sqliteTable("categories", {
@@ -193,6 +182,61 @@ export const postReactions = sqliteTable("post_reactions", {
   createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
 });
 
+export const courseLevels = sqliteTable("course_levels", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  key: text("key").notNull().unique(),
+  label: text("label").notNull(),
+  description: text("description").notNull().default(""),
+  icon: text("icon").notNull().default("🌱"),
+  color: text("color").notNull().default("blue"),
+  sortOrder: integer("sort_order").notNull().default(1),
+  createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
+  updatedAt: text("updated_at").notNull().$defaultFn(() => new Date().toISOString()),
+});
+
+export const courses = sqliteTable("courses", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  slug: text("slug").notNull().unique(),
+  title: text("title").notNull(),
+  description: text("description").notNull().default(""),
+  image: text("image").notNull().default(""),
+  level: text("level").notNull().default("beginner"),
+  price: integer("price").notNull().default(0),
+  category: text("category").notNull().default(""),
+  tags: text("tags", { mode: "json" }).notNull().$type<string[]>().default([]),
+  published: integer("published", { mode: "boolean" }).notNull().default(false),
+  featured: integer("featured", { mode: "boolean" }).notNull().default(false),
+  duration: text("duration").notNull().default(""),
+  createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
+  updatedAt: text("updated_at").notNull().$defaultFn(() => new Date().toISOString()),
+});
+
+export const courseLessons = sqliteTable("course_lessons", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  courseId: integer("course_id").notNull(),
+  slug: text("slug").notNull().default(""),
+  title: text("title").notNull(),
+  description: text("description").notNull().default(""),
+  content: text("content").notNull().default(""),
+  videoUrl: text("video_url").notNull().default(""),
+  orderIndex: integer("order_index").notNull().default(0),
+  duration: text("duration").notNull().default(""),
+  published: integer("published", { mode: "boolean" }).notNull().default(false),
+  createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
+  updatedAt: text("updated_at").notNull().$defaultFn(() => new Date().toISOString()),
+});
+
+export const courseEnrollments = sqliteTable("course_enrollments", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  courseId: integer("course_id").notNull(),
+  userEmail: text("user_email").notNull().default(""),
+  visitorId: text("visitor_id").notNull().default(""),
+  progress: integer("progress").notNull().default(0),
+  completed: integer("completed", { mode: "boolean" }).notNull().default(false),
+  createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
+  updatedAt: text("updated_at").notNull().$defaultFn(() => new Date().toISOString()),
+});
+
 export type UserRow = typeof users.$inferSelect;
 export type UserInsert = typeof users.$inferInsert;
 export type RoleRow = typeof roles.$inferSelect;
@@ -201,8 +245,6 @@ export type PostRow = typeof posts.$inferSelect;
 export type PostInsert = typeof posts.$inferInsert;
 export type CategoryRow = typeof categories.$inferSelect;
 export type CategoryInsert = typeof categories.$inferInsert;
-export type SeriesRow = typeof series.$inferSelect;
-export type SeriesInsert = typeof series.$inferInsert;
 export type MediaRow = typeof media.$inferSelect;
 export type MediaInsert = typeof media.$inferInsert;
 export type AuditLogRow = typeof auditLogs.$inferSelect;
@@ -219,3 +261,11 @@ export type AiProviderRow = typeof aiProviders.$inferSelect;
 export type AiProviderInsert = typeof aiProviders.$inferInsert;
 export type AiProfileRow = typeof aiProfiles.$inferSelect;
 export type AiProfileInsert = typeof aiProfiles.$inferInsert;
+export type CourseRow = typeof courses.$inferSelect;
+export type CourseInsert = typeof courses.$inferInsert;
+export type CourseLevelRow = typeof courseLevels.$inferSelect;
+export type CourseLevelInsert = typeof courseLevels.$inferInsert;
+export type CourseLessonRow = typeof courseLessons.$inferSelect;
+export type CourseLessonInsert = typeof courseLessons.$inferInsert;
+export type CourseEnrollmentRow = typeof courseEnrollments.$inferSelect;
+export type CourseEnrollmentInsert = typeof courseEnrollments.$inferInsert;

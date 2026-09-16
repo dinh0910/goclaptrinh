@@ -23,7 +23,6 @@ export async function proxy(request: NextRequest) {
     "/api/admin/audit",
     "/api/admin/mfa",
     "/api/admin/backups",
-    "/api/admin/series",
     "/api/admin/ai",
     "/api/admin/newsletter",
     "/api/admin/analytics",

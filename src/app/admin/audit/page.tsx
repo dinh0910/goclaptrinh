@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Breadcrumb from "@/components/shared/Breadcrumb";
 
 interface AuditRow {
   id: number;
@@ -81,6 +82,12 @@ export default function AdminAuditPage() {
 
   return (
     <div className="space-y-6">
+      <Breadcrumb
+        items={[
+          { label: "Dashboard", href: "/admin" },
+          { label: "Nhật ký hoạt động" },
+        ]}
+      />
       <div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
           Nhật ký hoạt động

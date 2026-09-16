@@ -1,6 +1,7 @@
 import { MetadataRoute } from "next";
 import { getAllPostSlugs, getPostBySlug, getAllTags } from "@/lib/posts";
 import { getCategoriesWithCounts } from "@/lib/categories";
+import { getAllCourses } from "@/lib/courses";
 import { siteConfig } from "@/lib/constants";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -17,6 +18,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       };
     })
   );
+
+  const courseEntries: MetadataRoute.Sitemap = getAllCourses(true).map((course) => ({
+    url: `${siteConfig.url}/courses/${course.slug}`,
+    lastModified: new Date(course.updatedAt),
+    changeFrequency: "weekly" as const,
+    priority: 0.8,
+  }));
 
   const categoryEntries: MetadataRoute.Sitemap = getCategoriesWithCounts().map((cat) => ({
     url: `${siteConfig.url}/categories/${cat.slug}`,
@@ -47,6 +55,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.9,
     },
     {
+      url: `${siteConfig.url}/courses`,
+      lastModified: new Date(),
+      changeFrequency: "daily",
+      priority: 0.9,
+    },
+    {
       url: `${siteConfig.url}/categories`,
       lastModified: new Date(),
       changeFrequency: "weekly",
@@ -66,6 +80,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
     ...categoryEntries,
     ...tagEntries,
+    ...courseEntries,
     ...postEntries,
   ];
 }

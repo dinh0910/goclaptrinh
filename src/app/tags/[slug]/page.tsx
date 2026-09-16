@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { getPostsByTag, getAllTags } from "@/lib/posts";
 import { siteConfig } from "@/lib/constants";
 import PostCard from "@/components/client/PostCard";
+import Breadcrumb from "@/components/shared/Breadcrumb";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -35,23 +35,14 @@ export default async function TagPage({ params }: PageProps) {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
-      <nav className="mb-8">
-        <ol className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400">
-          <li>
-            <Link href="/" className="hover:text-blue-600 dark:hover:text-blue-400">
-              Trang chủ
-            </Link>
-          </li>
-          <li>/</li>
-          <li>
-            <Link href="/tags" className="hover:text-blue-600 dark:hover:text-blue-400">
-              Tags
-            </Link>
-          </li>
-          <li>/</li>
-          <li className="text-gray-900 dark:text-white font-medium">#{slug}</li>
-        </ol>
-      </nav>
+      <Breadcrumb
+        className="mb-8"
+        items={[
+          { label: "Trang chủ", href: "/" },
+          { label: "Tags", href: "/tags" },
+          { label: `#${slug}` },
+        ]}
+      />
 
       <div className="mb-12">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">

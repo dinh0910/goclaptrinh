@@ -6,6 +6,7 @@ import { CATEGORIES } from "@/lib/constants";
 import * as schema from "./schema";
 import { maybeAutoBackup } from "../backup";
 import { DEFAULT_AI_PROFILES } from "@/lib/ai-defaults";
+import { slugify } from "@/lib/utils";
 
 const dbPath = path.join(process.cwd(), "data", "blog.db");
 const sqlite = new Database(dbPath);
@@ -187,7 +188,7 @@ const editorRoleRow = sqlite
   .get() as { permissions: string } | undefined;
 if (editorRoleRow) {
   const editorPerms = JSON.parse(editorRoleRow.permissions) as string[];
-  for (const perm of ["banners", "welcome"]) {
+  for (const perm of ["banners", "welcome", "courses"]) {
     if (!editorPerms.includes(perm)) {
       editorPerms.push(perm);
     }
@@ -309,24 +310,6 @@ if (!auditLogsTable) {
       entity_id TEXT NOT NULL DEFAULT '',
       detail TEXT NOT NULL DEFAULT '{}',
       ip TEXT NOT NULL DEFAULT '',
-      created_at TEXT NOT NULL
-    );
-  `);
-}
-
-// Boot-time migration: create the series table and publishing columns.
-const seriesTable = sqlite
-  .prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'series'")
-  .get();
-
-if (!seriesTable) {
-  sqlite.exec(`
-    CREATE TABLE series (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      slug TEXT NOT NULL UNIQUE,
-      name TEXT NOT NULL,
-      description TEXT NOT NULL DEFAULT '',
-      icon TEXT NOT NULL DEFAULT '📚',
       created_at TEXT NOT NULL
     );
   `);
@@ -484,12 +467,10 @@ for (const table of ["comment_rate_limits", "reaction_rate_limits"]) {
   }
 }
 
-// Boot-time migration: add draft/publish + series columns to posts.
+// Boot-time migration: add draft/publish columns to posts.
 for (const [col, ddl] of [
   ["published", "INTEGER NOT NULL DEFAULT 0"],
   ["published_at", "TEXT NOT NULL DEFAULT ''"],
-  ["series_id", "INTEGER"],
-  ["series_order", "INTEGER NOT NULL DEFAULT 0"],
 ]) {
   const hasCol = sqlite
     .prepare(`SELECT name FROM pragma_table_info('posts') WHERE name = ?`)
@@ -501,6 +482,160 @@ for (const [col, ddl] of [
 
 // Existing posts were always public -> publish them all.
 sqlite.exec(`UPDATE posts SET published = 1 WHERE published IS NULL OR published = 0;`);
+
+// Boot-time migration: create the courses, lessons, and enrollments tables.
+const coursesTable = sqlite
+  .prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'courses'")
+  .get();
+
+if (!coursesTable) {
+  sqlite.exec(`
+    CREATE TABLE courses (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      slug TEXT NOT NULL UNIQUE,
+      title TEXT NOT NULL,
+      description TEXT NOT NULL DEFAULT '',
+      image TEXT NOT NULL DEFAULT '',
+      level TEXT NOT NULL DEFAULT 'beginner',
+      price INTEGER NOT NULL DEFAULT 0,
+      category TEXT NOT NULL DEFAULT '',
+      tags TEXT NOT NULL DEFAULT '[]',
+      published INTEGER NOT NULL DEFAULT 0,
+      featured INTEGER NOT NULL DEFAULT 0,
+      duration TEXT NOT NULL DEFAULT '',
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+  `);
+}
+
+// Boot-time migration: create the configurable course-levels table and seed
+// the default levels so the module works out of the box.
+const courseLevelsTable = sqlite
+  .prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'course_levels'")
+  .get();
+
+if (!courseLevelsTable) {
+  sqlite.exec(`
+    CREATE TABLE course_levels (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      key TEXT NOT NULL UNIQUE,
+      label TEXT NOT NULL,
+      description TEXT NOT NULL DEFAULT '',
+      icon TEXT NOT NULL DEFAULT '🌱',
+      color TEXT NOT NULL DEFAULT 'blue',
+      sort_order INTEGER NOT NULL DEFAULT 1,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+  `);
+
+  const now = new Date().toISOString();
+  const seed = sqlite.prepare(`
+    INSERT INTO course_levels (key, label, description, icon, color, sort_order, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+  const levels = [
+    ["beginner", "Cơ bản", "Dành cho người mới bắt đầu", "🌱", "green", 1],
+    ["intermediate", "Trung cấp", "Dành cho người đã nắm vững kiến thức nền tảng", "⚡", "amber", 2],
+    ["advanced", "Nâng cao", "Dành cho lập trình viên muốn chuyên sâu", "🔥", "red", 3],
+  ];
+  for (const [key, label, description, icon, color, order] of levels) {
+    seed.run(key, label, description, icon, color, order, now, now);
+  }
+}
+
+// Idempotent fix: levels created before sort order became 1-based may hold
+// sort_order = 0. Shift every row up by 1 once so ordering starts at 1.
+const hasZeroSort = sqlite
+  .prepare("SELECT COUNT(*) AS n FROM course_levels WHERE sort_order = 0")
+  .get() as { n: number };
+if (hasZeroSort.n > 0) {
+  sqlite.prepare("UPDATE course_levels SET sort_order = sort_order + 1").run();
+}
+
+const lessonsTable = sqlite
+  .prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'course_lessons'")
+  .get();
+
+if (!lessonsTable) {
+  sqlite.exec(`
+    CREATE TABLE course_lessons (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      course_id INTEGER NOT NULL,
+      slug TEXT NOT NULL DEFAULT '',
+      title TEXT NOT NULL,
+      description TEXT NOT NULL DEFAULT '',
+      content TEXT NOT NULL DEFAULT '',
+      video_url TEXT NOT NULL DEFAULT '',
+      order_index INTEGER NOT NULL DEFAULT 0,
+      duration TEXT NOT NULL DEFAULT '',
+      published INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+  `);
+}
+
+// Boot-time migration: give every lesson a URL-safe slug (kept out of the
+// browser URL today, but used for the admin edit route so numeric ids never
+// appear in the address bar).
+const lessonSlugCol = sqlite
+  .prepare(`SELECT name FROM pragma_table_info('course_lessons') WHERE name = 'slug'`)
+  .get();
+if (!lessonSlugCol) {
+  sqlite.exec(`ALTER TABLE course_lessons ADD COLUMN slug TEXT NOT NULL DEFAULT '';`);
+}
+const lessonSlugStmt = sqlite.prepare(
+  "SELECT id, title FROM course_lessons WHERE slug = '' OR slug IS NULL ORDER BY id"
+);
+const lessonSlugUsed = new Set<string>();
+for (const row of lessonSlugStmt.all() as { id: number; title: string }[]) {
+  const base = slugify(row.title) || "bai-hoc";
+  let candidate = base;
+  let n = 2;
+  while (lessonSlugUsed.has(candidate)) {
+    candidate = `${base}-${n++}`;
+  }
+  lessonSlugUsed.add(candidate);
+  sqlite
+    .prepare("UPDATE course_lessons SET slug = ? WHERE id = ?")
+    .run(candidate, row.id);
+}
+sqlite.exec(
+  "CREATE UNIQUE INDEX IF NOT EXISTS idx_course_lessons_slug ON course_lessons(slug);"
+);
+
+const enrollmentsTable = sqlite
+  .prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'course_enrollments'")
+  .get();
+
+if (!enrollmentsTable) {
+  sqlite.exec(`
+    CREATE TABLE course_enrollments (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      course_id INTEGER NOT NULL,
+      user_email TEXT NOT NULL DEFAULT '',
+      visitor_id TEXT NOT NULL DEFAULT '',
+      progress INTEGER NOT NULL DEFAULT 0,
+      completed INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+  `);
+}
+
+// Boot-time migration: add lesson-progress columns if missing.
+for (const [col, ddl] of [
+  ["completed", "INTEGER NOT NULL DEFAULT 0"],
+]) {
+  const hasCol = sqlite
+    .prepare(`SELECT name FROM pragma_table_info('course_enrollments') WHERE name = ?`)
+    .get(col);
+  if (!hasCol) {
+    sqlite.exec(`ALTER TABLE course_enrollments ADD COLUMN ${col} ${ddl};`);
+  }
+}
 
 // Full-text search index over posts.
 sqlite.exec(`
@@ -691,6 +826,24 @@ if (!aiProfilesTable) {
       }
     }
   })();
+}
+
+// Legacy cleanup: drop the retired "series" feature from existing DBs.
+{
+  const hasSeries = sqlite
+    .prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'series'")
+    .get();
+  if (hasSeries) {
+    sqlite.exec("DROP TABLE IF EXISTS series;");
+  }
+  for (const col of ["series_id", "series_order"]) {
+    const hasCol = sqlite
+      .prepare(`SELECT name FROM pragma_table_info('posts') WHERE name = ?`)
+      .get(col);
+    if (hasCol) {
+      sqlite.exec(`ALTER TABLE posts DROP COLUMN ${col};`);
+    }
+  }
 }
 
 // Keep existing DBs in sync if the index was created empty.

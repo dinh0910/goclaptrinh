@@ -4,11 +4,11 @@ import Link from "next/link";
 import { getAllPostSlugs, getPostBySlug, getAllPosts, getPostIdBySlug } from "@/lib/posts";
 import { siteConfig, DEFAULT_CATEGORY_ICON } from "@/lib/constants";
 import { getCategoryBySlug } from "@/lib/categories";
-import { getSeriesById, getSeriesPostsById } from "@/lib/series";
 import { categoryColor } from "@/lib/categoryColors";
 import { sanitizePostHtml } from "@/lib/sanitize";
 import { listPublicComments } from "@/lib/comments";
 import { getReactionCounts } from "@/lib/reactions";
+import Breadcrumb from "@/components/shared/Breadcrumb";
 import PostContent from "@/components/client/PostContent";
 import PostCard from "@/components/client/PostCard";
 import BlogComments from "@/components/client/BlogComments";
@@ -90,24 +90,6 @@ export default async function BlogPostPage({ params }: PageProps) {
   const catMeta = categoryColor(post.categoryColor || post.category.toLowerCase());
   const catIcon = getCategoryBySlug(post.category)?.icon || DEFAULT_CATEGORY_ICON;
 
-  let seriesMeta: { name: string; slug: string; icon: string; order: number; total: number; prev: { slug: string; title: string } | null; next: { slug: string; title: string } | null } | null = null;
-  if (post.seriesId) {
-    const s = getSeriesById(post.seriesId);
-    if (s) {
-      const posts = getSeriesPostsById(s.id, { publishedOnly: true });
-      const idx = posts.findIndex((p) => p.slug === slug);
-      seriesMeta = {
-        name: s.name,
-        slug: s.slug,
-        icon: s.icon || "📚",
-        order: (post.seriesOrder ?? 0) + 1,
-        total: posts.length,
-        prev: idx < posts.length - 1 ? { slug: posts[idx + 1].slug, title: posts[idx + 1].title } : null,
-        next: idx > 0 ? { slug: posts[idx - 1].slug, title: posts[idx - 1].title } : null,
-      };
-    }
-  }
-
   return (
     <div>
       {/* Hero */}
@@ -117,23 +99,19 @@ export default async function BlogPostPage({ params }: PageProps) {
         </div>
         <div className="relative max-w-5xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
           {/* Breadcrumb */}
-          <nav className="mb-6">
-            <ol className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 flex-wrap">
-              <li>
-                <Link href="/" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Trang chủ</Link>
-              </li>
-              <li>/</li>
-              <li>
-                <Link href="/blog" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Blog</Link>
-              </li>
-              <li>/</li>
-              <li>
-                <Link href={`/categories/${post.category.toLowerCase()}`} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">{post.categoryName || post.category}</Link>
-              </li>
-              <li>/</li>
-              <li className="text-gray-900 dark:text-white font-medium truncate max-w-[200px]">{post.title}</li>
-            </ol>
-          </nav>
+          <Breadcrumb
+            className="mb-6"
+            itemClassName="truncate max-w-[200px]"
+            items={[
+              { label: "Trang chủ", href: "/" },
+              { label: "Blog", href: "/blog" },
+              {
+                label: post.categoryName || post.category,
+                href: `/categories/${post.category.toLowerCase()}`,
+              },
+              { label: post.title },
+            ]}
+          />
 
           {/* Mini info bar */}
           <div className="flex items-center gap-4">
@@ -200,57 +178,6 @@ export default async function BlogPostPage({ params }: PageProps) {
                 </p>
               </Link>
             )}
-          </div>
-        )}
-
-        {/* Series navigation */}
-        {seriesMeta && (
-          <div className="mb-12 rounded-2xl border border-gray-200 bg-violet-50/50 dark:border-gray-800 dark:bg-violet-500/5 p-5">
-            <div className="flex items-center gap-3 mb-3">
-              <span className="w-9 h-9 rounded-lg bg-gradient-to-br from-violet-500 to-indigo-500 flex items-center justify-center text-lg shadow-md shadow-violet-500/20">
-                {seriesMeta.icon}
-              </span>
-              <div>
-                <Link href={`/series/${seriesMeta.slug}`} className="text-sm font-bold text-violet-700 dark:text-violet-300 hover:underline">
-                  {seriesMeta.name}
-                </Link>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Bài {seriesMeta.order} trong {seriesMeta.total} bài
-                </p>
-              </div>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {seriesMeta.prev ? (
-                <Link href={`/blog/${seriesMeta.prev.slug}`} className="group flex items-start gap-2 rounded-xl bg-white border border-gray-200 hover:border-violet-200 hover:shadow-md transition-all p-3 dark:bg-gray-900 dark:border-gray-800 dark:hover:border-violet-800">
-                  <span className="text-gray-300 dark:text-gray-600 text-lg mt-0.5">
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-                    </svg>
-                  </span>
-                  <div className="min-w-0">
-                    <p className="text-[11px] font-medium text-gray-400 dark:text-gray-500 uppercase">Bài trước</p>
-                    <p className="text-sm font-bold text-gray-900 dark:text-white group-hover:text-violet-600 dark:group-hover:text-violet-400 line-clamp-2 transition-colors">{seriesMeta.prev.title}</p>
-                  </div>
-                </Link>
-              ) : (
-                <div />
-              )}
-              {seriesMeta.next ? (
-                <Link href={`/blog/${seriesMeta.next.slug}`} className="group flex items-start gap-2 rounded-xl bg-white border border-gray-200 hover:border-violet-200 hover:shadow-md transition-all p-3 text-right dark:bg-gray-900 dark:border-gray-800 dark:hover:border-violet-800">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[11px] font-medium text-gray-400 dark:text-gray-500 uppercase">Bài tiếp theo</p>
-                    <p className="text-sm font-bold text-gray-900 dark:text-white group-hover:text-violet-600 dark:group-hover:text-violet-400 line-clamp-2 transition-colors">{seriesMeta.next.title}</p>
-                  </div>
-                  <span className="text-gray-300 dark:text-gray-600 text-lg mt-0.5">
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                    </svg>
-                  </span>
-                </Link>
-              ) : (
-                <div />
-              )}
-            </div>
           </div>
         )}
 

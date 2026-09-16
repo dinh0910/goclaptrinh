@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import type { WelcomeField } from "@/lib/welcome-config";
+import Breadcrumb from "@/components/shared/Breadcrumb";
 
 interface Submission {
   id: number;
@@ -114,6 +115,13 @@ export default function WelcomeSubmissions() {
 
   return (
     <div>
+      <Breadcrumb
+        items={[
+          { label: "Dashboard", href: "/admin" },
+          { label: "Popup giới thiệu", href: "/admin/welcome" },
+          { label: "Đăng ký nhận tin" },
+        ]}
+      />
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
           Đăng ký nhận tin

@@ -1,6 +1,7 @@
 import NewsletterManager from "@/components/admin/NewsletterManager";
 import { requireAuth, PERMISSIONS } from "@/lib/permissions";
 import { notFound } from "next/navigation";
+import Breadcrumb from "@/components/shared/Breadcrumb";
 
 export const metadata = {
   title: "Newsletter",
@@ -12,6 +13,12 @@ export default async function AdminNewsletterPage() {
 
   return (
     <div>
+      <Breadcrumb
+        items={[
+          { label: "Dashboard", href: "/admin" },
+          { label: "Newsletter" },
+        ]}
+      />
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">

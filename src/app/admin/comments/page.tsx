@@ -1,6 +1,7 @@
 import CommentsManager from "@/components/admin/CommentsManager";
 import { requireAuth, PERMISSIONS } from "@/lib/permissions";
 import { notFound } from "next/navigation";
+import Breadcrumb from "@/components/shared/Breadcrumb";
 
 export const metadata = {
   title: "Bình luận",
@@ -11,6 +12,12 @@ export default async function AdminCommentsPage() {
 
   return (
     <div>
+      <Breadcrumb
+        items={[
+          { label: "Dashboard", href: "/admin" },
+          { label: "Bình luận" },
+        ]}
+      />
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">

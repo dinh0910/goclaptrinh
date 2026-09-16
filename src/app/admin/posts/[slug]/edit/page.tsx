@@ -3,7 +3,6 @@ import { db } from "@/lib/db";
 import { posts } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { getCategoriesWithCounts } from "@/lib/categories";
-import { getAllSeriesSimple } from "@/lib/series";
 import PostEditor from "@/components/admin/PostEditor";
 import { requireAuth, PERMISSIONS } from "@/lib/permissions";
 
@@ -28,14 +27,12 @@ export default async function EditPostPage({
   }
 
   const categories = getCategoriesWithCounts({ includeUnpublished: true });
-  const seriesList = getAllSeriesSimple();
 
   return (
     <PostEditor
       mode="edit"
       slug={post.slug}
       categories={categories}
-      seriesList={seriesList}
       initialData={{
         slug: post.slug,
         title: post.title,
@@ -50,8 +47,6 @@ export default async function EditPostPage({
         readingTime: post.readingTime,
         published: post.published,
         publishedAt: post.publishedAt || "",
-        seriesId: post.seriesId ?? null,
-        seriesOrder: post.seriesOrder ?? 0,
       }}
     />
   );

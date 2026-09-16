@@ -14,8 +14,6 @@ export interface Post {
   featured?: boolean;
   published?: boolean;
   publishedAt?: string;
-  seriesId?: number;
-  seriesOrder?: number;
 }
 
 export interface Category {
@@ -40,4 +38,32 @@ export interface SiteConfig {
     linkedin?: string;
     facebook?: string;
   };
+}
+
+export interface Course {
+  id: number;
+  slug: string;
+  title: string;
+  description: string;
+  image: string;
+  level: string;
+  price: number;
+  category: string;
+  tags: string[];
+  published: boolean;
+  featured: boolean;
+  duration: string;
+  lessonCount?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CourseLevel {
+  id: number;
+  key: string;
+  label: string;
+  description: string;
+  icon: string;
+  color: string;
+  sortOrder: number;
 }

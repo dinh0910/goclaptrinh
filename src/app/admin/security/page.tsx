@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { toast } from "sonner";
+import Breadcrumb from "@/components/shared/Breadcrumb";
 
 interface MfaStatus {
   enabled: boolean;
@@ -119,6 +120,12 @@ export default function AdminSecurityPage() {
 
   return (
     <div className="max-w-2xl">
+      <Breadcrumb
+        items={[
+          { label: "Dashboard", href: "/admin" },
+          { label: "Bảo mật" },
+        ]}
+      />
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Bảo mật</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">

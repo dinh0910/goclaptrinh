@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { WELCOME_TEMPLATES, type WelcomeItem } from "@/lib/welcome-config";
+import Breadcrumb from "@/components/shared/Breadcrumb";
 
 const templateLabel = (key: WelcomeItem["template"]) =>
   WELCOME_TEMPLATES.find((t) => t.key === key)?.label || key;
@@ -106,6 +107,12 @@ export default function WelcomeList() {
 
   return (
     <div>
+      <Breadcrumb
+        items={[
+          { label: "Dashboard", href: "/admin" },
+          { label: "Popup giới thiệu" },
+        ]}
+      />
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">

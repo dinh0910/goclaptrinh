@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import type { HeroPreset } from "@/lib/hero-config";
+import Breadcrumb from "@/components/shared/Breadcrumb";
 
 const TEMPLATES: { key: string; label: string }[] = [
   { key: "hero-text", label: "Nội dung + Code" },
@@ -102,6 +103,12 @@ export default function BannerList() {
 
   return (
     <div>
+      <Breadcrumb
+        items={[
+          { label: "Dashboard", href: "/admin" },
+          { label: "Quản lý banner" },
+        ]}
+      />
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">

@@ -8,6 +8,7 @@ import FieldSelect from "@/components/admin/FieldSelect";
 import { WelcomeVisual } from "@/components/client/WelcomeVisual";
 import FieldError, { errorInputClass } from "@/components/shared/FieldError";
 import FieldNumber from "@/components/admin/FieldNumber";
+import Breadcrumb from "@/components/shared/Breadcrumb";
 import type { FieldErrors } from "@/lib/validation";
 import {
   DEFAULT_ITEM,
@@ -226,6 +227,13 @@ export default function WelcomeEditor({
 
   return (
     <div className="xl:grid xl:grid-cols-[1fr_380px] xl:gap-6 xl:items-start">
+      <Breadcrumb
+        items={[
+          { label: "Dashboard", href: "/admin" },
+          { label: "Popup giới thiệu", href: "/admin/welcome" },
+          { label: mode === "edit" ? "Chỉnh sửa popup" : "Popup mới" },
+        ]}
+      />
       {/* Form */}
       <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6 mb-6 xl:mb-0">
         <div className="flex flex-wrap items-center justify-between gap-4 mb-6">

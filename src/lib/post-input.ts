@@ -117,32 +117,5 @@ export function cleanPostFields(
     out.publishedAt = s || "";
   }
 
-  if (has("seriesId")) {
-    if (body.seriesId !== null && body.seriesId !== undefined) {
-      if (
-        typeof body.seriesId !== "number" ||
-        !Number.isInteger(body.seriesId) ||
-        body.seriesId <= 0
-      ) {
-        return err("seriesId không hợp lệ");
-      }
-      out.seriesId = body.seriesId;
-    } else {
-      out.seriesId = null;
-    }
-  }
-
-  if (has("seriesOrder")) {
-    if (
-      typeof body.seriesOrder !== "number" ||
-      !Number.isInteger(body.seriesOrder) ||
-      body.seriesOrder < 0 ||
-      body.seriesOrder > 10_000
-    ) {
-      return err("seriesOrder không hợp lệ");
-    }
-    out.seriesOrder = body.seriesOrder;
-  }
-
   return { value: out };
 }

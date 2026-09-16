@@ -11,6 +11,7 @@ import {
   type HeroTemplate,
 } from "@/lib/hero-config";
 import FieldError, { errorInputClass } from "@/components/shared/FieldError";
+import Breadcrumb from "@/components/shared/Breadcrumb";
 import type { FieldErrors } from "@/lib/validation";
 
 const inputClass =
@@ -221,6 +222,13 @@ export default function BannerEditor({
 
   return (
     <div>
+      <Breadcrumb
+        items={[
+          { label: "Dashboard", href: "/admin" },
+          { label: "Quản lý banner", href: "/admin/banners" },
+          { label: isNew ? "Thêm biến thể mới" : "Chỉnh sửa biến thể" },
+        ]}
+      />
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <Link

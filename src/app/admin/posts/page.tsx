@@ -1,10 +1,10 @@
 import { getAllPosts } from "@/lib/posts";
-import Link from "next/link";
 import PostTable from "@/components/admin/PostTable";
 import { db } from "@/lib/db";
-import { categories, series as seriesTable } from "@/lib/db/schema";
+import { categories } from "@/lib/db/schema";
 import { requireAuth, PERMISSIONS } from "@/lib/permissions";
 import { notFound } from "next/navigation";
+import Breadcrumb from "@/components/shared/Breadcrumb";
 
 export const metadata = {
   title: "Quản lý bài viết",
@@ -19,26 +19,20 @@ export default async function AdminPostsPage() {
   const categoryName = Object.fromEntries(
     categoryList.map((c) => [c.slug, c.name])
   );
-  const seriesList = db.select().from(seriesTable).all();
-  const seriesName = Object.fromEntries(
-    seriesList.map((s) => [s.id, s.name])
-  );
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          Bài viết
-        </h1>
-        <Link
-          href="/admin/posts/new"
-          className="px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          + Viết mới
-        </Link>
-      </div>
+      <Breadcrumb
+        items={[
+          { label: "Dashboard", href: "/admin" },
+          { label: "Bài viết" },
+        ]}
+      />
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-8">
+        Bài viết
+      </h1>
 
-      <PostTable posts={posts} categoryName={categoryName} seriesName={seriesName} />
+      <PostTable posts={posts} categoryName={categoryName} />
     </div>
   );
 }

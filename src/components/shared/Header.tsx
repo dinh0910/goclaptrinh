@@ -8,6 +8,7 @@ import ThemeToggle from "./ThemeToggle";
 const navLinks = [
   { href: "/", label: "Trang chủ" },
   { href: "/blog", label: "Blog" },
+  { href: "/courses", label: "Khóa học" },
   { href: "/categories", label: "Danh mục" },
   { href: "/about", label: "Giới thiệu" },
 ];

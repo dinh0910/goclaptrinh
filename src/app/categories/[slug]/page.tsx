@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import Link from "next/link";
 import { siteConfig, DEFAULT_CATEGORY_ICON } from "@/lib/constants";
 import { getCategoryBySlug, getCategoriesWithCounts } from "@/lib/categories";
 import { getPostsByCategory } from "@/lib/posts";
 import { categoryColor, DEFAULT_CATEGORY_COLOR } from "@/lib/categoryColors";
 import PostCard from "@/components/client/PostCard";
+import Breadcrumb from "@/components/shared/Breadcrumb";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -51,23 +51,14 @@ export default async function CategoryPage({ params }: PageProps) {
           <div className={`absolute top-[-10%] left-[-5%] w-[400px] h-[400px] rounded-full bg-gradient-to-br ${color.gradient} opacity-10 blur-[100px]`} />
         </div>
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
-          <nav className="mb-6">
-            <ol className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400">
-              <li>
-                <Link href="/" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                  Trang chủ
-                </Link>
-              </li>
-              <li>/</li>
-              <li>
-                <Link href="/categories" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                  Danh mục
-                </Link>
-              </li>
-              <li>/</li>
-              <li className="text-gray-900 dark:text-white font-medium">{category.name}</li>
-            </ol>
-          </nav>
+          <Breadcrumb
+            className="mb-6"
+            items={[
+              { label: "Trang chủ", href: "/" },
+              { label: "Danh mục", href: "/categories" },
+              { label: category.name },
+            ]}
+          />
 
           <div className="flex items-center gap-4">
             <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${color.gradient} flex items-center justify-center text-3xl shadow-lg`}>

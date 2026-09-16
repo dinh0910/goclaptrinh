@@ -58,8 +58,6 @@ function rowToPost(row: PostRow, contentHtml: string): Post {
     featured: row.featured,
     published: row.published,
     publishedAt: row.publishedAt || "",
-    seriesId: row.seriesId ?? undefined,
-    seriesOrder: row.seriesOrder,
   };
 }
 

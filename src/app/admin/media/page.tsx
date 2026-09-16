@@ -4,6 +4,7 @@ import { media } from "@/lib/db/schema";
 import { desc } from "drizzle-orm";
 import { requireAuth, PERMISSIONS } from "@/lib/permissions";
 import { notFound } from "next/navigation";
+import Breadcrumb from "@/components/shared/Breadcrumb";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +20,12 @@ export default async function AdminMediaPage() {
 
   return (
     <div>
+      <Breadcrumb
+        items={[
+          { label: "Dashboard", href: "/admin" },
+          { label: "Hình ảnh" },
+        ]}
+      />
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
           Hình ảnh

@@ -2,6 +2,7 @@ import { getRolesWithCounts } from "@/lib/users";
 import RoleManager from "@/components/admin/RoleManager";
 import { requireAuth, PERMISSIONS } from "@/lib/permissions";
 import { notFound } from "next/navigation";
+import Breadcrumb from "@/components/shared/Breadcrumb";
 
 export const metadata = {
   title: "Quản lý vai trò",
@@ -23,6 +24,12 @@ export default async function AdminRolesPage() {
 
   return (
     <div>
+      <Breadcrumb
+        items={[
+          { label: "Dashboard", href: "/admin" },
+          { label: "Vai trò" },
+        ]}
+      />
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
           Vai trò

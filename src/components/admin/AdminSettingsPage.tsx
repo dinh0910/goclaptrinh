@@ -8,6 +8,7 @@ import {
   type FontScale,
 } from "@/components/admin/AdminSettings";
 import type { AdminTheme } from "@/lib/admin-prefs";
+import Breadcrumb from "@/components/shared/Breadcrumb";
 import AiSettings from "./AiSettings";
 
 type Tab = "appearance" | "font" | "ai";
@@ -128,6 +129,12 @@ export default function AdminSettingsPage({
 
   return (
     <div>
+      <Breadcrumb
+        items={[
+          { label: "Dashboard", href: "/admin" },
+          { label: "Cài đặt" },
+        ]}
+      />
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Cài đặt</h1>
