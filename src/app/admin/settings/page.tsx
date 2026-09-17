@@ -1,4 +1,4 @@
-import { requireAuth, getEffectivePermissions, PERMISSIONS } from "@/lib/permissions";
+import { requireAuth, getEffectivePermissions, getRolePermissions, PERMISSIONS } from "@/lib/permissions";
 import { notFound } from "next/navigation";
 import AdminSettingsPage from "@/components/admin/AdminSettingsPage";
 
@@ -15,6 +15,9 @@ export default async function SettingsPage() {
   const canManageAi =
     permissions.includes(PERMISSIONS.posts) ||
     permissions.includes(PERMISSIONS.all);
+  const canManageSite = getRolePermissions(session?.user?.role).includes(
+    PERMISSIONS.all
+  );
 
-  return <AdminSettingsPage canManageAi={canManageAi} />;
+  return <AdminSettingsPage canManageAi={canManageAi} canManageSite={canManageSite} />;
 }

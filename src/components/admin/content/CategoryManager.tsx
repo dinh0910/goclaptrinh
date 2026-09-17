@@ -6,8 +6,8 @@ import { useRouter } from "next/navigation";
 import { slugify } from "@/lib/utils";
 import type { CategoryWithCount } from "@/lib/categories";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
-import RowActionsMenu from "./RowActionsMenu";
-import DataTable from "./DataTable";
+import RowActionsMenu from "@/components/admin/ui/RowActionsMenu";
+import DataTable from "@/components/admin/ui/DataTable";
 import FieldError, { errorInputClass } from "@/components/shared/FieldError";
 import { TextArea } from "@/components/shared/TextArea";
 import {

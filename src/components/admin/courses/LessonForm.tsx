@@ -6,8 +6,8 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import Breadcrumb from "@/components/shared/Breadcrumb";
-import FieldNumber from "./FieldNumber";
-import RichEditor from "./RichEditor";
+import FieldNumber from "@/components/admin/ui/FieldNumber";
+import RichEditor from "@/components/admin/editor/RichEditor";
 import type { AdminLesson } from "./LessonsManager";
 
 interface LessonFormProps {

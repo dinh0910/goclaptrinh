@@ -10,12 +10,14 @@ import {
 import type { AdminTheme } from "@/lib/admin-prefs";
 import Breadcrumb from "@/components/shared/Breadcrumb";
 import AiSettings from "./AiSettings";
+import SiteInfoSettings from "./SiteInfoSettings";
 
-type Tab = "appearance" | "font" | "ai";
+type Tab = "appearance" | "font" | "ai" | "site";
 
 const TABS: { key: Tab; label: string }[] = [
   { key: "appearance", label: "Giao diện" },
   { key: "font", label: "Cỡ chữ" },
+  { key: "site", label: "Thông tin" },
   { key: "ai", label: "AI" },
 ];
 
@@ -62,8 +64,10 @@ function OptionCard({
 
 export default function AdminSettingsPage({
   canManageAi,
+  canManageSite,
 }: {
   canManageAi: boolean;
+  canManageSite: boolean;
 }) {
   const { settings, setFontScale } = useAdminSettings();
   const [tab, setTab] = useState<Tab>("appearance");
@@ -147,7 +151,9 @@ export default function AdminSettingsPage({
 
       {/* Tabs */}
       <div className="mb-8 flex gap-1 border-b border-gray-200 dark:border-gray-800">
-        {TABS.filter((t) => t.key !== "ai" || canManageAi).map((t) => (
+        {TABS.filter(
+          (t) => (t.key !== "ai" || canManageAi) && (t.key !== "site" || canManageSite)
+        ).map((t) => (
           <button
             key={t.key}
             type="button"
@@ -268,6 +274,21 @@ export default function AdminSettingsPage({
               );
             })}
           </div>
+        </>
+      )}
+
+      {tab === "site" && canManageSite && (
+        <>
+          <div className="mb-4">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+              Thông tin hiển thị trên header
+            </h2>
+            <p className="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
+              Email, số điện thoại liên hệ và dòng thông báo (khuyến mãi/ra
+              mắt) hiển thị ở thanh trên cùng của trang chủ.
+            </p>
+          </div>
+          <SiteInfoSettings />
         </>
       )}
 

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import { WelcomeVisual } from "@/components/client/WelcomeVisual";
+import { WelcomeVisual } from "@/components/client/welcome/WelcomeVisual";
 import type { WelcomeItem } from "@/lib/welcome-config";
 
 const STORAGE_KEY = "welcome-seen-at";

@@ -67,3 +67,9 @@ export interface CourseLevel {
   color: string;
   sortOrder: number;
 }
+
+export interface CourseEnrollmentProgress {
+  progress: number;
+  completed: boolean;
+  completedLessons: number[];
+}

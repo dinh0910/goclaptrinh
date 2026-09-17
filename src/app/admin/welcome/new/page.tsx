@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import WelcomeEditor from "@/components/admin/WelcomeEditor";
+import WelcomeEditor from "@/components/admin/content/WelcomeEditor";
 import { requireAuth, PERMISSIONS } from "@/lib/permissions";
 
 export const metadata = {

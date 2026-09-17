@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { getPostsByTag, getAllTags } from "@/lib/posts";
 import { siteConfig } from "@/lib/constants";
-import PostCard from "@/components/client/PostCard";
+import PostCard from "@/components/client/blog/PostCard";
 import Breadcrumb from "@/components/shared/Breadcrumb";
 
 interface PageProps {

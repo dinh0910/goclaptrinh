@@ -3,7 +3,7 @@ import Link from "next/link";
 import { getAllPosts } from "@/lib/posts";
 import { siteConfig } from "@/lib/constants";
 import { getCategoriesWithCounts } from "@/lib/categories";
-import PostCard from "@/components/client/PostCard";
+import PostCard from "@/components/client/blog/PostCard";
 
 export const metadata: Metadata = {
   title: "Blog",

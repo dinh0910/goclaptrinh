@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import type { Editor } from "@tiptap/react";
-import MediaPicker from "./MediaPicker";
-import FieldNumber from "./FieldNumber";
+import MediaPicker from "@/components/admin/media/MediaPicker";
+import FieldNumber from "@/components/admin/ui/FieldNumber";
 
 interface ImageToolbarProps {
   editor: Editor;

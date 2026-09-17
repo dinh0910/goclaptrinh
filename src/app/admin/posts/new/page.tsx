@@ -1,5 +1,5 @@
 import { getCategoriesWithCounts } from "@/lib/categories";
-import PostEditor from "@/components/admin/PostEditor";
+import PostEditor from "@/components/admin/editor/PostEditor";
 import { requireAuth, PERMISSIONS } from "@/lib/permissions";
 import { notFound } from "next/navigation";
 

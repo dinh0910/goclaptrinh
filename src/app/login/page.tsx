@@ -8,7 +8,7 @@ import { toast } from "sonner";
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") || "/admin";
+  const callbackUrl = searchParams.get("callbackUrl") || "";
   const [loading, setLoading] = useState(false);
   const [mfaRequired, setMfaRequired] = useState(false);
 
@@ -65,7 +65,31 @@ function LoginForm() {
         toast.error("Email hoặc mật khẩu không đúng");
       }
     } else {
-      router.push(callbackUrl);
+      // Chỉ cho phép redirect nội bộ để tránh open redirect.
+      const safeCallback =
+        callbackUrl.startsWith("/") && !callbackUrl.startsWith("//")
+          ? callbackUrl
+          : null;
+      if (safeCallback) {
+        router.push(safeCallback);
+        router.refresh();
+        return;
+      }
+      // Không có callbackUrl: đưa admin/staff về /admin, còn lại về trang chủ.
+      try {
+        const res = await fetch("/api/auth/session");
+        const session = (await res.json()) as {
+          user?: { role?: string };
+        };
+        const role = session?.user?.role;
+        router.push(
+          role === "admin" || role === "editor" || role === "author"
+            ? "/admin"
+            : "/"
+        );
+      } catch {
+        router.push("/");
+      }
       router.refresh();
     }
   }
@@ -90,7 +114,7 @@ function LoginForm() {
           disabled={mfaRequired}
           autoComplete="email"
           className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors disabled:opacity-60"
-          placeholder="admin@goclaptrinh.io.vn"
+          placeholder="bao@email.com"
         />
       </div>
 
@@ -174,10 +198,10 @@ export default function LoginPage() {
             {"</>"}
           </span>
           <h1 className="mt-4 text-2xl font-bold text-gray-900 dark:text-white">
-            Đăng nhập Admin
+            Đăng nhập
           </h1>
           <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-            Đăng nhập để quản lý nội dung blog
+            Đăng nhập để xem khóa học và theo dõi tiến độ học tập
           </p>
         </div>
 
@@ -192,7 +216,8 @@ export default function LoginPage() {
         </Suspense>
 
         <p className="mt-6 text-center text-xs text-gray-400 dark:text-gray-500">
-          Chỉ admin mới có quyền truy cập
+          Chưa có tài khoản? Vui lòng liên hệ quản trị viên để được tạo tài
+          khoản.
         </p>
       </div>
     </div>

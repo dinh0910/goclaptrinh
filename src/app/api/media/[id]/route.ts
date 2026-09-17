@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { media } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-import { deleteUploadedFile } from "@/lib/media";
+import { deleteUploadedFile } from "@/lib/storage";
 import { requireAuth, unauthorizedJson, PERMISSIONS } from "@/lib/permissions";
 import { logAudit, AUDIT_ACTIONS } from "@/lib/audit";
 import { getClientIp } from "@/lib/visitor";
@@ -103,7 +103,7 @@ export async function DELETE(
     return NextResponse.json({ error: "Media not found" }, { status: 404 });
   }
 
-  deleteUploadedFile(existing.filename);
+  await deleteUploadedFile(existing.filename);
   db.delete(media).where(eq(media.id, numericId)).run();
 
   logAudit({

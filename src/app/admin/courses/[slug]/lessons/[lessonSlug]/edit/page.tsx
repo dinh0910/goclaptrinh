@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { courses, courseLessons } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { requireAuth, PERMISSIONS } from "@/lib/permissions";
-import LessonForm from "@/components/admin/LessonForm";
+import LessonForm from "@/components/admin/courses/LessonForm";
 
 export const metadata = {
   title: "Chỉnh sửa bài học",

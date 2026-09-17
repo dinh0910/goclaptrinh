@@ -1,6 +1,6 @@
 import { getCategoriesWithCounts } from "@/lib/categories";
 import { getAllCourseLevels } from "@/lib/courseLevels";
-import CourseEditor from "@/components/admin/CourseEditor";
+import CourseEditor from "@/components/admin/courses/CourseEditor";
 import { requireAuth, PERMISSIONS } from "@/lib/permissions";
 import { notFound } from "next/navigation";
 

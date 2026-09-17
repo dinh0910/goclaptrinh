@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { getUsers, getRoles } from "@/lib/users";
-import UserManager from "@/components/admin/UserManager";
+import UserManager from "@/components/admin/users/UserManager";
 import { requireAuth, PERMISSIONS } from "@/lib/permissions";
 import Breadcrumb from "@/components/shared/Breadcrumb";
 

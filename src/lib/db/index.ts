@@ -628,6 +628,7 @@ if (!enrollmentsTable) {
 // Boot-time migration: add lesson-progress columns if missing.
 for (const [col, ddl] of [
   ["completed", "INTEGER NOT NULL DEFAULT 0"],
+  ["completed_lessons", "TEXT NOT NULL DEFAULT '[]'"],
 ]) {
   const hasCol = sqlite
     .prepare(`SELECT name FROM pragma_table_info('course_enrollments') WHERE name = ?`)

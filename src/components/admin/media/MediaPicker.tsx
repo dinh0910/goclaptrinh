@@ -3,19 +3,12 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { toast } from "sonner";
-import type { MediaItem } from "./MediaManager";
+import type { MediaItem } from "./media";
+import { mediaSrc } from "./media";
 
 interface MediaPickerProps {
   onSelect: (item: MediaItem) => void;
   onClose: () => void;
-}
-
-// Cache-busting URL: the file at a URL can change (e.g. after resize) while the
-// path stays the same, so version it from `updatedAt` to force a fresh fetch.
-function mediaSrc(item: { url: string; updatedAt?: string }): string {
-  if (!item.updatedAt) return item.url;
-  const v = Date.parse(item.updatedAt);
-  return Number.isNaN(v) ? item.url : `${item.url}?v=${v}`;
 }
 
 export default function MediaPicker({ onSelect, onClose }: MediaPickerProps) {
@@ -37,13 +30,15 @@ export default function MediaPicker({ onSelect, onClose }: MediaPickerProps) {
   }, []);
 
   const q = query.trim().toLowerCase();
-  const filtered = q
+  // Picker dành cho nội dung bài viết (chỉ hỗ trợ ảnh) — bỏ qua video.
+  const filtered = (q
     ? items.filter((m) =>
         [m.title, m.altText, m.description, m.originalName, m.filename]
           .concat(m.tags || [])
           .some((s) => s.toLowerCase().includes(q))
       )
-    : items;
+    : items
+  ).filter((m) => !m.mimeType.startsWith("video/"));
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">

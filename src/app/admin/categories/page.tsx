@@ -1,5 +1,5 @@
 import { getCategoriesWithCounts } from "@/lib/categories";
-import CategoryManager from "@/components/admin/CategoryManager";
+import CategoryManager from "@/components/admin/content/CategoryManager";
 import { requireAuth, PERMISSIONS } from "@/lib/permissions";
 import { notFound } from "next/navigation";
 import Breadcrumb from "@/components/shared/Breadcrumb";

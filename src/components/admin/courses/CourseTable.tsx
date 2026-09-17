@@ -5,8 +5,8 @@ import Link from "next/link";
 import { toast } from "sonner";
 import type { CourseLevel } from "@/lib/types";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
-import RowActionsMenu from "./RowActionsMenu";
-import DataTable from "./DataTable";
+import RowActionsMenu from "@/components/admin/ui/RowActionsMenu";
+import DataTable from "@/components/admin/ui/DataTable";
 import { categoryColor } from "@/lib/categoryColors";
 
 export interface AdminCourse {

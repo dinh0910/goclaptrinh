@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { SessionProvider } from "next-auth/react";
 import { siteConfig } from "@/lib/constants";
 import { ThemeProvider } from "@/components/shared/ThemeProvider";
 import ToasterProvider from "@/components/shared/ToasterProvider";
-import WelcomeDialog from "@/components/client/WelcomeDialog";
-import PageViewTracker from "@/components/client/PageViewTracker";
+import WelcomeDialog from "@/components/client/welcome/WelcomeDialog";
+import PageViewTracker from "@/components/client/ui/PageViewTracker";
 import Header from "@/components/shared/Header";
 import Footer from "@/components/shared/Footer";
-import TopProgressBar from "@/components/client/TopProgressBar";
+import TopProgressBar from "@/components/client/ui/TopProgressBar";
+import { getSiteInfo } from "@/lib/site-info";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -91,6 +93,8 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const siteInfo = getSiteInfo();
+
   return (
     <html lang="vi" className={`${geistSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
       <head>
@@ -106,8 +110,10 @@ export default function RootLayout({
           <TopProgressBar />
           <PageViewTracker />
           <WelcomeDialog />
-          <Header />
-          <main className="flex-1">{children}</main>
+          <SessionProvider>
+            <Header siteInfo={siteInfo} />
+            <main className="flex-1">{children}</main>
+          </SessionProvider>
           <Footer />
         </ThemeProvider>
       </body>

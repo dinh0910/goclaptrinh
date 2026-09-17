@@ -4,7 +4,7 @@ import { courses } from "@/lib/db/schema";
 import { requireAuth, PERMISSIONS } from "@/lib/permissions";
 import { notFound } from "next/navigation";
 import { getAllCourseLevels } from "@/lib/courseLevels";
-import LevelManager from "@/components/admin/LevelManager";
+import LevelManager from "@/components/admin/courses/LevelManager";
 import Breadcrumb from "@/components/shared/Breadcrumb";
 
 export const metadata = {

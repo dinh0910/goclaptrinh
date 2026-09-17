@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
-import RowActionsMenu from "./RowActionsMenu";
+import RowActionsMenu from "@/components/admin/ui/RowActionsMenu";
 
 export default function PostActions({ slug }: { slug: string }) {
   const router = useRouter();

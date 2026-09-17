@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { searchPosts } from "@/lib/search";
 import { siteConfig } from "@/lib/constants";
-import PostCard from "@/components/client/PostCard";
+import PostCard from "@/components/client/blog/PostCard";
 
 export const metadata: Metadata = {
   title: "Tìm kiếm",

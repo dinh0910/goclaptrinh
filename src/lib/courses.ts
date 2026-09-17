@@ -1,7 +1,7 @@
 import { db, sqliteClient } from "@/lib/db";
-import { courses, courseLessons } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
-import type { Course } from "@/lib/types";
+import { courses, courseLessons, courseEnrollments } from "@/lib/db/schema";
+import { and, eq } from "drizzle-orm";
+import type { Course, CourseEnrollmentProgress } from "@/lib/types";
 
 export function getAllCourses(includeUnpublished = false): Course[] {
   const query = db
@@ -39,6 +39,7 @@ export function getCourseBySlug(slug: string, includeUnpublished = false): Cours
 export function getCourseLessons(courseId: number): Array<{
   id: number;
   courseId: number;
+  slug: string;
   title: string;
   description: string;
   content: string;
@@ -62,4 +63,98 @@ export function countCourseLessons(courseId: number): number {
     .prepare("SELECT count(*) AS c FROM course_lessons WHERE course_id = ?")
     .get(courseId) as { c: number };
   return Number(row.c);
+}
+
+export interface CourseLesson {
+  id: number;
+  courseId: number;
+  slug: string;
+  title: string;
+  description: string;
+  content: string;
+  videoUrl: string;
+  orderIndex: number;
+  duration: string;
+  published: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export function countPublishedLessons(courseId: number): number {
+  const row = sqliteClient
+    .prepare("SELECT count(*) AS c FROM course_lessons WHERE course_id = ? AND published = 1")
+    .get(courseId) as { c: number };
+  return Number(row.c);
+}
+
+export function getEnrollmentByEmail(
+  courseId: number,
+  email: string
+): CourseEnrollmentProgress | null {
+  if (!email) return null;
+  const row = db
+    .select()
+    .from(courseEnrollments)
+    .where(and(eq(courseEnrollments.courseId, courseId), eq(courseEnrollments.userEmail, email)))
+    .get();
+  if (!row) return null;
+  const completedLessons = Array.isArray(row.completedLessons) ? row.completedLessons : [];
+  return {
+    progress: Number(row.progress) || 0,
+    completed: Boolean(row.completed),
+    completedLessons,
+  };
+}
+
+export function setLessonCompleted(
+  courseId: number,
+  lessonId: number,
+  email: string,
+  completed: boolean
+): CourseEnrollmentProgress | null {
+  if (!email) return null;
+
+  const total = countPublishedLessons(courseId);
+  const existing = db
+    .select()
+    .from(courseEnrollments)
+    .where(and(eq(courseEnrollments.courseId, courseId), eq(courseEnrollments.userEmail, email)))
+    .get();
+
+  const current: number[] = existing && Array.isArray(existing.completedLessons)
+    ? existing.completedLessons
+    : [];
+  const nextSet = completed
+    ? Array.from(new Set([...current, lessonId]))
+    : current.filter((id) => id !== lessonId);
+  const nextProgress = total > 0 ? Math.round((nextSet.length / total) * 100) : 0;
+  const nextCompleted = total > 0 && nextSet.length >= total;
+  const now = new Date().toISOString();
+
+  if (existing) {
+    db.update(courseEnrollments)
+      .set({
+        progress: nextProgress,
+        completed: nextCompleted,
+        completedLessons: nextSet,
+        updatedAt: now,
+      })
+      .where(eq(courseEnrollments.id, existing.id))
+      .run();
+  } else {
+    db.insert(courseEnrollments)
+      .values({
+        courseId,
+        userEmail: email,
+        visitorId: "",
+        progress: nextProgress,
+        completed: nextCompleted,
+        completedLessons: nextSet,
+        createdAt: now,
+        updatedAt: now,
+      })
+      .run();
+  }
+
+  return { progress: nextProgress, completed: nextCompleted, completedLessons: nextSet };
 }

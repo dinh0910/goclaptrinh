@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import PostActions from "./PostActions";
-import DataTable from "./DataTable";
+import DataTable from "@/components/admin/ui/DataTable";
 import { formatDateTime } from "@/lib/utils";
 
 export interface AdminPost {

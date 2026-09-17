@@ -3,7 +3,7 @@ import Link from "next/link";
 import { siteConfig } from "@/lib/constants";
 import { getAllCourses, countCourseLessons } from "@/lib/courses";
 import { getAllCourseLevels, getCourseLevelsMap, countCoursesByLevel } from "@/lib/courseLevels";
-import CourseCard from "@/components/client/CourseCard";
+import CourseCard from "@/components/client/courses/CourseCard";
 
 export const metadata: Metadata = {
   title: "Khóa học",

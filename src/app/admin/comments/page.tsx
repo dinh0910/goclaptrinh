@@ -1,4 +1,4 @@
-import CommentsManager from "@/components/admin/CommentsManager";
+import CommentsManager from "@/components/admin/content/CommentsManager";
 import { requireAuth, PERMISSIONS } from "@/lib/permissions";
 import { notFound } from "next/navigation";
 import Breadcrumb from "@/components/shared/Breadcrumb";

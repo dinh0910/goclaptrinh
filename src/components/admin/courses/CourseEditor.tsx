@@ -3,9 +3,9 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import MediaPicker from "./MediaPicker";
-import FieldSelect from "./FieldSelect";
-import FieldNumber from "./FieldNumber";
+import MediaPicker from "@/components/admin/media/MediaPicker";
+import FieldSelect from "@/components/admin/ui/FieldSelect";
+import FieldNumber from "@/components/admin/ui/FieldNumber";
 import FieldError, { errorInputClass } from "@/components/shared/FieldError";
 import { TextArea } from "@/components/shared/TextArea";
 import Breadcrumb from "@/components/shared/Breadcrumb";

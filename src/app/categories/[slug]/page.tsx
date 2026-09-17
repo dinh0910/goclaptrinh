@@ -4,7 +4,7 @@ import { siteConfig, DEFAULT_CATEGORY_ICON } from "@/lib/constants";
 import { getCategoryBySlug, getCategoriesWithCounts } from "@/lib/categories";
 import { getPostsByCategory } from "@/lib/posts";
 import { categoryColor, DEFAULT_CATEGORY_COLOR } from "@/lib/categoryColors";
-import PostCard from "@/components/client/PostCard";
+import PostCard from "@/components/client/blog/PostCard";
 import Breadcrumb from "@/components/shared/Breadcrumb";
 
 interface PageProps {

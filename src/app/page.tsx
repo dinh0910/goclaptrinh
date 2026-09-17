@@ -4,11 +4,11 @@ import { siteConfig } from "@/lib/constants";
 import { getCategoriesWithCounts } from "@/lib/categories";
 import { getAllCourses, countCourseLessons } from "@/lib/courses";
 import { getCourseLevelsMap } from "@/lib/courseLevels";
-import PostCard from "@/components/client/PostCard";
-import CourseCard from "@/components/client/CourseCard";
-import CategoryList from "@/components/client/CategoryList";
-import HeroBanner from "@/components/client/HeroBanner";
-import NewsletterForm from "@/components/client/NewsletterForm";
+import PostCard from "@/components/client/blog/PostCard";
+import CourseCard from "@/components/client/courses/CourseCard";
+import CategoryList from "@/components/client/blog/CategoryList";
+import HeroBanner from "@/components/client/welcome/HeroBanner";
+import NewsletterForm from "@/components/client/ui/NewsletterForm";
 import { getHeroConfig } from "@/lib/hero";
 
 export default async function Home() {

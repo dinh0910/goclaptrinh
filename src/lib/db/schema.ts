@@ -233,6 +233,7 @@ export const courseEnrollments = sqliteTable("course_enrollments", {
   visitorId: text("visitor_id").notNull().default(""),
   progress: integer("progress").notNull().default(0),
   completed: integer("completed", { mode: "boolean" }).notNull().default(false),
+  completedLessons: text("completed_lessons", { mode: "json" }).notNull().$type<number[]>().default([]),
   createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
   updatedAt: text("updated_at").notNull().$defaultFn(() => new Date().toISOString()),
 });

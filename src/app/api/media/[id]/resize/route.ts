@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { media } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-import { resolveUploadPath } from "@/lib/media";
-import fs from "fs";
+import { readUploadedFile, saveUploadedFile } from "@/lib/storage";
 import sharp from "sharp";
 import { requireAuth, unauthorizedJson, PERMISSIONS } from "@/lib/permissions";
 
@@ -52,14 +51,21 @@ export async function POST(
     );
   }
 
-  const filepath = resolveUploadPath(existing.filename);
-  if (!fs.existsSync(filepath)) {
-    return NextResponse.json({ error: "File missing on disk" }, { status: 404 });
+  if (existing.mimeType.startsWith("video/")) {
+    return NextResponse.json(
+      { error: "Chỉ hỗ trợ resize ảnh, không hỗ trợ video" },
+      { status: 400 }
+    );
+  }
+
+  const bytes = await readUploadedFile(existing.filename);
+  if (!bytes) {
+    return NextResponse.json({ error: "File missing on storage" }, { status: 404 });
   }
 
   try {
     // Resize to the exact requested dimensions.
-    const output = await sharp(filepath)
+    const output = await sharp(bytes)
       .resize(width, height, { fit: "fill" })
       .toBuffer();
 
@@ -72,7 +78,7 @@ export async function POST(
       );
     }
 
-    fs.writeFileSync(filepath, output);
+    await saveUploadedFile(existing.filename, output, existing.mimeType);
 
     const meta = await sharp(output).metadata();
 

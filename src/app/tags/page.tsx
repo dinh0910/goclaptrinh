@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { getAllTags } from "@/lib/posts";
 import { siteConfig } from "@/lib/constants";
-import TagCloud from "@/components/client/TagCloud";
+import TagCloud from "@/components/client/blog/TagCloud";
 
 export const metadata: Metadata = {
   title: "Tags",

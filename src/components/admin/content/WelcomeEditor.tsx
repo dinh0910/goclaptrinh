@@ -4,11 +4,11 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import FieldSelect from "@/components/admin/FieldSelect";
-import { WelcomeVisual } from "@/components/client/WelcomeVisual";
+import FieldSelect from "@/components/admin/ui/FieldSelect";
+import { WelcomeVisual } from "@/components/client/welcome/WelcomeVisual";
 import FieldError, { errorInputClass } from "@/components/shared/FieldError";
 import { TextArea } from "@/components/shared/TextArea";
-import FieldNumber from "@/components/admin/FieldNumber";
+import FieldNumber from "@/components/admin/ui/FieldNumber";
 import Breadcrumb from "@/components/shared/Breadcrumb";
 import type { FieldErrors } from "@/lib/validation";
 import {

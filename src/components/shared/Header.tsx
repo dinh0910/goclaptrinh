@@ -4,6 +4,9 @@ import Link from "next/link";
 import { useState, useEffect, useCallback } from "react";
 import { siteConfig } from "@/lib/constants";
 import ThemeToggle from "./ThemeToggle";
+import SiteInfoBar from "@/components/client/ui/SiteInfoBar";
+import UserMenu from "@/components/client/ui/UserMenu";
+import type { SiteInfo } from "@/lib/site-info";
 
 const navLinks = [
   { href: "/", label: "Trang chủ" },
@@ -13,7 +16,7 @@ const navLinks = [
   { href: "/about", label: "Giới thiệu" },
 ];
 
-export default function Header() {
+export default function Header({ siteInfo }: { siteInfo: SiteInfo }) {
   const [isOpen, setIsOpen] = useState(false);
 
   const handleEscape = useCallback(() => {
@@ -31,6 +34,7 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200 dark:bg-gray-950/80 dark:border-gray-800">
+      <SiteInfoBar info={siteInfo} />
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-16">
           <Link href="/" className="flex items-center gap-2">
@@ -79,6 +83,7 @@ export default function Header() {
               </svg>
             </form>
             <ThemeToggle />
+            <UserMenu />
             <button
               onClick={() => setIsOpen(!isOpen)}
               className="md:hidden p-2 text-gray-700 hover:bg-gray-100 rounded-lg dark:text-gray-300 dark:hover:bg-gray-800"

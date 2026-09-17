@@ -1,4 +1,4 @@
-import MediaManager from "@/components/admin/MediaManager";
+import MediaManager from "@/components/admin/media/MediaManager";
 import { db } from "@/lib/db";
 import { media } from "@/lib/db/schema";
 import { desc } from "drizzle-orm";

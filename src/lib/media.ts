@@ -1,16 +1,25 @@
-import path from "path";
-import fs from "fs";
 import sharp from "sharp";
+import {
+  UPLOAD_DIR,
+  resolveUploadPath,
+  ensureUploadDir,
+  saveUploadedFile,
+  readUploadedFile,
+  deleteUploadedFile,
+  getMediaUrl,
+  isRemoteStorage,
+} from "./storage";
 
-export const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads");
-
-export function resolveUploadPath(filename: string): string {
-  const filepath = path.resolve(UPLOAD_DIR, filename);
-  if (!filepath.startsWith(path.resolve(UPLOAD_DIR) + path.sep)) {
-    throw new Error("Invalid filename");
-  }
-  return filepath;
-}
+export {
+  UPLOAD_DIR,
+  resolveUploadPath,
+  ensureUploadDir,
+  saveUploadedFile,
+  readUploadedFile,
+  deleteUploadedFile,
+  getMediaUrl,
+  isRemoteStorage,
+};
 
 export async function getImageDimensions(
   buffer: Buffer
@@ -21,11 +30,4 @@ export async function getImageDimensions(
   } catch {
     return { width: 0, height: 0 };
   }
-}
-
-export function deleteUploadedFile(filename: string): boolean {
-  const filepath = resolveUploadPath(filename);
-  if (!fs.existsSync(filepath)) return false;
-  fs.unlinkSync(filepath);
-  return true;
 }

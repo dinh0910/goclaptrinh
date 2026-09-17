@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import BannerEditor from "@/components/admin/BannerEditor";
+import BannerEditor from "@/components/admin/content/BannerEditor";
 import { requireAuth, PERMISSIONS } from "@/lib/permissions";
 
 export const metadata = {

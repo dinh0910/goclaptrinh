@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { posts } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { getCategoriesWithCounts } from "@/lib/categories";
-import PostEditor from "@/components/admin/PostEditor";
+import PostEditor from "@/components/admin/editor/PostEditor";
 import { requireAuth, PERMISSIONS } from "@/lib/permissions";
 
 export const metadata = {

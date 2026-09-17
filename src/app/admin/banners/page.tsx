@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import BannerList from "@/components/admin/BannerList";
+import BannerList from "@/components/admin/content/BannerList";
 import { requireAuth, PERMISSIONS } from "@/lib/permissions";
 
 export const metadata = {

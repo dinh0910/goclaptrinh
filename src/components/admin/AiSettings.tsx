@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import FieldSelect from "./FieldSelect";
-import FieldNumber from "./FieldNumber";
+import FieldSelect from "@/components/admin/ui/FieldSelect";
+import FieldNumber from "@/components/admin/ui/FieldNumber";
 import { TextArea } from "@/components/shared/TextArea";
 
 interface PublicProvider {

@@ -23,9 +23,9 @@ import TaskItem from "@tiptap/extension-task-item";
 import { Tiktok } from "./tiktok-node";
 import { Indent } from "./indent";
 import { useRef, useState, useCallback, useEffect, memo } from "react";
-import MediaPicker from "./MediaPicker";
+import MediaPicker from "@/components/admin/media/MediaPicker";
 import ImageToolbar from "./ImageToolbar";
-import FloatingPanel from "./FloatingPanel";
+import FloatingPanel from "@/components/admin/ui/FloatingPanel";
 
 interface RichEditorProps {
   content: string;

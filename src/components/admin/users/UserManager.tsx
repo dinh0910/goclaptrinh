@@ -4,10 +4,10 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
-import RowActionsMenu from "./RowActionsMenu";
-import DataTable from "./DataTable";
+import RowActionsMenu from "@/components/admin/ui/RowActionsMenu";
+import DataTable from "@/components/admin/ui/DataTable";
 import { roleMeta } from "@/lib/userRoles";
-import FieldSelect, { type FieldSelectOption } from "./FieldSelect";
+import FieldSelect, { type FieldSelectOption } from "@/components/admin/ui/FieldSelect";
 import FieldError, { errorInputClass } from "@/components/shared/FieldError";
 import {
   isValidEmail,

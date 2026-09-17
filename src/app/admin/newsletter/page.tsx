@@ -1,4 +1,4 @@
-import NewsletterManager from "@/components/admin/NewsletterManager";
+import NewsletterManager from "@/components/admin/content/NewsletterManager";
 import { requireAuth, PERMISSIONS } from "@/lib/permissions";
 import { notFound } from "next/navigation";
 import Breadcrumb from "@/components/shared/Breadcrumb";

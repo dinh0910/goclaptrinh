@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { media } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-import { resolveUploadPath } from "@/lib/media";
-import fs from "fs";
+import { readUploadedFile, saveUploadedFile } from "@/lib/storage";
 import sharp from "sharp";
 import { requireAuth, unauthorizedJson, PERMISSIONS } from "@/lib/permissions";
 
@@ -26,20 +25,27 @@ export async function POST(
     return NextResponse.json({ error: "Media not found" }, { status: 404 });
   }
 
+  if (existing.mimeType.startsWith("video/")) {
+    return NextResponse.json(
+      { error: "Chỉ hỗ trợ khôi phục kích thước ảnh, không hỗ trợ video" },
+      { status: 400 }
+    );
+  }
+
   const originalWidth = existing.originalWidth || existing.width;
   const originalHeight = existing.originalHeight || existing.height;
 
-  const filepath = resolveUploadPath(existing.filename);
-  if (!fs.existsSync(filepath)) {
-    return NextResponse.json({ error: "File missing on disk" }, { status: 404 });
+  const bytes = await readUploadedFile(existing.filename);
+  if (!bytes) {
+    return NextResponse.json({ error: "File missing on storage" }, { status: 404 });
   }
 
   try {
-    const output = await sharp(filepath)
+    const output = await sharp(bytes)
       .resize(originalWidth, originalHeight, { fit: "fill" })
       .toBuffer();
 
-    fs.writeFileSync(filepath, output);
+    await saveUploadedFile(existing.filename, output, existing.mimeType);
 
     const meta = await sharp(output).metadata();
 

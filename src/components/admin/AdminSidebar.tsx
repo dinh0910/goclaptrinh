@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useRef, useState } from "react";
 import { signOut } from "next-auth/react";
-import FloatingPanel from "./FloatingPanel";
+import FloatingPanel from "@/components/admin/ui/FloatingPanel";
 
 interface AdminSidebarProps {
   user?: { name?: string | null; email?: string | null } | null;

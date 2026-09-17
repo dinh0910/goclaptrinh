@@ -3,7 +3,7 @@ import { courses, courseLessons } from "@/lib/db/schema";
 import { getAllCourseLevels } from "@/lib/courseLevels";
 import { requireAuth, PERMISSIONS } from "@/lib/permissions";
 import { notFound } from "next/navigation";
-import CourseTable from "@/components/admin/CourseTable";
+import CourseTable from "@/components/admin/courses/CourseTable";
 import Breadcrumb from "@/components/shared/Breadcrumb";
 
 export const metadata = {

@@ -1,5 +1,5 @@
 import { getRolesWithCounts } from "@/lib/users";
-import RoleManager from "@/components/admin/RoleManager";
+import RoleManager from "@/components/admin/users/RoleManager";
 import { requireAuth, PERMISSIONS } from "@/lib/permissions";
 import { notFound } from "next/navigation";
 import Breadcrumb from "@/components/shared/Breadcrumb";

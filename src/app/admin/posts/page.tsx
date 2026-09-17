@@ -1,5 +1,5 @@
 import { getAllPosts } from "@/lib/posts";
-import PostTable from "@/components/admin/PostTable";
+import PostTable from "@/components/admin/content/PostTable";
 import { db } from "@/lib/db";
 import { categories } from "@/lib/db/schema";
 import { requireAuth, PERMISSIONS } from "@/lib/permissions";

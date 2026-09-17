@@ -9,9 +9,9 @@ import { sanitizePostHtml } from "@/lib/sanitize";
 import { listPublicComments } from "@/lib/comments";
 import { getReactionCounts } from "@/lib/reactions";
 import Breadcrumb from "@/components/shared/Breadcrumb";
-import PostContent from "@/components/client/PostContent";
-import PostCard from "@/components/client/PostCard";
-import BlogComments from "@/components/client/BlogComments";
+import PostContent from "@/components/client/blog/PostContent";
+import PostCard from "@/components/client/blog/PostCard";
+import BlogComments from "@/components/client/blog/BlogComments";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
