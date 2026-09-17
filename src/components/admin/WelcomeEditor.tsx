@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import FieldSelect from "@/components/admin/FieldSelect";
 import { WelcomeVisual } from "@/components/client/WelcomeVisual";
 import FieldError, { errorInputClass } from "@/components/shared/FieldError";
+import { TextArea } from "@/components/shared/TextArea";
 import FieldNumber from "@/components/admin/FieldNumber";
 import Breadcrumb from "@/components/shared/Breadcrumb";
 import type { FieldErrors } from "@/lib/validation";
@@ -350,12 +351,12 @@ export default function WelcomeEditor({
             <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
               Nội dung
             </label>
-            <textarea
+            <TextArea
               value={form.content}
               onChange={(e) => set("content", e.target.value)}
               rows={4}
               placeholder="Nội dung giới thiệu khuyến mãi / thông báo..."
-              className={`${inputClass} resize-y`}
+              className="resize-y"
             />
           </div>
 
@@ -516,12 +517,12 @@ export default function WelcomeEditor({
                 <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
                   Thông báo sau khi đăng ký thành công
                 </label>
-                <textarea
+                <TextArea
                   value={form.successMessage}
                   onChange={(e) => set("successMessage", e.target.value)}
                   rows={2}
                   placeholder="VD: Đăng ký thành công! Chúng tôi sẽ liên hệ với bạn sớm."
-                  className={`${inputClass} resize-y`}
+                  className="resize-y"
                 />
               </div>
             </div>

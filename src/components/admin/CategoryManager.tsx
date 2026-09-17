@@ -9,6 +9,7 @@ import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import RowActionsMenu from "./RowActionsMenu";
 import DataTable from "./DataTable";
 import FieldError, { errorInputClass } from "@/components/shared/FieldError";
+import { TextArea } from "@/components/shared/TextArea";
 import {
   fieldErrorsFrom,
   type FieldErrors,
@@ -390,14 +391,13 @@ export default function CategoryManager({
             <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
               Mô tả
             </label>
-            <textarea
+            <TextArea
               value={addForm.description}
               onChange={(e) =>
                 setAddForm((f) => ({ ...f, description: e.target.value }))
               }
               placeholder="Mô tả ngắn về danh mục"
               rows={3}
-              className={inputClass}
             />
           </div>
           <IconPicker
@@ -525,7 +525,7 @@ export default function CategoryManager({
               </td>
               <td className="p-4 align-top">
                 {isEditing ? (
-                  <textarea
+                  <TextArea
                     value={editForm.description}
                     onChange={(e) =>
                       setEditForm((f) => ({
@@ -534,7 +534,6 @@ export default function CategoryManager({
                       }))
                     }
                     rows={2}
-                    className={inputClass}
                   />
                 ) : (
                   <span className="text-sm text-gray-500 dark:text-gray-400">

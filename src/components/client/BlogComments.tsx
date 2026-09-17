@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { getVisitorId, getVisitorSignals } from "@/lib/client-visitor";
+import { TextArea } from "@/components/shared/TextArea";
 
 interface CommentItem {
   id: number;
@@ -232,11 +233,10 @@ export default function BlogComments({
         </div>
         <div className="mb-3">
           <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Nội dung *</label>
-          <textarea
+          <TextArea
             value={content}
             onChange={(e) => setContent(e.target.value)}
             rows={3}
-            className={inputClass}
             placeholder="Viết bình luận..."
             required
           />
@@ -381,11 +381,11 @@ function CommentThread({
               placeholder="Email"
             />
           </div>
-          <textarea
+          <TextArea
             value={replyContent}
             onChange={(e) => setReplyContent(e.target.value)}
             rows={2}
-            className={`${inputClass} mb-2`}
+            className="mb-2"
             placeholder="Viết phản hồi..."
           />
           <div className="flex gap-2 justify-end">

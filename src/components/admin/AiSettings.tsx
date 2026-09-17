@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import FieldSelect from "./FieldSelect";
 import FieldNumber from "./FieldNumber";
+import { TextArea } from "@/components/shared/TextArea";
 
 interface PublicProvider {
   id: number;
@@ -118,11 +119,11 @@ function ProfileEditor({
               </div>
               <div>
                 <label className={labelClass}>System prompt</label>
-                <textarea
+                <TextArea
                   value={pr.systemPrompt}
                   onChange={(e) => onUpdate(pr.action, { systemPrompt: e.target.value })}
                   rows={5}
-                  className={`${inputClass} font-mono text-xs leading-relaxed resize-y`}
+                  className="font-mono text-xs leading-relaxed resize-y"
                 />
               </div>
               <div className="mt-3 grid grid-cols-2 gap-3">

@@ -7,6 +7,7 @@ import RichEditor from "./RichEditor";
 import MediaPicker from "./MediaPicker";
 import FieldSelect from "./FieldSelect";
 import FieldError from "@/components/shared/FieldError";
+import { TextArea } from "@/components/shared/TextArea";
 import Breadcrumb from "@/components/shared/Breadcrumb";
 import type { FieldErrors } from "@/lib/validation";
 
@@ -516,11 +517,16 @@ export default function PostEditor({ mode, initialData, slug, categories }: Post
               </div>
               <WordCount count={countChars(form.description)} limit={SEO_LIMITS.description} />
             </div>
-            <textarea
+            <TextArea
               value={form.description}
               onChange={(e) => updateField("description", e.target.value)}
               rows={2}
-              className={`${fieldClass(countChars(form.description) > SEO_LIMITS.description || !!errors.description)} resize-none`}
+              className={`${
+                countChars(form.description) > SEO_LIMITS.description ||
+                !!errors.description
+                  ? "bg-red-50 dark:bg-red-500/10 border-red-500 focus:ring-red-500"
+                  : undefined
+              } resize-none`}
               placeholder="Mô tả ngắn gọn nội dung bài viết..."
             />
             <FieldError message={errors.description} />

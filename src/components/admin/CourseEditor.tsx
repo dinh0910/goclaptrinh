@@ -7,6 +7,7 @@ import MediaPicker from "./MediaPicker";
 import FieldSelect from "./FieldSelect";
 import FieldNumber from "./FieldNumber";
 import FieldError, { errorInputClass } from "@/components/shared/FieldError";
+import { TextArea } from "@/components/shared/TextArea";
 import Breadcrumb from "@/components/shared/Breadcrumb";
 import type { FieldErrors } from "@/lib/validation";
 
@@ -252,11 +253,11 @@ export default function CourseEditor({
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
               Mô tả
             </label>
-            <textarea
+            <TextArea
               value={form.description}
               onChange={(e) => updateField("description", e.target.value)}
               rows={4}
-              className={`${fieldClass} resize-none`}
+              className="resize-none"
               placeholder="Mô tả ngắn gọn nội dung khóa học..."
             />
             <FieldError message={errors.description} />

@@ -8,6 +8,7 @@ import RowActionsMenu from "./RowActionsMenu";
 import DataTable from "./DataTable";
 import { roleMeta, PERMISSION_OPTIONS } from "@/lib/userRoles";
 import FieldError, { errorInputClass } from "@/components/shared/FieldError";
+import { TextArea } from "@/components/shared/TextArea";
 import {
   fieldErrorsFrom,
   type FieldErrors,
@@ -245,12 +246,11 @@ export default function RoleManager({ initialRoles }: RoleManagerProps) {
             <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
               Mô tả
             </label>
-            <textarea
+            <TextArea
               value={addForm.description}
               onChange={(e) => setAddForm((f) => ({ ...f, description: e.target.value }))}
               placeholder="Mô tả ngắn về vai trò"
               rows={2}
-              className={inputClass}
             />
           </div>
           <div>
@@ -326,12 +326,11 @@ export default function RoleManager({ initialRoles }: RoleManagerProps) {
                       />
                       <FieldError message={editErrors.slug} />
                     </div>
-                    <textarea
+                    <TextArea
                       value={editForm.description}
                       onChange={(e) => setEditForm((f) => ({ ...f, description: e.target.value }))}
                       placeholder="Mô tả"
                       rows={2}
-                      className={inputClass}
                     />
                   </div>
                 ) : (

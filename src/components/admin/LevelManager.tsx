@@ -9,6 +9,7 @@ import RowActionsMenu from "./RowActionsMenu";
 import DataTable from "./DataTable";
 import FieldNumber from "./FieldNumber";
 import FieldError, { errorInputClass } from "@/components/shared/FieldError";
+import { TextArea } from "@/components/shared/TextArea";
 import type { FieldErrors } from "@/lib/validation";
 import { CATEGORY_ICON_OPTIONS } from "@/lib/constants";
 import { CATEGORY_COLOR_OPTIONS, categoryColor } from "@/lib/categoryColors";
@@ -400,11 +401,10 @@ export default function LevelManager({ initialLevels, levelCoursesCount }: Level
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Mô tả</label>
-                <textarea
+                <TextArea
                   value={addForm.description}
                   onChange={(e) => setAddForm((f) => ({ ...f, description: e.target.value }))}
                   rows={2}
-                  className={input()}
                   placeholder="Mô tả ngắn về cấp độ này..."
                 />
               </div>
@@ -489,11 +489,10 @@ export default function LevelManager({ initialLevels, levelCoursesCount }: Level
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Mô tả</label>
-                <textarea
+                <TextArea
                   value={editForm.description}
                   onChange={(e) => setEditForm((f) => ({ ...f, description: e.target.value }))}
                   rows={2}
-                  className={input()}
                 />
               </div>
               <div>

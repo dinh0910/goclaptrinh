@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import type { NewsletterSubscriber, NewsletterCampaign } from "@/lib/newsletter";
+import { TextArea } from "@/components/shared/TextArea";
 
 interface NewsletterData {
   config: { provider: string; hasKey: boolean; from: string; fromName: string };
@@ -261,11 +262,11 @@ export default function NewsletterManager({ adminEmail }: { adminEmail: string }
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Nội dung (HTML)</label>
-            <textarea
+            <TextArea
               value={content}
               onChange={(e) => setContent(e.target.value)}
               rows={8}
-              className={`${inputClass} font-mono text-xs`}
+              className="font-mono text-xs"
               placeholder="<h2>Xin chào!</h2><p>Nội dung bản tin...</p>"
             />
             <p className="mt-1.5 text-xs text-gray-400 dark:text-gray-500">

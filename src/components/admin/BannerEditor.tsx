@@ -11,6 +11,7 @@ import {
   type HeroTemplate,
 } from "@/lib/hero-config";
 import FieldError, { errorInputClass } from "@/components/shared/FieldError";
+import { TextArea } from "@/components/shared/TextArea";
 import Breadcrumb from "@/components/shared/Breadcrumb";
 import type { FieldErrors } from "@/lib/validation";
 
@@ -405,7 +406,7 @@ export default function BannerEditor({
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
               Nội dung code (1 dòng mỗi dòng)
             </label>
-            <textarea
+            <TextArea
               rows={10}
               spellCheck={false}
               placeholder={'Mỗi dòng là một dòng code, ví dụ:\nimport { useState } from "react"'}
@@ -422,7 +423,7 @@ export default function BannerEditor({
                   },
                 }))
               }
-              className={`${inputClass} font-mono text-xs leading-5`}
+              className="font-mono text-xs leading-5"
             />
           </div>
         </div>

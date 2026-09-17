@@ -4,6 +4,7 @@ import { useCallback, useRef, useState } from "react";
 import Image from "next/image";
 import { toast } from "sonner";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
+import { TextArea } from "@/components/shared/TextArea";
 import { SearchBar } from "./SearchBar";
 import { Pagination } from "./Pagination";
 import FieldNumber from "./FieldNumber";
@@ -822,7 +823,7 @@ export default function MediaManager({
                     <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
                       Mô tả (Description)
                     </label>
-                    <textarea
+                    <TextArea
                       value={metaForm.description}
                       onChange={(e) =>
                         setMetaForm((f) => ({
@@ -832,9 +833,11 @@ export default function MediaManager({
                       }
                       placeholder="Mô tả chi tiết hơn về hình ảnh"
                       rows={3}
-                      className={seoFieldClass(
+                      className={
                         metaForm.description.length > SEO_LIMITS.description
-                      )}
+                          ? "border-red-400 dark:border-red-500 focus:ring-red-500"
+                          : undefined
+                      }
                     />
                     <SeoCounter
                       count={metaForm.description.length}
