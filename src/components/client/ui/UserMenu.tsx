@@ -33,7 +33,7 @@ export default function UserMenu() {
     };
   }, []);
 
-  if (pathname.startsWith("/admin") || pathname === "/login") {
+  if (pathname.startsWith("/admin")) {
     return null;
   }
 

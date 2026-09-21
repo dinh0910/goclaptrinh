@@ -112,7 +112,7 @@ export default function RootLayout({
           <WelcomeDialog />
           <SessionProvider>
             <Header siteInfo={siteInfo} />
-            <main className="flex-1">{children}</main>
+            <main className="flex-1 flex flex-col">{children}</main>
           </SessionProvider>
           <Footer />
         </ThemeProvider>

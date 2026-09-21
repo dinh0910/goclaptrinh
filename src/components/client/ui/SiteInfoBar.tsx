@@ -54,7 +54,7 @@ function Announcement({
 export default function SiteInfoBar({ info }: { info: SiteInfo }) {
   const pathname = usePathname();
 
-  if (pathname.startsWith("/admin") || pathname === "/login") {
+  if (pathname.startsWith("/admin")) {
     return null;
   }
 
