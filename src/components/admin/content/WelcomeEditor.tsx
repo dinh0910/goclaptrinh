@@ -10,6 +10,7 @@ import FieldError, { errorInputClass } from "@/components/shared/FieldError";
 import { TextArea } from "@/components/shared/TextArea";
 import FieldNumber from "@/components/admin/ui/FieldNumber";
 import Breadcrumb from "@/components/shared/Breadcrumb";
+import { LoadingScreen } from "@/components/shared/LoadingSpinner";
 import type { FieldErrors } from "@/lib/validation";
 import {
   DEFAULT_ITEM,
@@ -206,9 +207,7 @@ export default function WelcomeEditor({
     return (
       <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-8 text-center">
         {loading ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Đang tải popup giới thiệu...
-          </p>
+          <LoadingScreen label="Đang tải popup giới thiệu..." compact />
         ) : (
           <div>
             <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">

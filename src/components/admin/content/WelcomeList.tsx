@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { WELCOME_TEMPLATES, type WelcomeItem } from "@/lib/welcome-config";
 import Breadcrumb from "@/components/shared/Breadcrumb";
+import { LoadingScreen } from "@/components/shared/LoadingSpinner";
 
 const templateLabel = (key: WelcomeItem["template"]) =>
   WELCOME_TEMPLATES.find((t) => t.key === key)?.label || key;
@@ -98,11 +99,7 @@ export default function WelcomeList() {
   };
 
   if (loading) {
-    return (
-      <p className="text-sm text-gray-500 dark:text-gray-400">
-        Đang tải danh sách popup...
-      </p>
-    );
+    return <LoadingScreen label="Đang tải danh sách popup..." />;
   }
 
   return (

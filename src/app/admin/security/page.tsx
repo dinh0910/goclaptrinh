@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { toast } from "sonner";
 import Breadcrumb from "@/components/shared/Breadcrumb";
+import { LoadingScreen } from "@/components/shared/LoadingSpinner";
 
 interface MfaStatus {
   enabled: boolean;
@@ -115,7 +116,7 @@ export default function AdminSecurityPage() {
   };
 
   if (loading) {
-    return <p className="text-gray-500 dark:text-gray-400">Đang tải...</p>;
+    return <LoadingScreen label="Đang tải cấu hình bảo mật..." />;
   }
 
   return (

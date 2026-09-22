@@ -3,6 +3,7 @@
 import { useEffect, useId, useState } from "react";
 import { toast } from "sonner";
 import type { AnalyticsData, DayPoint } from "@/lib/analytics";
+import { LoadingScreen } from "@/components/shared/LoadingSpinner";
 
 type ChartType = "bar" | "line";
 type RangeMode = "preset" | "custom";
@@ -210,7 +211,7 @@ export default function AnalyticsDashboard() {
       </div>
 
       {loading ? (
-        <DashboardSkeleton />
+        <LoadingScreen label="Đang tải dữ liệu thống kê..." />
       ) : data ? (
         <>
           {/* Stats */}
@@ -513,71 +514,3 @@ function HorizontalBarChart({
   );
 }
 
-function DashboardSkeleton() {
-  return (
-    <div className="space-y-6" aria-hidden="true">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div
-            key={i}
-            className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4"
-          >
-            <div className="h-3 w-24 bg-gray-200 dark:bg-gray-800 rounded animate-pulse mb-2" />
-            <div className="h-7 w-16 bg-gray-200 dark:bg-gray-800 rounded animate-pulse" />
-          </div>
-        ))}
-      </div>
-
-      <SectionSkeleton variant="chart" />
-
-      <div className="grid md:grid-cols-2 gap-6">
-        <SectionSkeleton variant="bars" />
-        <SectionSkeleton variant="bars" />
-      </div>
-
-      <SectionSkeleton variant="list" />
-
-      <div className="grid md:grid-cols-2 gap-6">
-        <SectionSkeleton variant="chart" />
-        <SectionSkeleton variant="chart" />
-      </div>
-    </div>
-  );
-}
-
-function SectionSkeleton({ variant }: { variant: "chart" | "bars" | "list" }) {
-  return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
-      <div className="h-4 w-44 bg-gray-200 dark:bg-gray-800 rounded animate-pulse mb-4" />
-      {variant === "chart" && (
-        <>
-          <div className="h-40 w-full bg-gray-200 dark:bg-gray-800 rounded animate-pulse" />
-          <div className="ml-auto mt-5 h-2 w-64 bg-gray-200 dark:bg-gray-800 rounded animate-pulse" />
-        </>
-      )}
-      {variant === "bars" && (
-        <div className="space-y-3">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="flex items-center gap-3">
-              <div className="h-3 w-16 bg-gray-200 dark:bg-gray-800 rounded animate-pulse shrink-0" />
-              <div
-                className="h-3 bg-gray-200 dark:bg-gray-800 rounded animate-pulse"
-                style={{ width: `${100 - i * 12}%` }}
-              />
-            </div>
-          ))}
-        </div>
-      )}
-      {variant === "list" && (
-        <div className="space-y-3">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="flex items-center justify-between gap-4">
-              <div className="h-3 w-1/2 bg-gray-200 dark:bg-gray-800 rounded animate-pulse" />
-              <div className="h-3 w-10 bg-gray-200 dark:bg-gray-800 rounded animate-pulse shrink-0" />
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}

@@ -4,9 +4,14 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import type { NewsletterSubscriber, NewsletterCampaign } from "@/lib/newsletter";
 import { TextArea } from "@/components/shared/TextArea";
+import FieldSelect from "@/components/admin/ui/FieldSelect";
+import {
+  MAIL_PROVIDER_OPTIONS,
+  type MailProvider,
+} from "@/lib/mailProviders";
 
 interface NewsletterData {
-  config: { provider: string; hasKey: boolean; from: string; fromName: string };
+  config: { provider: MailProvider; hasKey: boolean; from: string; fromName: string };
   counts: { active: number; total: number };
   subscribers: NewsletterSubscriber[];
   campaigns: NewsletterCampaign[];
@@ -17,7 +22,7 @@ const inputClass =
 
 export default function NewsletterManager({ adminEmail }: { adminEmail: string }) {
   const [data, setData] = useState<NewsletterData | null>(null);
-  const [provider, setProvider] = useState("resend");
+  const [provider, setProvider] = useState<MailProvider>("resend");
   const [from, setFrom] = useState("");
   const [fromName, setFromName] = useState("");
   const [apiKey, setApiKey] = useState("");
@@ -38,7 +43,7 @@ export default function NewsletterManager({ adminEmail }: { adminEmail: string }
       .then((res) => (res.ok ? (res.json() as Promise<NewsletterData>) : Promise.reject(new Error("Không thể tải dữ liệu"))))
       .then((d) => {
         setData(d);
-        setProvider(d.config.provider);
+        setProvider(d.config.provider as MailProvider);
         setFrom(d.config.from);
         setFromName(d.config.fromName);
       })
@@ -197,10 +202,19 @@ export default function NewsletterManager({ adminEmail }: { adminEmail: string }
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Nhà cung cấp</label>
-              <select value={provider} onChange={(e) => setProvider(e.target.value)} className={inputClass}>
-                <option value="resend">Resend</option>
-                <option value="sendgrid">SendGrid</option>
-              </select>
+              <FieldSelect
+                value={provider}
+                onChange={(v) => setProvider(v as MailProvider)}
+                options={MAIL_PROVIDER_OPTIONS}
+                className="w-full"
+              />
+              {provider === "google" && (
+                <p className="mt-1.5 text-xs text-gray-400 dark:text-gray-500">
+                  Dùng tài khoản Gmail / Google Workspace. Kích hoạt 2 lớp xác minh rồi tạo{" "}
+                  <span className="text-gray-600 dark:text-gray-400">mật khẩu ứng dụng</span> (App
+                  Password) và dán vào ô API Key bên dưới. Email gửi phải đúng địa chỉ tài khoản.
+                </p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">

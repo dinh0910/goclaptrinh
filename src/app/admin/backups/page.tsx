@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import Breadcrumb from "@/components/shared/Breadcrumb";
+import { LoadingScreen } from "@/components/shared/LoadingSpinner";
 
 interface BackupMeta {
   filename: string;
@@ -216,7 +217,7 @@ export default function AdminBackupsPage() {
           </div>
 
           {loading ? (
-            <p className="p-8 text-center text-sm text-gray-400">Đang tải...</p>
+            <LoadingScreen label="Đang tải danh sách backup..." compact />
           ) : backups.length === 0 ? (
             <p className="p-8 text-center text-sm text-gray-400">
               Chưa có backup nào.

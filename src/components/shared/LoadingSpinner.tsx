@@ -38,15 +38,19 @@ export function LoadingSpinner({
 export function LoadingScreen({
   label = "Đang tải...",
   className = "",
+  compact = false,
 }: {
   label?: string;
   className?: string;
+  compact?: boolean;
 }) {
   return (
     <div
-      className={`flex flex-col items-center justify-center gap-4 py-20 ${className}`}
+      className={`flex flex-col items-center justify-center gap-3 ${
+        compact ? "py-8" : "py-20"
+      } ${className}`}
     >
-      <LoadingSpinner size="lg" />
+      <LoadingSpinner size={compact ? "md" : "lg"} />
       <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
         {label}
       </p>

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import type { HeroPreset } from "@/lib/hero-config";
 import Breadcrumb from "@/components/shared/Breadcrumb";
+import { LoadingScreen } from "@/components/shared/LoadingSpinner";
 
 const TEMPLATES: { key: string; label: string }[] = [
   { key: "hero-text", label: "Nội dung + Code" },
@@ -94,11 +95,7 @@ export default function BannerList() {
   };
 
   if (loading) {
-    return (
-      <p className="text-sm text-gray-500 dark:text-gray-400">
-        Đang tải danh sách banner...
-      </p>
-    );
+    return <LoadingScreen label="Đang tải danh sách banner..." />;
   }
 
   return (

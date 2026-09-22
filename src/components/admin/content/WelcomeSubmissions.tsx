@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import type { WelcomeField } from "@/lib/welcome-config";
 import Breadcrumb from "@/components/shared/Breadcrumb";
+import { LoadingScreen } from "@/components/shared/LoadingSpinner";
 
 interface Submission {
   id: number;
@@ -98,11 +99,7 @@ export default function WelcomeSubmissions() {
   };
 
   if (loading) {
-    return (
-      <p className="text-sm text-gray-500 dark:text-gray-400">
-        Đang tải danh sách đăng ký...
-      </p>
-    );
+    return <LoadingScreen label="Đang tải danh sách đăng ký..." />;
   }
 
   const formatDate = (iso: string) => {

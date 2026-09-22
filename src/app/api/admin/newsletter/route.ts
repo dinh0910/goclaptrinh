@@ -9,6 +9,7 @@ import {
   syncFromWelcome,
 } from "@/lib/newsletter";
 import { getMailConfig, saveMailConfig } from "@/lib/mail";
+import { isMailProvider } from "@/lib/mailProviders";
 import { logAudit } from "@/lib/audit";
 import { AUDIT_ACTIONS } from "@/lib/audit";
 import { getClientIp } from "@/lib/visitor";
@@ -48,7 +49,7 @@ export async function PUT(request: NextRequest) {
 
     const body = await request.json();
     const apiKey = body.apiKey === null ? null : typeof body.apiKey === "string" ? body.apiKey : undefined;
-    const provider = body.provider === "sendgrid" ? "sendgrid" : "resend";
+    const provider = isMailProvider(body.provider) ? body.provider : "resend";
     const from = typeof body.from === "string" ? body.from.trim() : undefined;
     const fromName = typeof body.fromName === "string" ? body.fromName.trim() : undefined;
 

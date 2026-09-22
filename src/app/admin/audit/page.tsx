@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Breadcrumb from "@/components/shared/Breadcrumb";
+import { LoadingScreen } from "@/components/shared/LoadingSpinner";
 
 interface AuditRow {
   id: number;
@@ -127,7 +128,7 @@ export default function AdminAuditPage() {
 
       <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden">
         {loading ? (
-          <p className="p-8 text-center text-sm text-gray-400">Đang tải...</p>
+          <LoadingScreen label="Đang tải nhật ký..." compact />
         ) : rows.length === 0 ? (
           <p className="p-8 text-center text-sm text-gray-400">
             Chưa có bản ghi nào.

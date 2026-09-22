@@ -12,6 +12,7 @@ import {
 } from "@/lib/hero-config";
 import FieldError, { errorInputClass } from "@/components/shared/FieldError";
 import { TextArea } from "@/components/shared/TextArea";
+import { LoadingScreen } from "@/components/shared/LoadingSpinner";
 import Breadcrumb from "@/components/shared/Breadcrumb";
 import type { FieldErrors } from "@/lib/validation";
 
@@ -214,11 +215,7 @@ export default function BannerEditor({
   };
 
   if (loading || !draft) {
-    return (
-      <p className="text-sm text-gray-500 dark:text-gray-400">
-        Đang tải cấu hình banner...
-      </p>
-    );
+    return <LoadingScreen label="Đang tải cấu hình banner..." />;
   }
 
   return (

@@ -5,6 +5,7 @@ import Image from "next/image";
 import { toast } from "sonner";
 import type { MediaItem } from "./media";
 import { mediaSrc } from "./media";
+import { LoadingScreen } from "@/components/shared/LoadingSpinner";
 
 interface MediaPickerProps {
   onSelect: (item: MediaItem) => void;
@@ -70,9 +71,7 @@ export default function MediaPicker({ onSelect, onClose }: MediaPickerProps) {
 
         <div className="flex-1 overflow-y-auto p-6">
           {loading ? (
-            <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-8">
-              Đang tải...
-            </p>
+            <LoadingScreen label="Đang tải danh sách ảnh..." compact />
           ) : filtered.length === 0 ? (
             <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-8">
               Không tìm thấy hình ảnh nào.

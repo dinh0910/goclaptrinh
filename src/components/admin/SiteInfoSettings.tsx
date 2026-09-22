@@ -10,6 +10,7 @@ import {
   normalizeHexColor,
 } from "@/lib/bar-colors";
 import FieldError, { errorInputClass } from "@/components/shared/FieldError";
+import { LoadingScreen } from "@/components/shared/LoadingSpinner";
 import {
   fieldErrorsFrom,
   isValidEmail,
@@ -175,11 +176,7 @@ export default function SiteInfoSettings() {
   };
 
   if (loading) {
-    return (
-      <p className="text-sm text-gray-500 dark:text-gray-400 py-4">
-        Đang tải...
-      </p>
-    );
+    return <LoadingScreen label="Đang tải cấu hình..." compact />;
   }
 
   return (

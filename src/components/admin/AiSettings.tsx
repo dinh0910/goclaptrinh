@@ -5,6 +5,10 @@ import { toast } from "sonner";
 import FieldSelect from "@/components/admin/ui/FieldSelect";
 import FieldNumber from "@/components/admin/ui/FieldNumber";
 import { TextArea } from "@/components/shared/TextArea";
+import {
+  LoadingScreen,
+  LoadingSpinner,
+} from "@/components/shared/LoadingSpinner";
 
 interface PublicProvider {
   id: number;
@@ -50,15 +54,6 @@ const emptyDraft: ProviderDraft = {
   model: "",
   active: false,
 };
-
-function Spinner({ className = "w-4 h-4" }: { className?: string }) {
-  return (
-    <svg className={`${className} animate-spin`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <circle cx="12" cy="12" r="10" opacity="0.25" />
-      <path d="M12 2a10 10 0 0 1 10 10" />
-    </svg>
-  );
-}
 
 function Toggle({ checked, onChange }: { checked: boolean; onChange: () => void }) {
   return (
@@ -467,9 +462,7 @@ export default function AiSettings() {
 
       <div className="space-y-4">
         {loading ? (
-          <div className="flex items-center justify-center py-10 text-gray-400">
-            <Spinner className="w-5 h-5" />
-          </div>
+          <LoadingScreen label="Đang tải cấu hình AI..." compact />
         ) : providers.length === 0 && !showAdd ? (
           <div className="rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-700 p-10 text-center">
             <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -559,7 +552,7 @@ export default function AiSettings() {
                         className="mb-0.5 inline-flex items-center gap-1.5 px-3 h-11 text-xs font-semibold text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 hover:bg-blue-100 dark:hover:bg-blue-500/20 rounded-lg disabled:opacity-50 transition-colors shrink-0"
                       >
                         {busy["models-form"] ? (
-                          <Spinner className="w-3 h-3" />
+                          <LoadingSpinner size="sm" />
                         ) : (
                           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
@@ -649,7 +642,7 @@ export default function AiSettings() {
                             disabled={busy[`active-${p.id}`]}
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/20 hover:bg-green-100 dark:hover:bg-green-500/20 rounded-lg disabled:opacity-50 transition-colors"
                           >
-                            {busy[`active-${p.id}`] && <Spinner className="w-3 h-3" />}
+                            {busy[`active-${p.id}`] && <LoadingSpinner size="sm" />}
                             Kích hoạt
                           </button>
                         )}

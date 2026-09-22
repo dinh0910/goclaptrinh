@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
+import { LoadingScreen } from "@/components/shared/LoadingSpinner";
 
 interface AdminComment {
   id: number;
@@ -262,7 +263,7 @@ export default function CommentsManager() {
       </div>
 
       {loading && ((mode === "comments" ? comments.length : reports.length) === 0) ? (
-        <p className="text-sm text-gray-400 dark:text-gray-500">Đang tải...</p>
+        <LoadingScreen label="Đang tải bình luận..." compact />
       ) : mode === "comments" ? (
         comments.length === 0 ? (
           <p className="text-sm text-gray-400 dark:text-gray-500">Không có bình luận nào</p>
