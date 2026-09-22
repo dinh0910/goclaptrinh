@@ -4,6 +4,7 @@ import { getClientIp, computeFingerprint, normalizeSignals } from "@/lib/visitor
 import { commentLimiter } from "@/lib/rate-limit";
 import { logAudit, AUDIT_ACTIONS } from "@/lib/audit";
 import { sqliteClient } from "@/lib/db";
+import { auth } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -21,10 +22,25 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const session = await auth();
+  if (!session?.user) {
+    return NextResponse.json(
+      { error: "Vui lòng đăng nhập để bình luận" },
+      { status: 401 }
+    );
+  }
+  const userId = Number(session.user.id || 0);
+  const userName = (session.user.name || "").trim();
+  const userEmail = (session.user.email || "").trim();
+  if (userId <= 0) {
+    return NextResponse.json(
+      { error: "Vui lòng đăng nhập để bình luận" },
+      { status: 401 }
+    );
+  }
+
   const body = (await request.json().catch(() => null)) as {
     slug?: unknown;
-    name?: unknown;
-    email?: unknown;
     website?: unknown;
     content?: unknown;
     parentId?: unknown;
@@ -47,7 +63,7 @@ export async function POST(request: NextRequest) {
   const visitorId = typeof body.visitorId === "string" ? body.visitorId.trim().slice(0, 128) : "";
   const ip = getClientIp(request.headers);
   const fingerprint = computeFingerprint(signals);
-  const rateKey = ip || fingerprint || visitorId || "anon";
+  const rateKey = ip || fingerprint || visitorId || `u${userId}`;
 
   if (!commentLimiter.allow(rateKey)) {
     return NextResponse.json(
@@ -74,8 +90,9 @@ export async function POST(request: NextRequest) {
 
   const result = addComment({
     postId: postRow.id,
-    name: typeof body.name === "string" ? body.name : "",
-    email: typeof body.email === "string" ? body.email : "",
+    userId,
+    name: userName || `Thành viên #${userId}`,
+    email: userEmail,
     website: typeof body.website === "string" ? body.website : "",
     content,
     parentId,
@@ -90,9 +107,11 @@ export async function POST(request: NextRequest) {
 
   logAudit({
     action: AUDIT_ACTIONS.commentCreate,
+    userId,
+    userEmail,
     entity: "comment",
     entityId: String(result.id),
-    detail: { slug, name: body.name, email: body.email, parentId },
+    detail: { slug, name: userName, email: userEmail, parentId },
     ip,
   });
 

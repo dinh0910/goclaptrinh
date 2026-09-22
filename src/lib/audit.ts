@@ -139,6 +139,8 @@ export const AUDIT_ACTIONS = {
   commentApprove: "comment.approve",
   commentReject: "comment.reject",
   commentDelete: "comment.delete",
+  commentReport: "comment.report",
+  commentReportHandle: "comment.report-handle",
   reactionToggle: "reaction.toggle",
   courseCreate: "course.create",
   courseUpdate: "course.update",

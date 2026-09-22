@@ -160,11 +160,12 @@ export const comments = sqliteTable("comments", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   postId: integer("post_id").notNull(),
   parentId: integer("parent_id"),
+  userId: integer("user_id").notNull().default(0),
   name: text("name").notNull().default(""),
   email: text("email").notNull().default(""),
   website: text("website").notNull().default(""),
   content: text("content").notNull(),
-  status: text("status").notNull().default("pending"),
+  status: text("status").notNull().default("approved"),
   visitorId: text("visitor_id").notNull().default(""),
   ip: text("ip").notNull().default(""),
   signals: text("signals", { mode: "json" })
@@ -179,6 +180,17 @@ export const postReactions = sqliteTable("post_reactions", {
   postId: integer("post_id").notNull(),
   visitorId: text("visitor_id").notNull().default(""),
   reaction: text("reaction").notNull().default("like"),
+  createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
+});
+
+export const commentReports = sqliteTable("comment_reports", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  commentId: integer("comment_id").notNull(),
+  reporterId: integer("reporter_id").notNull().default(0),
+  reason: text("reason").notNull().default(""),
+  note: text("note").notNull().default(""),
+  status: text("status").notNull().default("pending"),
+  ip: text("ip").notNull().default(""),
   createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
 });
 
@@ -256,6 +268,8 @@ export type PageViewRow = typeof pageViews.$inferSelect;
 export type PageViewInsert = typeof pageViews.$inferInsert;
 export type CommentRow = typeof comments.$inferSelect;
 export type CommentInsert = typeof comments.$inferInsert;
+export type CommentReportRow = typeof commentReports.$inferSelect;
+export type CommentReportInsert = typeof commentReports.$inferInsert;
 export type PostReactionRow = typeof postReactions.$inferSelect;
 export type PostReactionInsert = typeof postReactions.$inferInsert;
 export type AiProviderRow = typeof aiProviders.$inferSelect;

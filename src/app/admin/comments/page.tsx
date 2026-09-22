@@ -24,7 +24,7 @@ export default async function AdminCommentsPage() {
             Bình luận
           </h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Quản lý bình luận từ người đọc. Bình luận mới cần được duyệt trước khi hiển thị.
+            Quản lý bình luận từ người đọc. Bình luận của thành viên đã đăng nhập sẽ hiển thị ngay lập tức.
           </p>
         </div>
       </div>

@@ -1,6 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { getVisitorId, getVisitorSignals } from "@/lib/client-visitor";
 import { TextArea } from "@/components/shared/TextArea";
@@ -9,6 +12,7 @@ interface CommentItem {
   id: number;
   postId: number;
   parentId: number | null;
+  userId: number;
   name: string;
   content: string;
   createdAt: string;
@@ -23,27 +27,51 @@ interface BlogCommentsProps {
 const inputClass =
   "w-full px-3 py-2 text-sm bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent";
 
+const REPORT_REASONS = [
+  "Spam / quảng cáo",
+  "Nội dung xúc phạm, thô tục",
+  "Quấy rối",
+  "Không liên quan",
+  "Khác",
+];
+
 export default function BlogComments({
   slug,
   initialComments,
   initialLikeCount,
 }: BlogCommentsProps) {
+  const { data: session, status } = useSession();
+  const pathname = usePathname();
+  const isLoggedIn = status === "authenticated";
+  const userName = session?.user?.name || session?.user?.email || "";
+
   const [comments, setComments] = useState<CommentItem[]>(initialComments);
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(initialLikeCount);
 
   // Comment form state
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [website, setWebsite] = useState("");
   const [content, setContent] = useState("");
   const [replyTo, setReplyTo] = useState<number | null>(null);
   const [replyContent, setReplyContent] = useState("");
-  const [replyName, setReplyName] = useState("");
-  const [replyEmail, setReplyEmail] = useState("");
   const [sending, setSending] = useState(false);
   const [sendingReply, setSendingReply] = useState<number | null>(null);
-  const [showSuccess, setShowSuccess] = useState(false);
+
+  // Report state
+  const [reportOpen, setReportOpen] = useState<number | null>(null);
+  const [reportReason, setReportReason] = useState(REPORT_REASONS[0]);
+  const [reportNote, setReportNote] = useState("");
+  const [sendingReport, setSendingReport] = useState(false);
+
+  const loadComments = useCallback(
+    () =>
+      fetch(`/api/comments?slug=${encodeURIComponent(slug)}`)
+        .then((r) => r.json().catch(() => null))
+        .then((d) => {
+          if (d && Array.isArray(d.comments)) setComments(d.comments);
+        })
+        .catch(() => {}),
+    [slug]
+  );
 
   // Load visitor reaction state + latest comments on mount
   useEffect(() => {
@@ -57,13 +85,8 @@ export default function BlogComments({
         })
         .catch(() => {});
     }
-    fetch(`/api/comments?slug=${encodeURIComponent(slug)}`)
-      .then((r) => r.json().catch(() => null))
-      .then((d) => {
-        if (d && Array.isArray(d.comments)) setComments(d.comments);
-      })
-      .catch(() => {});
-  }, [slug]);
+    loadComments();
+  }, [slug, loadComments]);
 
   const toggleLike = async () => {
     const visitorId = getVisitorId();
@@ -84,8 +107,12 @@ export default function BlogComments({
 
   const submitComment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !email.trim() || !content.trim()) {
-      toast.error("Vui lòng nhập tên, email và nội dung");
+    if (!content.trim()) {
+      toast.error("Vui lòng nhập nội dung bình luận");
+      return;
+    }
+    if (!isLoggedIn) {
+      toast.error("Vui lòng đăng nhập để bình luận");
       return;
     }
     setSending(true);
@@ -95,9 +122,6 @@ export default function BlogComments({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           slug,
-          name,
-          email,
-          website,
           content,
           visitorId: getVisitorId(),
           signals: getVisitorSignals(),
@@ -106,12 +130,9 @@ export default function BlogComments({
       });
       const d = await res.json();
       if (!res.ok) throw new Error(d.error || "Không thể gửi bình luận");
-      setName("");
-      setEmail("");
-      setWebsite("");
       setContent("");
-      setShowSuccess(true);
-      toast.success("Bình luận đã gửi, đang chờ duyệt.");
+      toast.success("Bình luận đã được đăng.");
+      loadComments();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Có lỗi xảy ra");
     } finally {
@@ -120,8 +141,12 @@ export default function BlogComments({
   };
 
   const submitReply = async (parentId: number) => {
-    if (!replyName.trim() || !replyEmail.trim() || !replyContent.trim()) {
-      toast.error("Vui lòng nhập tên, email và nội dung phản hồi");
+    if (!replyContent.trim()) {
+      toast.error("Vui lòng nhập nội dung phản hồi");
+      return;
+    }
+    if (!isLoggedIn) {
+      toast.error("Vui lòng đăng nhập để phản hồi");
       return;
     }
     setSendingReply(parentId);
@@ -131,9 +156,6 @@ export default function BlogComments({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           slug,
-          name: replyName,
-          email: replyEmail,
-          website: "",
           content: replyContent,
           parentId,
           visitorId: getVisitorId(),
@@ -145,9 +167,8 @@ export default function BlogComments({
       if (!res.ok) throw new Error(d.error || "Không thể gửi phản hồi");
       setReplyTo(null);
       setReplyContent("");
-      setReplyName("");
-      setReplyEmail("");
-      toast.success("Phản hồi đã gửi, đang chờ duyệt.");
+      toast.success("Phản hồi đã được đăng.");
+      loadComments();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Có lỗi xảy ra");
     } finally {
@@ -155,16 +176,44 @@ export default function BlogComments({
     }
   };
 
+  const submitReport = async (commentId: number) => {
+    if (!isLoggedIn) {
+      toast.error("Vui lòng đăng nhập để báo cáo");
+      return;
+    }
+    setSendingReport(true);
+    try {
+      const res = await fetch("/api/comments/report", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ commentId, reason: reportReason, note: reportNote }),
+      });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || "Không thể gửi báo cáo");
+      setReportOpen(null);
+      setReportNote("");
+      setReportReason(REPORT_REASONS[0]);
+      toast.success("Đã gửi báo cáo. Cảm ơn bạn!");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Có lỗi xảy ra");
+    } finally {
+      setSendingReport(false);
+    }
+  };
+
   // Build a simple nested list (1 level)
-  const topLevel = (comments.length ? comments : initialComments).filter((c) => !c.parentId);
+  const list = comments.length ? comments : initialComments;
+  const topLevel = list.filter((c) => !c.parentId);
   const byParent = new Map<number, CommentItem[]>();
-  for (const c of (comments.length ? comments : initialComments)) {
+  for (const c of list) {
     if (c.parentId) {
-      const list = byParent.get(c.parentId) ?? [];
-      list.push(c);
-      byParent.set(c.parentId, list);
+      const arr = byParent.get(c.parentId) ?? [];
+      arr.push(c);
+      byParent.set(c.parentId, arr);
     }
   }
+
+  const callbackUrl = encodeURIComponent(pathname);
 
   return (
     <div className="mt-12">
@@ -193,79 +242,58 @@ export default function BlogComments({
         </h2>
       </div>
 
-      {/* Comment form */}
-      <form onSubmit={submitComment} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 mb-6">
-        {/* Honeypot — hidden from humans */}
-        <input type="text" name="honeypot" tabIndex={-1} autoComplete="off" className="absolute opacity-0 pointer-events-none w-0 h-0" onChange={() => {}} value="" />
-        <div className="grid sm:grid-cols-2 gap-3 mb-3">
-          <div>
-            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Tên *</label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className={inputClass}
-              placeholder="Tên hiển thị"
+      {/* Comment form / login prompt */}
+      {isLoggedIn ? (
+        <form onSubmit={submitComment} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 mb-6">
+          {/* Honeypot — hidden from humans */}
+          <input type="text" tabIndex={-1} autoComplete="off" className="absolute opacity-0 pointer-events-none w-0 h-0" onChange={() => {}} value="" />
+          <div className="mb-3">
+            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+              Bình luận với tư cách <span className="text-blue-600 dark:text-blue-400">{userName}</span>
+            </label>
+            <TextArea
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              rows={3}
+              placeholder="Viết bình luận..."
               required
             />
           </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Email * (không hiển thị)</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className={inputClass}
-              placeholder="email@example.com"
-              required
-            />
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-gray-400 dark:text-gray-500">
+              Bình luận sẽ hiển thị ngay lập tức.
+            </p>
+            <button
+              type="submit"
+              disabled={sending}
+              className="px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+            >
+              {sending ? "Đang gửi..." : "Gửi bình luận"}
+            </button>
           </div>
-        </div>
-        <div className="mb-3">
-          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Website (tùy chọn)</label>
-          <input
-            type="url"
-            value={website}
-            onChange={(e) => setWebsite(e.target.value)}
-            className={inputClass}
-            placeholder="https://..."
-          />
-        </div>
-        <div className="mb-3">
-          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Nội dung *</label>
-          <TextArea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            rows={3}
-            placeholder="Viết bình luận..."
-            required
-          />
-        </div>
-        <div className="flex items-center justify-between">
-          <p className="text-xs text-gray-400 dark:text-gray-500">
-            Bình luận sẽ hiển thị sau khi được admin duyệt.
-          </p>
-          <button
-            type="submit"
-            disabled={sending}
-            className="px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+        </form>
+      ) : (
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 mb-6 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+          <div>
+            <p className="text-sm font-semibold text-gray-900 dark:text-white">
+              Đăng nhập để bình luận
+            </p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+              Bạn cần đăng nhập trước khi có thể bình luận hoặc trả lời.
+            </p>
+          </div>
+          <Link
+            href={`/login?callbackUrl=${callbackUrl}`}
+            className="inline-flex items-center px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
           >
-            {sending ? "Đang gửi..." : "Gửi bình luận"}
-          </button>
-        </div>
-      </form>
-
-      {showSuccess && (
-        <div className="mb-6 p-3 bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/20 rounded-lg">
-          <p className="text-sm text-green-700 dark:text-green-400">
-            Bình luận đã được gửi thành công! Nó sẽ hiển thị sau khi được admin duyệt.
-          </p>
+            Đăng nhập
+          </Link>
         </div>
       )}
 
       {/* Comments list */}
       <div className="space-y-4">
-        {topLevel.length === 0 && !showSuccess ? (
+        {topLevel.length === 0 ? (
           <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-8">
             Chưa có bình luận nào. Hãy là người đầu tiên chia sẻ suy nghĩ!
           </p>
@@ -275,17 +303,28 @@ export default function BlogComments({
               key={c.id}
               comment={c}
               replies={byParent.get(c.id) ?? []}
-              onReply={(id) => { setReplyTo(id); setReplyContent(""); setReplyName(name); setReplyEmail(email); }}
+              onReply={(id) => {
+                setReplyTo(id);
+                setReplyContent("");
+              }}
               replyTo={replyTo}
               replyContent={replyContent}
               setReplyContent={setReplyContent}
-              replyName={replyName}
-              setReplyName={setReplyName}
-              replyEmail={replyEmail}
-              setReplyEmail={setReplyEmail}
               submitReply={submitReply}
               sendingReply={sendingReply}
               onCancelReply={() => setReplyTo(null)}
+              reportOpen={reportOpen}
+              setReportOpen={(id) => {
+                setReportOpen(id);
+                setReportReason(REPORT_REASONS[0]);
+                setReportNote("");
+              }}
+              reportReason={reportReason}
+              setReportReason={setReportReason}
+              reportNote={reportNote}
+              setReportNote={setReportNote}
+              submitReport={submitReport}
+              sendingReport={sendingReport}
             />
           ))
         )}
@@ -301,13 +340,17 @@ function CommentThread({
   replyTo,
   replyContent,
   setReplyContent,
-  replyName,
-  setReplyName,
-  replyEmail,
-  setReplyEmail,
   submitReply,
   sendingReply,
   onCancelReply,
+  reportOpen,
+  setReportOpen,
+  reportReason,
+  setReportReason,
+  reportNote,
+  setReportNote,
+  submitReport,
+  sendingReport,
 }: {
   comment: CommentItem;
   replies: CommentItem[];
@@ -315,13 +358,17 @@ function CommentThread({
   replyTo: number | null;
   replyContent: string;
   setReplyContent: (v: string) => void;
-  replyName: string;
-  setReplyName: (v: string) => void;
-  replyEmail: string;
-  setReplyEmail: (v: string) => void;
   submitReply: (parentId: number) => void;
   sendingReply: number | null;
   onCancelReply: () => void;
+  reportOpen: number | null;
+  setReportOpen: (id: number | null) => void;
+  reportReason: string;
+  setReportReason: (v: string) => void;
+  reportNote: string;
+  setReportNote: (v: string) => void;
+  submitReport: (id: number) => void;
+  sendingReport: boolean;
 }) {
   return (
     <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
@@ -337,12 +384,61 @@ function CommentThread({
         </div>
       </div>
       <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap mb-2">{c.content}</p>
-      <button
-        onClick={() => onReply(c.id)}
-        className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
-      >
-        Phản hồi
-      </button>
+      <div className="flex items-center gap-3">
+        <button
+          onClick={() => onReply(c.id)}
+          className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+        >
+          Phản hồi
+        </button>
+        <button
+          onClick={() => setReportOpen(reportOpen === c.id ? null : c.id)}
+          className="text-xs text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400"
+        >
+          Báo cáo
+        </button>
+      </div>
+
+      {reportOpen === c.id && (
+        <div className="mt-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3 border border-gray-100 dark:border-gray-700">
+          <p className="text-xs font-medium text-gray-600 dark:text-gray-300 mb-2">
+            Báo cáo bình luận này
+          </p>
+          <select
+            value={reportReason}
+            onChange={(e) => setReportReason(e.target.value)}
+            className={`${inputClass} mb-2`}
+          >
+            {REPORT_REASONS.map((r) => (
+              <option key={r} value={r}>{r}</option>
+            ))}
+          </select>
+          <TextArea
+            value={reportNote}
+            onChange={(e) => setReportNote(e.target.value)}
+            rows={2}
+            className="mb-2"
+            placeholder="Ghi chú thêm (tùy chọn)..."
+          />
+          <div className="flex gap-2 justify-end">
+            <button
+              type="button"
+              onClick={() => setReportOpen(null)}
+              className="px-3 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+            >
+              Hủy
+            </button>
+            <button
+              type="button"
+              onClick={() => submitReport(c.id)}
+              disabled={sendingReport}
+              className="px-3 py-1.5 text-xs font-semibold text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors"
+            >
+              {sendingReport ? "Đang gửi..." : "Gửi báo cáo"}
+            </button>
+          </div>
+        </div>
+      )}
 
       {replies.length > 0 && (
         <div className="mt-3 ml-6 space-y-3 border-l-2 border-gray-100 dark:border-gray-800 pl-4">
@@ -357,7 +453,53 @@ function CommentThread({
                   {new Date(r.createdAt).toLocaleString("vi-VN")}
                 </p>
               </div>
-              <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap ml-8">{r.content}</p>
+              <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap ml-8 mb-1">{r.content}</p>
+              <button
+                onClick={() => setReportOpen(reportOpen === r.id ? null : r.id)}
+                className="text-xs text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 ml-8"
+              >
+                Báo cáo
+              </button>
+              {reportOpen === r.id && (
+                <div className="mt-2 ml-8 bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3 border border-gray-100 dark:border-gray-700">
+                  <p className="text-xs font-medium text-gray-600 dark:text-gray-300 mb-2">
+                    Báo cáo bình luận này
+                  </p>
+                  <select
+                    value={reportReason}
+                    onChange={(e) => setReportReason(e.target.value)}
+                    className={`${inputClass} mb-2`}
+                  >
+                    {REPORT_REASONS.map((r) => (
+                      <option key={r} value={r}>{r}</option>
+                    ))}
+                  </select>
+                  <TextArea
+                    value={reportNote}
+                    onChange={(e) => setReportNote(e.target.value)}
+                    rows={2}
+                    className="mb-2"
+                    placeholder="Ghi chú thêm (tùy chọn)..."
+                  />
+                  <div className="flex gap-2 justify-end">
+                    <button
+                      type="button"
+                      onClick={() => setReportOpen(null)}
+                      className="px-3 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+                    >
+                      Hủy
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => submitReport(r.id)}
+                      disabled={sendingReport}
+                      className="px-3 py-1.5 text-xs font-semibold text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors"
+                    >
+                      {sendingReport ? "Đang gửi..." : "Gửi báo cáo"}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -365,22 +507,6 @@ function CommentThread({
 
       {replyTo === c.id && (
         <div className="mt-3 ml-6 bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3 border border-gray-100 dark:border-gray-700">
-          <div className="grid sm:grid-cols-2 gap-2 mb-2">
-            <input
-              type="text"
-              value={replyName}
-              onChange={(e) => setReplyName(e.target.value)}
-              className={inputClass}
-              placeholder="Tên"
-            />
-            <input
-              type="email"
-              value={replyEmail}
-              onChange={(e) => setReplyEmail(e.target.value)}
-              className={inputClass}
-              placeholder="Email"
-            />
-          </div>
           <TextArea
             value={replyContent}
             onChange={(e) => setReplyContent(e.target.value)}

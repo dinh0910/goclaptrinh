@@ -420,14 +420,43 @@ if (!commentsTable) {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       post_id INTEGER NOT NULL,
       parent_id INTEGER,
+      user_id INTEGER NOT NULL DEFAULT 0,
       name TEXT NOT NULL DEFAULT '',
       email TEXT NOT NULL DEFAULT '',
       website TEXT NOT NULL DEFAULT '',
       content TEXT NOT NULL,
-      status TEXT NOT NULL DEFAULT 'pending',
+      status TEXT NOT NULL DEFAULT 'approved',
       visitor_id TEXT NOT NULL DEFAULT '',
       ip TEXT NOT NULL DEFAULT '',
       signals TEXT NOT NULL DEFAULT '{}',
+      created_at TEXT NOT NULL
+    );
+  `);
+} else {
+  // Comments now require a logged-in account and publish instantly.
+  const commentUserIdCol = sqlite
+    .prepare(`SELECT name FROM pragma_table_info('comments') WHERE name = 'user_id'`)
+    .get();
+  if (!commentUserIdCol) {
+    sqlite.exec(`ALTER TABLE comments ADD COLUMN user_id INTEGER NOT NULL DEFAULT 0;`);
+  }
+}
+
+// Boot-time migration: create the comment_reports table (user-submitted reports).
+const commentReportsTable = sqlite
+  .prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'comment_reports'")
+  .get();
+
+if (!commentReportsTable) {
+  sqlite.exec(`
+    CREATE TABLE comment_reports (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      comment_id INTEGER NOT NULL,
+      reporter_id INTEGER NOT NULL DEFAULT 0,
+      reason TEXT NOT NULL DEFAULT '',
+      note TEXT NOT NULL DEFAULT '',
+      status TEXT NOT NULL DEFAULT 'pending',
+      ip TEXT NOT NULL DEFAULT '',
       created_at TEXT NOT NULL
     );
   `);
