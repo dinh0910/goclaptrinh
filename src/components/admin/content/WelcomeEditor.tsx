@@ -228,6 +228,7 @@ export default function WelcomeEditor({
   return (
     <div className="xl:grid xl:grid-cols-[1fr_380px] xl:gap-6 xl:items-start">
       <Breadcrumb
+        className="mb-4 xl:mb-0 xl:col-span-2"
         items={[
           { label: "Dashboard", href: "/admin" },
           { label: "Popup giới thiệu", href: "/admin/welcome" },
