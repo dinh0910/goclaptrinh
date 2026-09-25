@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import type { NewsletterSubscriber, NewsletterCampaign } from "@/lib/newsletter";
 import { TextArea } from "@/components/shared/TextArea";
+import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import FieldSelect from "@/components/admin/ui/FieldSelect";
 import {
   MAIL_PROVIDER_OPTIONS,
@@ -20,6 +21,88 @@ interface NewsletterData {
 const inputClass =
   "w-full px-3 py-2 text-sm bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent";
 
+function buildPreviewDocument(html: string) {
+  const content = html.trim() ||
+    '<p style="margin: 0; color: #6b7280; text-align: center;">Chưa có nội dung để xem trước.</p>';
+
+  return `<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src https: http: data: blob:; style-src 'unsafe-inline' https:; font-src https: data:; media-src https: http:; base-uri 'none'; form-action 'none';">
+<style>
+  * { box-sizing: border-box; }
+  html { background: #f3f4f6; }
+  body {
+    margin: 0;
+    padding: 24px;
+    background: #f3f4f6;
+    color: #111827;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    overflow-wrap: break-word;
+  }
+  a { color: #2563eb; }
+  img { max-width: 100%; height: auto; }
+  table { max-width: 100%; border-collapse: collapse; }
+</style>
+</head>
+<body>${content}</body>
+</html>`;
+}
+
+function NewsletterPreview({
+  subject,
+  content,
+  from,
+  fromName,
+}: {
+  subject: string;
+  content: string;
+  from: string;
+  fromName: string;
+}) {
+  const previewDocument = useMemo(() => buildPreviewDocument(content), [content]);
+
+  return (
+    <div className="space-y-4">
+      <div className="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between gap-3 border-b border-gray-200 p-4 dark:border-gray-700">
+          <div className="min-w-0">
+            <p className="text-xs font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500">Tiêu đề</p>
+            <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">
+              {subject || "Chưa có tiêu đề"}
+            </p>
+          </div>
+          <span className="shrink-0 rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700 dark:bg-green-500/15 dark:text-green-400">
+            Xem trước
+          </span>
+        </div>
+        <div className="flex min-w-0 items-center gap-2 p-4 text-xs text-gray-500 dark:text-gray-400">
+          <span className="max-w-[45%] truncate font-medium text-gray-700 dark:text-gray-300">
+            {fromName || "Tên người gửi"}
+          </span>
+          <span className="max-w-[55%] truncate">{from || "Chưa cấu hình email gửi"}</span>
+        </div>
+      </div>
+      <div className="overflow-hidden rounded-xl border border-gray-200 bg-gray-100 dark:border-gray-700 dark:bg-gray-950">
+        <iframe
+          title="Xem trước nội dung bản tin"
+          srcDoc={previewDocument}
+          sandbox=""
+          referrerPolicy="no-referrer"
+          className="h-[60vh] min-h-[24rem] w-full bg-white"
+        />
+      </div>
+      <p className="text-xs text-gray-400 dark:text-gray-500">
+        Nội dung HTML được cập nhật theo dữ liệu hiện tại. Script và form trong preview không được thực thi.
+      </p>
+    </div>
+  );
+}
+
 export default function NewsletterManager({ adminEmail }: { adminEmail: string }) {
   const [data, setData] = useState<NewsletterData | null>(null);
   const [provider, setProvider] = useState<MailProvider>("resend");
@@ -30,6 +113,7 @@ export default function NewsletterManager({ adminEmail }: { adminEmail: string }
 
   const [subject, setSubject] = useState("");
   const [content, setContent] = useState("");
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [testTo, setTestTo] = useState(adminEmail);
   const [sending, setSending] = useState(false);
   const [progress, setProgress] = useState<{ sent: number; total: number; failed: number } | null>(null);
@@ -275,7 +359,29 @@ export default function NewsletterManager({ adminEmail }: { adminEmail: string }
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Nội dung (HTML)</label>
+            <div className="mb-1.5 flex items-center justify-between gap-3">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Nội dung (HTML)</label>
+              <button
+                type="button"
+                onClick={() => setPreviewOpen(true)}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-100 dark:border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-400 dark:hover:bg-blue-500/20"
+              >
+                <svg
+                  className="h-4 w-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+                Xem thử
+              </button>
+            </div>
             <TextArea
               value={content}
               onChange={(e) => setContent(e.target.value)}
@@ -324,6 +430,18 @@ export default function NewsletterManager({ adminEmail }: { adminEmail: string }
           )}
         </div>
       </div>
+
+      <ConfirmDialog
+        open={previewOpen}
+        title="Xem thử bản tin"
+        confirmLabel="Đóng"
+        size="large"
+        showCancelButton={false}
+        onConfirm={() => setPreviewOpen(false)}
+        onCancel={() => setPreviewOpen(false)}
+      >
+        <NewsletterPreview subject={subject} content={content} from={from} fromName={fromName} />
+      </ConfirmDialog>
 
       {/* Campaigns */}
       {data && data.campaigns.length > 0 && (

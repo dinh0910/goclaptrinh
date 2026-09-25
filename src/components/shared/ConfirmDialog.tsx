@@ -1,15 +1,18 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 
 interface ConfirmDialogProps {
   open: boolean;
   title: string;
-  message: string;
+  message?: ReactNode;
   confirmLabel?: string;
   cancelLabel?: string;
   danger?: boolean;
   loading?: boolean;
+  size?: "default" | "large";
+  showCancelButton?: boolean;
+  children?: ReactNode;
   onConfirm: () => void;
   onCancel: () => void;
 }
@@ -22,6 +25,9 @@ export default function ConfirmDialog({
   cancelLabel = "Hủy",
   danger = false,
   loading = false,
+  size = "default",
+  showCancelButton = true,
+  children,
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
@@ -52,7 +58,11 @@ export default function ConfirmDialog({
       aria-labelledby="confirm-dialog-title"
     >
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-      <div className="relative flex max-h-[80vh] w-full max-w-md flex-col bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-2xl">
+      <div
+        className={`relative flex w-full flex-col bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-2xl ${
+          size === "large" ? "max-h-[90vh] max-w-5xl" : "max-h-[80vh] max-w-md"
+        }`}
+      >
         <div className="shrink-0 flex flex-col items-center gap-3 px-6 pt-6 text-center">
           <span
             className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${
@@ -98,18 +108,26 @@ export default function ConfirmDialog({
             {title}
           </h3>
         </div>
-        <div className="overflow-y-auto px-6 py-4 text-sm text-center text-gray-600 dark:text-gray-300">
-          {message}
+        <div
+          className={`min-h-0 overflow-y-auto px-6 py-4 ${
+            children !== undefined
+              ? "text-left"
+              : "text-center text-sm text-gray-600 dark:text-gray-300"
+          }`}
+        >
+          {children ?? message}
         </div>
         <div className="shrink-0 flex justify-end gap-3 border-t border-gray-200 dark:border-gray-800 px-6 py-4">
-          <button
-            type="button"
-            onClick={onCancel}
-            disabled={loading}
-            className="rounded-lg px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-50 transition-colors"
-          >
-            {cancelLabel}
-          </button>
+          {showCancelButton && (
+            <button
+              type="button"
+              onClick={onCancel}
+              disabled={loading}
+              className="rounded-lg px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-50 transition-colors"
+            >
+              {cancelLabel}
+            </button>
+          )}
           <button
             type="button"
             ref={confirmRef}
