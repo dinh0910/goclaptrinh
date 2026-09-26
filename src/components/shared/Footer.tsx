@@ -60,6 +60,14 @@ export default function Footer() {
                     Giới thiệu
                   </Link>
                 </li>
+                <li>
+                  <Link
+                    href="/chinh-sach"
+                    className="text-sm text-gray-600 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400"
+                  >
+                    Chính sách
+                  </Link>
+                </li>
               </ul>
             </nav>
           </div>

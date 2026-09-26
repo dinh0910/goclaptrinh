@@ -2,6 +2,7 @@ import { MetadataRoute } from "next";
 import { getAllPostSlugs, getPostBySlug, getAllTags } from "@/lib/posts";
 import { getCategoriesWithCounts } from "@/lib/categories";
 import { getAllCourses } from "@/lib/courses";
+import { getPublishedPolicies } from "@/lib/policy";
 import { siteConfig } from "@/lib/constants";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -78,6 +79,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "monthly",
       priority: 0.5,
     },
+    {
+      url: `${siteConfig.url}/chinh-sach`,
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.4,
+    },
+    // Văn bản pháp lý thay đổi rất hiếm nên ưu tiên thấp, cũng không cần tần suất.
+    ...getPublishedPolicies().map((policy) => ({
+      url: `${siteConfig.url}/chinh-sach/${policy.slug}`,
+      lastModified: policy.updatedAt ? new Date(policy.updatedAt) : new Date(),
+      priority: 0.3,
+    })),
     ...categoryEntries,
     ...tagEntries,
     ...courseEntries,

@@ -1,4 +1,5 @@
 import { sqliteClient } from "./db";
+import { maskIp } from "./privacy";
 
 export interface Comment {
   id: number;
@@ -16,6 +17,10 @@ export interface Comment {
   createdAt: string;
 }
 
+// Bình luận trả cho người đọc: bỏ hẳn ip và signals vì đó là dữ liệu cá nhân,
+// không có lý do để công khai. IP đã phục vụ mục đích rate-limit lúc ghi.
+export type PublicComment = Omit<Comment, "ip" | "signals">;
+
 export interface CommentReport {
   id: number;
   commentId: number;
@@ -29,7 +34,7 @@ export interface CommentReport {
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-function rowToComment(row: {
+type CommentRow = {
   id: number;
   post_id: number;
   parent_id: number | null;
@@ -43,7 +48,9 @@ function rowToComment(row: {
   ip: string;
   signals: string;
   created_at: string;
-}): Comment {
+};
+
+function commentBase(row: CommentRow) {
   return {
     id: row.id,
     postId: row.post_id,
@@ -55,11 +62,22 @@ function rowToComment(row: {
     content: row.content,
     status: row.status,
     visitorId: row.visitor_id,
-    ip: row.ip,
+    createdAt: row.created_at,
+  };
+}
+
+function rowToPublicComment(row: CommentRow): PublicComment {
+  return commentBase(row);
+}
+
+function rowToComment(row: CommentRow): Comment {
+  return {
+    ...commentBase(row),
+    // Che ở tầng data để IP gốc không rời khỏi server.
+    ip: maskIp(row.ip),
     signals: (() => {
       try { return JSON.parse(row.signals || "{}"); } catch { return {}; }
     })(),
-    createdAt: row.created_at,
   };
 }
 
@@ -108,13 +126,13 @@ export function addComment(input: {
   return { ok: true, id: Number(result.lastInsertRowid) };
 }
 
-export function listPublicComments(postId: number): Comment[] {
+export function listPublicComments(postId: number): PublicComment[] {
   const rows = sqliteClient
     .prepare(
       "SELECT * FROM comments WHERE post_id = ? AND status = 'approved' ORDER BY created_at ASC"
     )
-    .all(postId) as Record<string, unknown>[];
-  return rows.map((r) => rowToComment(r as Parameters<typeof rowToComment>[0]));
+    .all(postId) as CommentRow[];
+  return rows.map((r) => rowToPublicComment(r));
 }
 
 export function getPostCommentCount(postId: number): number {
@@ -361,7 +379,7 @@ function rowToReport(row: Record<string, unknown>): CommentReport {
     reason: (row.reason as string) || "",
     note: (row.note as string) || "",
     status: (row.status as string) || "",
-    ip: (row.ip as string) || "",
+    ip: maskIp((row.ip as string) || ""),
     createdAt: (row.created_at as string) || "",
   };
 }

@@ -65,3 +65,6 @@ export function allowSubmit(key: string): boolean {
 
 // 10 attempts per 15 minutes, keyed by normalized email + IP.
 export const loginLimiter = makeLimiter("login_rate_limits", 15 * 60_000, 10);
+
+// Support chat: 6 messages per minute per visitor/IP on the client side.
+export const chatLimiter = makeLimiter("chat_rate_limits", 60_000, 6);

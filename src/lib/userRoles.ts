@@ -50,5 +50,7 @@ export const PERMISSION_OPTIONS: { key: string; label: string }[] = [
   { key: "newsletter", label: "Newsletter" },
   { key: "analytics", label: "Thống kê" },
   { key: "comments", label: "Bình luận" },
+  { key: "courses", label: "Khóa học" },
+  { key: "chat", label: "Tin nhắn" },
   { key: "users", label: "Người dùng & vai trò" },
 ];

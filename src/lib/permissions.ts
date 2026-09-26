@@ -16,6 +16,7 @@ export const PERMISSIONS = {
   analytics: "analytics",
   comments: "comments",
   courses: "courses",
+  chat: "chat",
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
@@ -33,6 +34,7 @@ export const ADMIN_PERMISSIONS: Permission[] = [
   PERMISSIONS.analytics,
   PERMISSIONS.comments,
   PERMISSIONS.courses,
+  PERMISSIONS.chat,
 ];
 
 export function getRolePermissions(role?: string | null): string[] {

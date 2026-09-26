@@ -6,6 +6,7 @@ import {
   type WelcomeSubmission,
 } from "@/lib/welcome-submissions";
 import { deviceLabel, normalizeSignals } from "@/lib/visitor";
+import { maskIp } from "@/lib/privacy";
 import { requireAuth, unauthorizedJson, PERMISSIONS } from "@/lib/permissions";
 
 function clientKey(s: WelcomeSubmission): string {
@@ -47,9 +48,12 @@ export async function GET() {
 
   return NextResponse.json({
     submissions: submissions.map((s) => {
-      const signals = normalizeSignals(s.signals);
+      // Không gửi signals thô ra trình duyệt: UI chỉ cần nhãn thiết bị đã dẫn xuất.
+      const { signals: rawSignals, ...rest } = s;
+      const signals = normalizeSignals(rawSignals);
       return {
-        ...s,
+        ...rest,
+        ip: maskIp(s.ip),
         popupName: nameById.get(s.itemId) || "Đã xóa",
         fields: itemById.get(s.itemId)?.fields ?? [],
         device: deviceLabel(signals),

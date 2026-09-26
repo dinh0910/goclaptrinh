@@ -10,7 +10,8 @@
     "db:seed": "npx tsx scripts/seed.ts",
     "db:generate": "npx drizzle-kit generate",
     "db:migrate": "npx drizzle-kit migrate",
-    "db:studio": "npx drizzle-kit studio"
+    "db:studio": "npx drizzle-kit studio",
+    "db:retention": "npx tsx scripts/retention.ts"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.11.3",

@@ -250,6 +250,36 @@ export const courseEnrollments = sqliteTable("course_enrollments", {
   updatedAt: text("updated_at").notNull().$defaultFn(() => new Date().toISOString()),
 });
 
+export const chatConversations = sqliteTable("chat_conversations", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  userId: integer("user_id").notNull().default(0),
+  visitorId: text("visitor_id").notNull().default(""),
+  name: text("name").notNull().default(""),
+  email: text("email").notNull().default(""),
+  phone: text("phone").notNull().default(""),
+  status: text("status").notNull().default("open"),
+  lastMessageAt: text("last_message_at").notNull().default(""),
+  lastMessagePreview: text("last_message_preview").notNull().default(""),
+  unreadForAdmin: integer("unread_for_admin", { mode: "boolean" }).notNull().default(false),
+  unreadForClient: integer("unread_for_client", { mode: "boolean" }).notNull().default(false),
+  ip: text("ip").notNull().default(""),
+  signals: text("signals", { mode: "json" })
+    .notNull()
+    .$type<Partial<VisitorSignals>>()
+    .default({}),
+  createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
+  updatedAt: text("updated_at").notNull().$defaultFn(() => new Date().toISOString()),
+});
+
+export const chatMessages = sqliteTable("chat_messages", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  conversationId: integer("conversation_id").notNull(),
+  sender: text("sender").notNull().default("client"),
+  senderName: text("sender_name").notNull().default(""),
+  content: text("content").notNull(),
+  createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
+});
+
 export type UserRow = typeof users.$inferSelect;
 export type UserInsert = typeof users.$inferInsert;
 export type RoleRow = typeof roles.$inferSelect;
@@ -284,3 +314,7 @@ export type CourseLessonRow = typeof courseLessons.$inferSelect;
 export type CourseLessonInsert = typeof courseLessons.$inferInsert;
 export type CourseEnrollmentRow = typeof courseEnrollments.$inferSelect;
 export type CourseEnrollmentInsert = typeof courseEnrollments.$inferInsert;
+export type ChatConversationRow = typeof chatConversations.$inferSelect;
+export type ChatConversationInsert = typeof chatConversations.$inferInsert;
+export type ChatMessageRow = typeof chatMessages.$inferSelect;
+export type ChatMessageInsert = typeof chatMessages.$inferInsert;

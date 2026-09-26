@@ -8,7 +8,9 @@ import { maybeAutoBackup } from "../backup";
 import { DEFAULT_AI_PROFILES } from "@/lib/ai-defaults";
 import { slugify } from "@/lib/utils";
 
-const dbPath = path.join(process.cwd(), "data", "blog.db");
+// DB_PATH chỉ để test trỏ sang một file DB khác; production không set nên
+// luôn rơi về data/blog.db.
+const dbPath = process.env.DB_PATH || path.join(process.cwd(), "data", "blog.db");
 const sqlite = new Database(dbPath);
 sqlite.pragma("journal_mode = WAL");
 
@@ -665,6 +667,85 @@ for (const [col, ddl] of [
   if (!hasCol) {
     sqlite.exec(`ALTER TABLE course_enrollments ADD COLUMN ${col} ${ddl};`);
   }
+}
+
+// Boot-time migration: create the support-chat tables. One conversation per
+// visitor (or per signed-in user) so the history follows them across sessions.
+const chatConversationsTable = sqlite
+  .prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'chat_conversations'")
+  .get();
+
+if (!chatConversationsTable) {
+  sqlite.exec(`
+    CREATE TABLE chat_conversations (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL DEFAULT 0,
+      visitor_id TEXT NOT NULL DEFAULT '',
+      name TEXT NOT NULL DEFAULT '',
+      email TEXT NOT NULL DEFAULT '',
+      phone TEXT NOT NULL DEFAULT '',
+      status TEXT NOT NULL DEFAULT 'open',
+      last_message_at TEXT NOT NULL DEFAULT '',
+      last_message_preview TEXT NOT NULL DEFAULT '',
+      unread_for_admin INTEGER NOT NULL DEFAULT 0,
+      unread_for_client INTEGER NOT NULL DEFAULT 0,
+      ip TEXT NOT NULL DEFAULT '',
+      signals TEXT NOT NULL DEFAULT '{}',
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+  `);
+  sqlite.exec(
+    "CREATE INDEX IF NOT EXISTS idx_chat_conversations_visitor ON chat_conversations(visitor_id);"
+  );
+  sqlite.exec(
+    "CREATE INDEX IF NOT EXISTS idx_chat_conversations_user ON chat_conversations(user_id);"
+  );
+}
+
+// Boot-time migration: add the contact-phone column to chat_conversations if
+// missing. The table was created before visitors were required to leave a
+// phone number, so older databases need the backfill.
+const chatConversationsPhone = sqlite
+  .prepare("SELECT name FROM pragma_table_info('chat_conversations') WHERE name = 'phone'")
+  .get();
+if (!chatConversationsPhone) {
+  sqlite.exec("ALTER TABLE chat_conversations ADD COLUMN phone TEXT NOT NULL DEFAULT '';");
+}
+
+const chatMessagesTable = sqlite
+  .prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'chat_messages'")
+  .get();
+
+if (!chatMessagesTable) {
+  sqlite.exec(`
+    CREATE TABLE chat_messages (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      conversation_id INTEGER NOT NULL,
+      sender TEXT NOT NULL DEFAULT 'client',
+      sender_name TEXT NOT NULL DEFAULT '',
+      content TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    );
+  `);
+  sqlite.exec(
+    "CREATE INDEX IF NOT EXISTS idx_chat_messages_conversation ON chat_messages(conversation_id, id);"
+  );
+}
+
+// Boot-time migration: create the chat rate-limit table.
+const chatRateLimitsTable = sqlite
+  .prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'chat_rate_limits'")
+  .get();
+
+if (!chatRateLimitsTable) {
+  sqlite.exec(`
+    CREATE TABLE chat_rate_limits (
+      key TEXT PRIMARY KEY,
+      window_start INTEGER NOT NULL,
+      count INTEGER NOT NULL
+    );
+  `);
 }
 
 // Full-text search index over posts.

@@ -66,6 +66,7 @@ const navItems: NavItem[] = [
     ],
   },
   { kind: "link", href: "/admin/comments", label: "Bình luận", icon: "💬", permission: "comments" },
+  { kind: "link", href: "/admin/chat", label: "Tin nhắn", icon: "🗨️", permission: "chat" },
   { kind: "link", href: "/admin/media", label: "Hình ảnh", icon: "🖼️", permission: "media" },
   {
     kind: "section",
@@ -96,6 +97,7 @@ const navItems: NavItem[] = [
   { kind: "link", href: "/admin/security", label: "Bảo mật", icon: "🔐" },
   { kind: "link", href: "/admin/audit", label: "Nhật ký", icon: "📋" },
   { kind: "link", href: "/admin/backups", label: "Sao lưu", icon: "💾" },
+  { kind: "link", href: "/admin/policy", label: "Chính sách", icon: "📜" },
   { kind: "link", href: "/admin/settings", label: "Cài đặt", icon: "⚙️" },
   { kind: "link", href: "/", label: "Xem site", icon: "🌐" },
 ];

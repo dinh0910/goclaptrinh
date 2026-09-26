@@ -1,4 +1,5 @@
 import { sqliteClient } from "./db";
+import { maskIp } from "./privacy";
 
 export interface AuditEntry {
   userId?: number | null;
@@ -87,8 +88,9 @@ export function listAuditLogs(opts?: {
       action: r.action,
       entity: r.entity,
       entityId: r.entity_id,
-      detail: safeParse(r.detail),
-      ip: r.ip,
+      detail: maskDetailIp(safeParse(r.detail)),
+      // Che ở tầng data để IP gốc không rời khỏi server.
+      ip: maskIp(r.ip),
       createdAt: r.created_at,
     })),
   };
@@ -101,6 +103,25 @@ function safeParse(raw: string): Record<string, unknown> {
   } catch {
     return {};
   }
+}
+
+// detail là JSON tự do nên IP có thể nằm lọt trong đó (vd login.failed ở
+// credentials.ts) và hiện thẳng ra /admin/audit, lách qua maskIp ở cột ip.
+// Che mọi khoá tên ip/ips/ipAddress để không sót đường vòng.
+function maskDetailIp(detail: Record<string, unknown>): Record<string, unknown> {
+  let touched = false;
+  const out: Record<string, unknown> = { ...detail };
+  for (const key of ["ip", "ips", "ipAddress"]) {
+    const value = out[key];
+    if (typeof value === "string") {
+      out[key] = maskIp(value);
+      touched = true;
+    } else if (Array.isArray(value)) {
+      out[key] = value.map((v) => (typeof v === "string" ? maskIp(v) : v));
+      touched = true;
+    }
+  }
+  return touched ? out : detail;
 }
 
 export const AUDIT_ACTIONS = {
@@ -151,4 +172,9 @@ export const AUDIT_ACTIONS = {
   courseLevelCreate: "course-level.create",
   courseLevelUpdate: "course-level.update",
   courseLevelDelete: "course-level.delete",
+  chatClientSend: "chat.client-send",
+  chatAdminReply: "chat.admin-reply",
+  chatStatusChange: "chat.status-change",
+  chatDelete: "chat.delete",
+  policyUpdate: "policy.update",
 } as const;

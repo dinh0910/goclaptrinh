@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/components/shared/ThemeProvider";
 import ToasterProvider from "@/components/shared/ToasterProvider";
 import WelcomeDialog from "@/components/client/welcome/WelcomeDialog";
 import PageViewTracker from "@/components/client/ui/PageViewTracker";
+import ChatWidget from "@/components/client/chat/ChatWidget";
 import Header from "@/components/shared/Header";
 import Footer from "@/components/shared/Footer";
 import TopProgressBar from "@/components/client/ui/TopProgressBar";
@@ -109,6 +110,7 @@ export default function RootLayout({
           <ToasterProvider />
           <TopProgressBar />
           <PageViewTracker />
+          <ChatWidget />
           <WelcomeDialog />
           <SessionProvider>
             <Header siteInfo={siteInfo} />
